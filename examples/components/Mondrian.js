@@ -5,8 +5,8 @@ import {useSubscribe} from 'replicache-react-util';
 
 const rep = new Replicache({
   clientViewURL: new URL('/api/replicache-client-view', location.href).toString(),
-  diffServerURL: 'http://localhost:7001/pull',
-  diffServerAuth: 'sandbox',
+  diffServerURL: process.env.VERCEL ? 'https://serve.replicache.dev/pull' : 'http://localhost:7001/pull',
+  diffServerAuth: process.env.VERCEL ? '1000000' : 'sandbox',
   wasmModule: '/replicache/replicache.wasm',
   syncInterval: 5000,
 });
