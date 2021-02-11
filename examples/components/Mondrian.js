@@ -3,11 +3,12 @@ import Designer from '../../src/Designer';
 import Replicache from 'replicache';
 import {useSubscribe} from 'replicache-react-util';
 
-console.log('vercel', process.env);
+const isProd = location.host.indexOf('.vercel.app') > -1;
+
 const rep = new Replicache({
   clientViewURL: new URL('/api/replicache-client-view', location.href).toString(),
-  diffServerURL: process.env.VERCEL ? 'https://serve.replicache.dev/pull' : 'http://localhost:7001/pull',
-  diffServerAuth: process.env.VERCEL ? '1000000' : 'sandbox',
+  diffServerURL: isProd ? 'https://serve.replicache.dev/pull' : 'http://localhost:7001/pull',
+  diffServerAuth: isProd ? '1000000' : 'sandbox',
   wasmModule: '/replicache/replicache.wasm',
   syncInterval: 5000,
 });
