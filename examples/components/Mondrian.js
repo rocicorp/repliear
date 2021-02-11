@@ -1,5 +1,12 @@
 import React, { Component } from 'react';
 import Designer from '../../src/Designer';
+import Replicache from 'replicache';
+
+const rep = new Replicache({
+  clientViewURL: '',
+  diffServerURL: '',
+  wasmModule: '/replicache/replicache.wasm',
+});
 
 export default class extends Component {
   state = {
