@@ -14,16 +14,17 @@ export default class Rect extends Vector {
       strokeWidth: 0,
       fill: "blue",
       radius: 0,
-      blendMode: "normal",
       rotate: 0
     }
   };
 
   render() {
     let {object, index} = this.props;
-    return (
+    const attribs = this.getObjectAttributes();
+    delete attribs.blendMode;
+   return (
       <rect style={this.getStyle()}
-         {...this.getObjectAttributes()}
+         {...attribs}
          rx={object.radius}
          width={object.width}
          height={object.height} />
