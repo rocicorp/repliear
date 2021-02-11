@@ -3,8 +3,9 @@ import Designer from '../../src/Designer';
 import Replicache from 'replicache';
 
 const rep = new Replicache({
-  clientViewURL: '',
-  diffServerURL: '',
+  clientViewURL: '/api/replicache-client-view',
+  diffServerURL: 'http://localhost:7001/pull',
+  diffServerAuth: 'sandbox',
   wasmModule: '/replicache/replicache.wasm',
 });
 
