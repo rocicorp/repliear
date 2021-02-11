@@ -1,4 +1,4 @@
-export default ({object, startPoint, mouse}) => {
+const Rotator = ({object, startPoint, mouse}) => {
   let angle = Math.atan2(
     startPoint.objectX + (object.width || 0) / 2 - mouse.x,
     startPoint.objectY + (object.height || 0) / 2 - mouse.y
@@ -12,3 +12,4 @@ export default ({object, startPoint, mouse}) => {
     rotate: rotation
   };
 };
+export default Rotator;

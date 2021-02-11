@@ -1,4 +1,4 @@
-export default ({object, startPoint, mouse}) => {
+const Scaler = ({object, startPoint, mouse}) => {
   let {objectX, objectY, clientX, clientY} = startPoint;
   let width = startPoint.width + mouse.x - clientX;
   let height = startPoint.height + mouse.y - clientY;
@@ -11,3 +11,4 @@ export default ({object, startPoint, mouse}) => {
     height: Math.abs(height)
   };
 };
+export default Scaler;
