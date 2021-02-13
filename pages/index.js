@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Replicache from 'replicache';
-import {Rect2} from '../src/objects/rect2';
+import {Designer2} from '../src/Designer2';
 
 export default function Home() {
   const [rep, setRep] = useState(null);
@@ -21,7 +21,5 @@ export default function Home() {
     }));
   });
 
-  return rep && <svg>
-    <Rect2 rep={rep} rk='/object/290282801471685133' />
-  </svg>;
+  return rep && <Designer2 rep={rep}/>;
 }
