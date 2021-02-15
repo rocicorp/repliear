@@ -1,25 +1,34 @@
 import { useEffect, useState } from 'react';
 import Replicache from 'replicache';
+import {Data} from '../src/data';
 import {Designer2} from '../src/Designer2';
 
 export default function Home() {
-  const [rep, setRep] = useState(null);
+  const [data, setData] = useState(null);
 
-  // TODO: Think through React under SSR.
+  // TODO: Think through Replicache + SSR.
   useEffect(() => {
-    if (rep) {
+    if (data) {
       return;
+    }
+    // TODO: Use clientID from Replicache:
+    // https://github.com/rocicorp/replicache-sdk-js/issues/275
+    let clientID = localStorage.clientID;
+    if (!clientID) {
+      clientID = localStorage.clientID = Math.random().toString(36).substring(2);
     }
 
     const isProd = location.host.indexOf('.vercel.app') > -1;
-    setRep(new Replicache({
+    const rep = new Replicache({
       clientViewURL: new URL('/api/replicache-client-view', location.href).toString(),
       diffServerURL: isProd ? 'https://serve.replicache.dev/pull' : 'http://localhost:7001/pull',
       diffServerAuth: isProd ? '1000000' : 'sandbox',
       wasmModule: '/replicache/replicache.dev.wasm',
       syncInterval: 5000,
-    }));
+    });
+
+    setData(new Data(rep));
   });
 
-  return rep && <Designer2 rep={rep}/>;
+  return data && <Designer2 {...{data}}/>;
 }

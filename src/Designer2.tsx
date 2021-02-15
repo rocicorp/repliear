@@ -1,13 +1,11 @@
 import React from 'react';
-import {useSubscribe} from 'replicache-react-util';
 import {Rect2} from './objects/Rect2';
+import {Data} from './data';
 
-export function Designer2({rep}) {
-  const keys = useSubscribe(rep,
-    async tx => (await tx.scanAll({prefix: '/object/'})).map(([k]) => k), []);
-
+export function Designer2({data}: {data: Data}) {
+  const ids = data.useShapeIDs();
   return <svg style={styles} width={350} height={400}>
-    {keys.map(rk => <Rect2 rep={rep} key={rk} rk={rk}/>)}
+    {ids.map(id => <Rect2 key={id} {...{data, id}}/>)}
   </svg>;
 }
 
@@ -18,5 +16,4 @@ const styles = {
     + 'PSIyMCIgZmlsbD0iI2ZmZiI+PC9yZWN0Pgo8cmVjdCB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9I'
     + 'iNGN0Y3RjciPjwvcmVjdD4KPHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIG'
     + 'ZpbGw9IiNGN0Y3RjciPjwvcmVjdD4KPC9zdmc+)',
-  backgroundSize: "auto"
 };
