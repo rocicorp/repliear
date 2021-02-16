@@ -1,4 +1,4 @@
-import React, {CSSProperties, useState} from 'react';
+import React, {CSSProperties, MouseEvent, useState} from 'react';
 import {Rect2} from './objects/Rect2';
 import {Handler} from './Handler2';
 import {Data} from './data';
@@ -9,12 +9,63 @@ export function Designer2({data}: {data: Data}) {
   // TODO: This should be stored in Replicache too, since we will be rendering
   // other users' selections.
   const [selectedID, setSelectedID] = useState('');
+  const [lastDrag, setLastDrag] = useState(null);
 
-  return <div style={styles.container}>
-    <Handler {...{data, selectedID, onMouseLeave: () => setSelectedID('')}}/>
+  const onMouseEnter = (e: MouseEvent, id: string) => {
+    if (fromClass(e, 'shape')) {
+      if (lastDrag == null) {
+        setSelectedID(id);
+      }
+    }
+  };
+
+  const onMouseLeave = (e: MouseEvent) => {
+    if (fromClass(e, 'handler')) {
+      if (lastDrag == null) {
+        setSelectedID('');
+      }
+    }
+  };
+
+  const onMouseDown = (e: MouseEvent) => {
+    updateLastDrag(e);
+  };
+
+  const onMouseMove = (e: MouseEvent) => {
+    if (lastDrag == null) {
+      return;
+    }
+    data.moveShape({
+      id: selectedID,
+      dx: e.clientX - lastDrag.x,
+      dy: e.clientY - lastDrag.y
+    });
+    updateLastDrag(e);
+  };
+
+  const onMouseUp = (e: MouseEvent) => {
+    setLastDrag(null);
+  };
+
+  const fromClass = (e: MouseEvent, className: string) => {
+    const target = e.target as HTMLElement;
+    return target.classList.contains(className);
+  };
+
+  const updateLastDrag = (e: MouseEvent) => {
+    setLastDrag({x: e.clientX, y: e.clientY});
+  }
+
+  return <div {...{className: 'container', style: styles.container, onMouseMove, onMouseUp}}>
+    <Handler {...{
+      data,
+      selectedID,
+      onMouseDown,
+      onMouseLeave,
+    }}/>
     <svg style={styles.svg} width={350} height={400}>
       {ids.map(
-        id => <Rect2 key={id} {...{data, id, onMouseEnter: () => setSelectedID(id)}}/>)}
+        id => <Rect2 key={id} {...{data, id, onMouseEnter: (e) => onMouseEnter(e, id)}}/>)}
     </svg>
   </div>;
 }

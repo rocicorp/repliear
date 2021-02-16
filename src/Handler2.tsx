@@ -1,13 +1,19 @@
-import React, {CSSProperties} from 'react';
+import React, {CSSProperties, MouseEventHandler} from 'react';
 import {Data} from './data';
 
-export function Handler({data, selectedID, onMouseLeave}: {data: Data, selectedID: string, onMouseLeave: () => void}) {
+export function Handler({data, selectedID, onMouseDown, onMouseLeave}:
+  {
+    data: Data,
+    selectedID: string,
+    onMouseDown: MouseEventHandler,
+    onMouseLeave: MouseEventHandler,
+  }) {
   const shape = data.useShapeByID(selectedID);
   if (!shape) {
     return null;
   }
 
-  let handlerStyle = {
+  const handlerStyle = {
     ...styles.handler,
     width: shape.width + 4,
     height: shape.height + 4,
@@ -16,10 +22,12 @@ export function Handler({data, selectedID, onMouseLeave}: {data: Data, selectedI
     transform: `rotate(${shape.rotate}deg)`
   };
 
-  return <div
-    style={handlerStyle}
-    onMouseLeave={onMouseLeave}>
-  </div>;
+  return <div {...{
+    className: 'handler',
+    style: handlerStyle,
+    onMouseDown,
+    onMouseLeave,
+  }}/>;
 }
 
 const styles = {
