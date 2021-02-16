@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Replicache from 'replicache';
 import {Data} from '../src/data';
 import {Designer2} from '../src/Designer2';
+import Pusher from 'pusher-js';
 
 export default function Home() {
   const [data, setData] = useState(null);
@@ -25,7 +26,18 @@ export default function Home() {
       diffServerURL: isProd ? 'https://serve.replicache.dev/pull' : 'http://localhost:7001/pull',
       diffServerAuth: isProd ? '1000000' : 'sandbox',
       wasmModule: '/replicache/replicache.dev.wasm',
-      syncInterval: 5000,
+      syncInterval: null,
+      pushDelay: 10,
+    });
+    rep.sync();
+
+    Pusher.logToConsole = true;
+    var pusher = new Pusher('d9088b47d2371d532c4c', {
+      cluster: 'us3'
+    });
+    var channel = pusher.subscribe('default');
+    channel.bind('poke', function(data) {
+      rep.sync();
     });
 
     setData(new Data(rep));

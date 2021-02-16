@@ -1,5 +1,6 @@
 import faunadb from "faunadb";
 import { faunaClient } from "./fauna";
+import Pusher from 'pusher';
 
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -30,9 +31,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           q.Select(['args', 'id'], q.Var('mutation')),
           q.Select(['args', 'dx'], q.Var('mutation')),
           q.Select(['args', 'dy'], q.Var('mutation')))));
-  console.log('sending', query);
+  console.time('sending to fauna...');
   await client.query(query);
-  console.log('done');
+  console.timeEnd('sending to fauna...');
+
+  console.log('firing poke...');
+  const pusher = new Pusher({
+    appId: "1157097",
+    key: "d9088b47d2371d532c4c",
+    secret: "64204dab73c42e17afc3",
+    cluster: "us3",
+    useTLS: true
+  });
+  await pusher.trigger("default", "poke", {});
+  console.log("done");
+
   res.status(200).json({});
 };
 
