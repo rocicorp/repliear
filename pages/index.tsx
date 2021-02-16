@@ -20,7 +20,8 @@ export default function Home() {
 
     const isProd = location.host.indexOf('.vercel.app') > -1;
     const rep = new Replicache({
-      clientViewURL: new URL('/api/replicache-client-view', location.href).toString(),
+      batchURL: '/api/replicache-push',
+      clientViewURL: '/api/replicache-pull',
       diffServerURL: isProd ? 'https://serve.replicache.dev/pull' : 'http://localhost:7001/pull',
       diffServerAuth: isProd ? '1000000' : 'sandbox',
       wasmModule: '/replicache/replicache.dev.wasm',
