@@ -2,8 +2,16 @@ import Replicache, {JSONObject, ReadTransaction, WriteTransaction} from 'replica
 import {useSubscribe} from 'replicache-react-util';
 
 export interface Shape {
+  type: string,
   x: number,
   y: number,
+  width: number,
+  height: number,
+  rotate: number,
+  strokeWidth: number,
+  fill: string,
+  radius: number,
+  blendMode: string,
 }
 
 export class Data {
@@ -34,12 +42,12 @@ export class Data {
   useShapeByID(id: string): Shape|null {
     return useSubscribe(this.rep, (tx: ReadTransaction) => {
       return this.getShape(tx, id);
-    }, null);
+    }, null, [id]);
   }
 
   private async getShape(tx: ReadTransaction, id: string): Promise<Shape> {
     // TODO: Is there an automated way to check that the returned value implements Shape?
-    return await tx.get(`/object/${id}`) as unknown as Shape;
+    return id == '' ? null : await tx.get(`/object/${id}`) as unknown as Shape;
   }
   private async putShape(tx: WriteTransaction, id: string, shape: Shape) {
     return await tx.put(`/object/${id}`, shape as unknown as JSONObject) as unknown as Shape;
