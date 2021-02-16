@@ -18,16 +18,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const client = faunaClient();
   const batch = req.body as { clientID: string; mutations: Array<Mutation> };
-  let infos = [];
-  for (let m of batch.mutations) {
-    if (m.name != "moveShape") {
-      throw new Error("Unexpected mutation: " + m.name);
-    }
-    const { id: objectID, dx, dy } = m.args;
-    const params = [batch.clientID, m.id, objectID, dx, dy];
-    console.log("Calling replicache_push with: ", params);
-    const result = await client.query(q.Call("replicache_push", ...params));
-  }
+
+  // TODO: replicache_push does not correctly honor transaction isolation -
+  // an error anywhere in the batch takes down the whole batch.
+  const query =
+    q.Foreach(batch.mutations,
+      q.Lambda('mutation',
+        q.Call('replicache_push',
+          batch.clientID,
+          q.Select('id', q.Var('mutation')),
+          q.Select(['args', 'id'], q.Var('mutation')),
+          q.Select(['args', 'dx'], q.Var('mutation')),
+          q.Select(['args', 'dy'], q.Var('mutation')))));
+  console.log('sending', query);
+  await client.query(query);
+  console.log('done');
   return {};
 };
 
