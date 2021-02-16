@@ -33,7 +33,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log('sending', query);
   await client.query(query);
   console.log('done');
-  res.status(200).send('');
+  res.status(200).json({});
 };
 
 function validatePayload(payload: any) {
