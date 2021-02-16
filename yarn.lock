@@ -3311,10 +3311,10 @@ repeat-string@^1.6.1:
   resolved "https://registry.yarnpkg.com/repeat-string/-/repeat-string-1.6.1.tgz"
   integrity sha1-jcrkcOHIirwtYA//Sndihtp15jc=
 
-replicache-react-util@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/replicache-react-util/-/replicache-react-util-1.0.1.tgz"
-  integrity sha512-pe+8Eiyqnpg9HTJG9i76C9oe5n6iqJIloEFPC1tSL8d5K8Q8ERJ/xTkwAf9UarsNWJclKScQFuXGds2QctcftQ==
+replicache-react-util@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/replicache-react-util/-/replicache-react-util-1.1.0.tgz#ee072394a01f22c82cf0da3f0f4965a60fb53117"
+  integrity sha512-hrCJz2nY/lSx39j89P1V48kEx16RwZer9YJTYwEHjCnW8MuBirGy2DR35cA9eHr8EVfYr2D3oW5Ns37EkYRsKQ==
   dependencies:
     react ">=16.0 <18.0"
     replicache ">=4.0.1 <6.0"
