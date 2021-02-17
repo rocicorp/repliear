@@ -44,10 +44,10 @@ export function Designer({data}: {data: Data}) {
   };
 
   const handlers = {
-    moveLeft: () => data.moveShape({id: selectedID, dx: -1, dy: 0}),
-    moveRight: () => data.moveShape({id: selectedID, dx: 1, dy: 0}),
-    moveUp: () => data.moveShape({id: selectedID, dx: 0, dy: -1}),
-    moveDown: () => data.moveShape({id: selectedID, dx: 0, dy: 1}),
+    moveLeft: () => data.moveShape({id: selectedID, dx: -20, dy: 0}),
+    moveRight: () => data.moveShape({id: selectedID, dx: 20, dy: 0}),
+    moveUp: () => data.moveShape({id: selectedID, dx: 0, dy: -20}),
+    moveDown: () => data.moveShape({id: selectedID, dx: 0, dy: 20}),
   };
 
   return (
