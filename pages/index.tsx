@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Replicache from 'replicache';
 import {Data} from '../src/data';
-import {Designer2} from '../src/Designer2';
+import {Designer} from '../src/designer';
 import Pusher from 'pusher-js';
 
 export default function Home() {
@@ -25,7 +25,7 @@ export default function Home() {
       clientViewURL: '/api/replicache-pull',
       diffServerURL: isProd ? 'https://serve.replicache.dev/pull' : 'http://localhost:7001/pull',
       diffServerAuth: isProd ? '1000000' : 'sandbox',
-      wasmModule: '/replicache/replicache.dev.wasm',
+      wasmModule: '/replicache/replicache.wasm',
       syncInterval: null,
     });
     rep.sync();
@@ -42,5 +42,5 @@ export default function Home() {
     setData(new Data(rep));
   });
 
-  return data && <Designer2 {...{data}}/>;
+  return data && <Designer {...{data}}/>;
 }

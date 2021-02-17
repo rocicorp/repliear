@@ -1,9 +1,9 @@
 import React, {CSSProperties, MouseEvent, useState} from 'react';
-import {Rect2} from './objects/Rect2';
+import {Rect2} from './rect';
 import {HotKeys} from 'react-hotkeys';
 import {Data} from './data';
 
-export function Designer2({data}: {data: Data}) {
+export function Designer({data}: {data: Data}) {
   const ids = data.useShapeIDs();
 
   // TODO: This should be stored in Replicache too, since we will be rendering
