@@ -27,6 +27,7 @@ export default function Home() {
       diffServerAuth: isProd ? '1000000' : 'sandbox',
       wasmModule: '/replicache/replicache.wasm',
       syncInterval: null,
+      useMemstore: true,
     });
     rep.sync();
 
