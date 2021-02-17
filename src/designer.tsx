@@ -53,7 +53,7 @@ export function Designer({data}: {data: Data}) {
   return (
     <HotKeys {...{keyMap, style: styles.keyboardManager, handlers}}>
       <div {...{className: 'container', style: styles.container, onMouseMove, onMouseUp}}>
-        <svg style={styles.svg} width={350} height={400}>
+        <svg style={styles.svg} width={400} height={550}>
           {ids.map(
             id => <Rect2 key={id} {...{data, id, onMouseDown: (e) => onMouseDown(e, id)}}/>)}
         </svg>
