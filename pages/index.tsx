@@ -27,7 +27,6 @@ export default function Home() {
       diffServerAuth: isProd ? '1000000' : 'sandbox',
       wasmModule: '/replicache/replicache.dev.wasm',
       syncInterval: null,
-      pushDelay: Number.MIN_VALUE,
     });
     rep.sync();
 
