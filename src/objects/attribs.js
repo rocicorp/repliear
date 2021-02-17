@@ -1,17 +1,21 @@
-export function getObjectAttributes(state) {
-  const style = getStyle(state);
+export function getObjectAttributes(state, over) {
+  const style = getStyle(state, over);
   const transform = getTransformMatrix(state);
   delete state.blendMode;
   return {
     style,
     transform,
     ...state,
+
   };
 }
 
-function getStyle(data) {
+function getStyle(data, over) {
   return {
-    mixBlendMode: data.blendMode
+    mixBlendMode: data.blendMode,
+    outlineColor: '#dedede',
+    outlineStyle: over ? 'solid' : 'none',
+    outlineWidth: '2px',
   }
 }
 
