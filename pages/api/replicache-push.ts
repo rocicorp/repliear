@@ -13,7 +13,8 @@ type Mutation = {
 };
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-  console.log("Processing push", req.body);
+  const uniqueID = Math.random().toString(36).substr(2);
+  console.log(`Processing push ${uniqueID}`, req.body);
 
   validatePayload(req.body);
 
@@ -31,11 +32,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           q.Select(['args', 'id'], q.Var('mutation')),
           q.Select(['args', 'dx'], q.Var('mutation')),
           q.Select(['args', 'dy'], q.Var('mutation')))));
-  console.time('sending to fauna...');
+  console.time(`${uniqueID}: sending to fauna...`);
   await client.query(query);
-  console.timeEnd('sending to fauna...');
+  console.timeEnd(`${uniqueID}: sending to fauna...`);
 
-  console.log('firing poke...');
   const pusher = new Pusher({
     appId: "1157097",
     key: "d9088b47d2371d532c4c",
@@ -43,8 +43,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     cluster: "us3",
     useTLS: true
   });
+  console.time(`${uniqueID}: sending poke...`);
   await pusher.trigger("default", "poke", {});
-  console.log("done");
+  console.timeEnd(`${uniqueID}: sending poke...`);
 
   res.status(200).json({});
 };
