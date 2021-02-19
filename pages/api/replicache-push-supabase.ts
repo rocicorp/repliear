@@ -10,8 +10,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const supabase = createClient("https://iovzpefufdsclrdhklbq.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYxMzcyNTUyMCwiZXhwIjoxOTI5MzAxNTIwfQ.NdNq59B5DMINRzugFsY26AFtwp9T3AA5gywOIZH7DAM");
   console.time('Inserting 100 rows');
   var p = [];
-  for (var i = 0; i < 100; i++) {
-    p.push(supabase.from('Shape').insert([
+  for (var i = 0; i < 10; i++) {
+    await supabase.from('Shape').insert([
       {id: Math.random().toString(36).substr(2), content: `{
         "ref": Ref(Collection("objects"), "290282750093558285"),
         "ts": 1613670707753000,
@@ -30,7 +30,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       }`}
     ], {
       returning: 'minimal',
-    }));
+    });
   }
   console.log(await Promise.all(p));
   console.timeEnd('Inserting 100 rows');
