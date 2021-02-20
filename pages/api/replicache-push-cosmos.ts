@@ -6,9 +6,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const uniqueID = Math.random().toString(36).substr(2);
+  const consistencyLevel = req.query['c'] || 'Strong' as any;
 
   const { endpoint, key, databaseId, containerId } = config;
-  const client = new CosmosClient({ endpoint, key });
+  const client = new CosmosClient({ endpoint, key, consistencyLevel });
   const database = client.database(databaseId);
   const container = database.container(containerId);
 
