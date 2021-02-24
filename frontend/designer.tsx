@@ -2,6 +2,12 @@ import React, {CSSProperties, MouseEvent, useState} from 'react';
 import {Rect2} from './rect';
 import {HotKeys} from 'react-hotkeys';
 import {Data} from './data';
+import {newID} from'../shared/id';
+
+type LastDrag = {x: number, y: number};
+const canvasWidth = 400;
+const canvasHeight = 550;
+const colors = ['red', 'blue', 'white', 'green', 'yellow'];
 
 export function Designer({data}: {data: Data}) {
   const ids = data.useShapeIDs();
@@ -9,7 +15,7 @@ export function Designer({data}: {data: Data}) {
   // TODO: This should be stored in Replicache too, since we will be rendering
   // other users' selections.
   const [selectedID, setSelectedID] = useState('');
-  const [lastDrag, setLastDrag] = useState(null);
+  const [lastDrag, setLastDrag] = useState<LastDrag|null>(null);
 
   const onMouseDown = (e: MouseEvent, id: string) => {
     setSelectedID(id);
@@ -50,6 +56,29 @@ export function Designer({data}: {data: Data}) {
     moveDown: () => data.moveShape({id: selectedID, dx: 0, dy: 20}),
   };
 
+  const randInt = (min: number, max: number): number => {
+    const range = max - min;
+    return Math.round(Math.random() * range);
+  };
+
+  const onNewRectangle = async () => {
+    await data.createShape({
+      id: newID(),
+      shape: {
+        type: 'rect',
+        x: randInt(0, canvasWidth - 100),
+        y: randInt(0, canvasHeight- 100),
+        width: randInt(100, canvasWidth - 100),
+        height: randInt(100, canvasHeight - 100),
+        rotate: 0,
+        strokeWidth: randInt(1, 5),
+        fill: colors[randInt(0, colors.length)],
+        radius: 0,
+        blendMode: 'normal',
+      }
+    });
+  };
+
   return (
     <HotKeys {...{keyMap, style: styles.keyboardManager, handlers}}>
       <div {...{className: 'container', style: styles.container, onMouseMove, onMouseUp}}>
@@ -57,6 +86,8 @@ export function Designer({data}: {data: Data}) {
           {ids.map(
             id => <Rect2 key={id} {...{data, id, onMouseDown: (e) => onMouseDown(e, id)}}/>)}
         </svg>
+        <br/>
+        <button onClick={() => onNewRectangle()}>New Rectangle</button>
       </div>
     </HotKeys>
   );
