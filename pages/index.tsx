@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Replicache from 'replicache';
-import {Data} from '../src/data';
-import {Designer} from '../src/designer';
+import {Data} from '../frontend/data';
+import {Designer} from '../frontend/designer';
 import Pusher from 'pusher-js';
 
 export default function Home() {
