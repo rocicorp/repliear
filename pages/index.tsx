@@ -5,18 +5,12 @@ import {Designer} from '../src/designer';
 import Pusher from 'pusher-js';
 
 export default function Home() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<Data|null>(null);
 
   // TODO: Think through Replicache + SSR.
   useEffect(() => {
     if (data) {
       return;
-    }
-    // TODO: Use clientID from Replicache:
-    // https://github.com/rocicorp/replicache-sdk-js/issues/275
-    let clientID = localStorage.clientID;
-    if (!clientID) {
-      clientID = localStorage.clientID = Math.random().toString(36).substring(2);
     }
 
     const isProd = location.host.indexOf('.vercel.app') > -1;
@@ -36,7 +30,7 @@ export default function Home() {
       cluster: 'us3'
     });
     var channel = pusher.subscribe('default');
-    channel.bind('poke', function(data) {
+    channel.bind('poke', function(data: unknown) {
       rep.sync();
     });
 
