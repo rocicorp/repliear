@@ -1,24 +1,27 @@
 /**
  * This module provides implements mutators abstracted over underlying storage,
  * which is either RDS (on server) or Replicache (on client).
- * 
+ *
  * This way we can use the same mutator implementations on client-side and
  * server-side.
  */
 
-import * as t from 'io-ts';
-import {shape} from './shape';
-import type {Shape} from './shape';
+import * as t from "io-ts";
+import { shape } from "./shape";
+import type { Shape } from "./shape";
 
 /**
  * Interface required of underlying storage.
  */
 export interface MutatorStorage {
-  getShape(id: string): Promise<Shape|null>;
+  getShape(id: string): Promise<Shape | null>;
   putShape(id: string, shape: Shape): Promise<void>;
 }
 
-export async function createShape(storage: MutatorStorage, args: CreateShapeArgs): Promise<void> {
+export async function createShape(
+  storage: MutatorStorage,
+  args: CreateShapeArgs
+): Promise<void> {
   await storage.putShape(args.id, args.shape);
 }
 // TODO: Is there a way to make this a little less laborious?
@@ -28,7 +31,10 @@ export const createShapeArgs = t.type({
 });
 export type CreateShapeArgs = t.TypeOf<typeof createShapeArgs>;
 
-export async function moveShape(storage: MutatorStorage, args: MoveShapeArgs): Promise<void> {
+export async function moveShape(
+  storage: MutatorStorage,
+  args: MoveShapeArgs
+): Promise<void> {
   const shape = await storage.getShape(args.id);
   if (!shape) {
     console.log(`Specified shape ${args.id} not found.`);
