@@ -1,66 +1,77 @@
 import * as t from 'io-ts';
 import {ExecuteStatementFn, transact} from '../../backend/rds';
-import {MutatorStorage, createShape, createShapeArgs, moveShape, moveShapeArgs} from '../../shared/mutators';
+import {MutatorStorage, createShape, createShapeArgs, moveShape, moveShapeArgs, MoveShapeArgs} from '../../shared/mutators';
 import {getLastMutationID, getShape, putShape, setLastMutationID} from '../../backend/data';
-import {UserError} from '../../backend/user_error';
 import {must} from '../../backend/decode';
 import Pusher from 'pusher';
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const mutation = t.type({
-  id: t.number,
-  name: t.string,
-  args: t.object,
-});
+const mutation = t.union([
+  t.type({
+    id: t.number,
+    name: t.literal('createShape'),
+    args: createShapeArgs,
+  }),
+  t.type({
+    id: t.number,
+    name: t.literal('moveShape'),
+    args: moveShapeArgs,
+  })
+]);
 
 const pushRequest = t.type({
   clientID: t.string,
   mutations: t.array(mutation),
 });
 
+type Mutation = t.TypeOf<typeof mutation>;
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const push = must(pushRequest.decode(req.body));
 
-  for (const mutation of push.mutations) {
+  for (let i = 0; i < push.mutations.length; i++) {
     await transact(async (executor) => {
       console.log('Processing mutation', mutation);
 
-      const lastMutationID = await getLastMutationID(executor, push.clientID);
+      let lastMutationID = await getLastMutationID(executor, push.clientID);
       console.log('lastMutationID:', lastMutationID);
 
-      const expectedMutationID = lastMutationID + 1;
-      if (mutation.id < expectedMutationID) {
-        console.log('This mutation has already been processed. Nothing to do.');
-        return;
-      }
-      if (mutation.id > expectedMutationID) {
-        console.log('This mutation is from the future. Nothing to do but wait.');
-        return;
-      }
+      // Scan forward from here collapsing any collapsable mutations.
+      for (let mutation: Mutation; mutation = push.mutations[i]; i++) {
+        const expectedMutationID = lastMutationID + 1;
+        if (mutation.id < expectedMutationID) {
+          console.log('This mutation has already been processed. Nothing to do.');
+          return;
+        }
+        if (mutation.id > expectedMutationID) {
+          console.log('This mutation is from the future. Nothing to do but wait.');
+          return;
+        }
+  
+        const next = push.mutations[i+1];
+        console.log('Considering for collapse', mutation, next);
+        if (next) {
+          if (collapse(mutation, next)) {
+            lastMutationID = mutation.id;
+            console.log('Collapsed into', next);
+            continue;
+          }
+        }
 
-      const ms = mutatorStorage(executor);
-      const {args} = mutation;
+        const ms = mutatorStorage(executor);
 
-      try {
         switch (mutation.name) {
-          case  'moveShape':
-            await moveShape(ms, must(moveShapeArgs.decode(mutation.args)));
+          case 'moveShape':
+            await moveShape(ms, mutation.args);
             break;
           case 'createShape':
             await createShape(ms, must(createShapeArgs.decode(mutation.args)))
             break;
-          default:
-            throw new UserError(`Unknown mutation: ${mutation.name}`);
         }
-      } catch (e: any) {
-        if (e instanceof UserError) {
-          console.error('Invalid mutation, skipping. ', e);
-        } else {
-          throw e;
-        }
+  
+        await setLastMutationID(executor, push.clientID, expectedMutationID);
+        break;
       }
-
-      await setLastMutationID(executor, push.clientID, expectedMutationID);
     });
   }
 
@@ -77,6 +88,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   res.status(200).json({});
 };
+
+// If prev and next are collapsible, collapse them by mutating next.
+function collapse(prev: Mutation, next: Mutation): boolean {
+  if (prev.name == 'moveShape' && next.name == 'moveShape') {
+    next.args.dx += prev.args.dx;
+    next.args.dy += prev.args.dy;
+    return true;
+  }
+  return false;
+}
 
 function mutatorStorage(executor: ExecuteStatementFn): MutatorStorage {
   return {
