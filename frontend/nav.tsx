@@ -1,0 +1,99 @@
+import styles from './nav.module.css';
+import {Data} from './data';
+import { newID } from "../shared/id";
+
+const colors = ["red", "blue", "white", "green", "yellow"];
+
+function randInt(min: number, max: number): number {
+  const range = max - min;
+  return Math.round(Math.random() * range);
+};
+
+export function Nav({data}: {data: Data|null}) {
+  const onRectangle = async () => {
+    if (!data) {
+      return;
+    }
+    await data.createShape({
+      id: newID(),
+      shape: {
+        type: "rect",
+        x: randInt(0, 400),
+        y: randInt(0, 400),
+        width: randInt(100, 400),
+        height: randInt(100, 400),
+        rotate: 0,
+        strokeWidth: randInt(1, 5),
+        fill: colors[randInt(0, colors.length)],
+        radius: 0,
+        blendMode: "normal",
+      },
+    });
+  };
+  
+  return (
+    <div className={styles.nav} style={{}}>
+      <div className={styles.button} title="Move">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.872 8.859L3.646 2.072l-.98-.592.231 1.121 2.683 13 .243 1.178.664-1.003 3.038-4.59 5.22-1.417 1.127-.306-1-.604zM4.108 3.52l9.247 5.59-4.274 1.16-.182.05-.104.156-2.479 3.746L4.108 3.52z"
+            fillRule="nonzero"
+            fillOpacity="1"
+            fill="white"
+            stroke="none"
+          ></path>
+        </svg>
+      </div>
+      <div onClick={() => onRectangle()} className={styles.button} title="Rectangle">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M1 1h16v16H1V1zm1 1h14v14H2V2z"
+            fillRule="evenodd"
+            fill="white"
+          ></path>
+        </svg>
+      </div>
+      <div className={styles.button} title="Ellipse">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M9 17c4.418 0 8-3.582 8-8 0-4.418-3.582-8-8-8-4.418 0-8 3.582-8 8 0 4.418 3.582 8 8 8zm0 1c4.97 0 9-4.03 9-9 0-4.97-4.03-9-9-9-4.97 0-9 4.03-9 9 0 4.97 4.03 9 9 9z"
+            fillRule="evenodd"
+            fillOpacity="1"
+            fill="white"
+          ></path>
+        </svg>
+      </div>
+      <div className={styles.button} title="Text">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M2 5h1V2h5v14H5v1h7v-1H9V2h5v3h1V1H2v4z"
+            fillRule="nonzero"
+            fillOpacity="1"
+            fill="white"
+            stroke="none"
+          ></path>
+        </svg>
+      </div>
+    </div>
+  );
+}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Replicache from "replicache";
 import { Data } from "../frontend/data";
 import { Designer } from "../frontend/designer";
+import { Nav } from "../frontend/nav";
 import Pusher from "pusher-js";
 
 export default function Home() {
@@ -39,5 +40,21 @@ export default function Home() {
     setData(new Data(rep));
   });
 
-  return data && <Designer {...{ data }} />;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        display: "flex",
+        flexDirection: "column",
+        left: 0,
+        top: 0,
+        width: "100%",
+        height: "100%",
+        background: "rgb(229,229,229)",
+      }}
+    >
+      <Nav data={data} />
+      { data && <Designer {...{ data }} /> }
+    </div>
+  );
 }

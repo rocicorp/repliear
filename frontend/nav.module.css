@@ -1,0 +1,20 @@
+.nav {
+  display: flex;
+  background: rgb(44, 44, 44);
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  opacity: "0.8";
+  fill: "white";
+  stroke-width: 0;
+}
+
+.button:hover {
+  background-color: rgb(75, 158, 244);
+  opacity: 1;
+}
