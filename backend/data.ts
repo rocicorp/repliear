@@ -3,10 +3,12 @@
  */
 
 import { shape } from "../shared/shape";
+import { clientState } from "../shared/client-state";
 import { must } from "./decode";
 
 import type { ExecuteStatementFn } from "./rds";
 import type { Shape } from "../shared/shape";
+import type { ClientState } from "../shared/client-state";
 
 export async function getCookieVersion(
   executor: ExecuteStatementFn
@@ -72,5 +74,35 @@ export async function putShape(
   await executor(`CALL PutShape(:id, :content)`, {
     id: { stringValue: id },
     content: { stringValue: JSON.stringify(shape) },
+  });
+}
+
+export async function getClientState(
+  executor: ExecuteStatementFn,
+  id: string
+): Promise<ClientState> {
+  const { records } = await executor(
+    "SELECT Content FROM ClientState WHERE Id = :id",
+    {
+      id: { stringValue: id },
+    }
+  );
+  const content = records?.[0]?.[0]?.stringValue;
+  if (!content) {
+    return {
+      overID: "",
+    };
+  }
+  return must(clientState.decode(JSON.parse(content)));
+}
+
+export async function putClientState(
+  executor: ExecuteStatementFn,
+  id: string,
+  clientState: ClientState
+): Promise<void> {
+  await executor(`CALL PutClientState(:id, :content)`, {
+    id: { stringValue: id },
+    content: { stringValue: JSON.stringify(clientState) },
   });
 }

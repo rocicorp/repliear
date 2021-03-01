@@ -7,10 +7,14 @@ import {
   moveShape,
   moveShapeArgs,
   MoveShapeArgs,
+  overShape,
+  overShapeArgs,
 } from "../../shared/mutators";
 import {
+  getClientState,
   getLastMutationID,
   getShape,
+  putClientState,
   putShape,
   setLastMutationID,
 } from "../../backend/data";
@@ -28,6 +32,11 @@ const mutation = t.union([
     id: t.number,
     name: t.literal("moveShape"),
     args: moveShapeArgs,
+  }),
+  t.type({
+    id: t.number,
+    name: t.literal("overShape"),
+    args: overShapeArgs,
   }),
 ]);
 
@@ -83,9 +92,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           case "createShape":
             await createShape(ms, must(createShapeArgs.decode(mutation.args)));
             break;
+          case "overShape":
+            await overShape(ms, must(overShapeArgs.decode(mutation.args)));
+            break;
         }
 
         await setLastMutationID(executor, push.clientID, expectedMutationID);
+
         break;
       }
     });
@@ -119,5 +132,7 @@ function mutatorStorage(executor: ExecuteStatementFn): MutatorStorage {
   return {
     getShape: getShape.bind(null, executor),
     putShape: putShape.bind(null, executor),
+    getClientState: getClientState.bind(null, executor),
+    putClientState: putClientState.bind(null, executor),
   };
 }

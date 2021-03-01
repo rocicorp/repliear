@@ -9,6 +9,9 @@ export function Designer({ data }: { data: Data }) {
   const ids = data.useShapeIDs();
   console.log({ ids });
 
+  const overID = data.useOverShapeID();
+  console.log({ overID });
+
   // TODO: This should be stored in Replicache too, since we will be rendering
   // other users' selections.
   const [selectedID, setSelectedID] = useState("");
@@ -66,10 +69,35 @@ export function Designer({ data }: { data: Data }) {
         <svg width="100%" height="100%">
           {ids.map((id) => (
             <Rect
-              key={id}
-              {...{ data, id, onMouseDown: (e) => onMouseDown(e, id) }}
+              {...{
+                key: id,
+                data,
+                id,
+                onMouseEnter: () =>
+                  data.overShape({ clientID: data.clientID, shapeID: id }),
+                onMouseLeave: () =>
+                  data.overShape({ clientID: data.clientID, shapeID: "" }),
+                onMouseDown: (e) => onMouseDown(e, id),
+              }}
+              highlight={false}
             />
           ))}
+
+          {
+            // This looks a little odd at first, but we want the selection
+            // rectangle to be stacked above all objects on the page, so we
+            // paint the highlighted object again in a special 'highlight'
+            // mode.
+            overID && (
+            <Rect
+              {...{
+                key: `highlight-${overID}`,
+                data,
+                id: overID,
+                highlight: true,
+              }}
+            />
+          )}
         </svg>
       </div>
     </HotKeys>

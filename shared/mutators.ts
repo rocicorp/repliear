@@ -9,6 +9,8 @@
 import * as t from "io-ts";
 import { shape } from "./shape";
 import type { Shape } from "./shape";
+import { clientState } from "./client-state";
+import type { ClientState } from "./client-state";
 
 /**
  * Interface required of underlying storage.
@@ -16,6 +18,8 @@ import type { Shape } from "./shape";
 export interface MutatorStorage {
   getShape(id: string): Promise<Shape | null>;
   putShape(id: string, shape: Shape): Promise<void>;
+  getClientState(id: string): Promise<ClientState>;
+  putClientState(id: string, client: ClientState): Promise<void>;
 }
 
 export async function createShape(
@@ -50,3 +54,17 @@ export const moveShapeArgs = t.type({
   dy: t.number,
 });
 export type MoveShapeArgs = t.TypeOf<typeof moveShapeArgs>;
+
+export async function overShape(
+  storage: MutatorStorage,
+  args: OverShapeArgs
+): Promise<void> {
+  const client = await storage.getClientState(args.clientID);
+  client.overID = args.shapeID;
+  await storage.putClientState(args.clientID, client);
+}
+export const overShapeArgs = t.type({
+  clientID: t.string,
+  shapeID: t.string,
+});
+export type OverShapeArgs = t.TypeOf<typeof overShapeArgs>;
