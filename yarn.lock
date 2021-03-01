@@ -2635,7 +2635,12 @@ replicache-react-util@^1.1.0:
     react ">=16.0 <18.0"
     replicache ">=4.0.1 <6.0"
 
-replicache@5.2.0, "replicache@>=4.0.1 <6.0":
+replicache@6.0.0-beta.0:
+  version "6.0.0-beta.0"
+  resolved "https://registry.yarnpkg.com/replicache/-/replicache-6.0.0-beta.0.tgz#ff4059094b320156c16273caf3f3a131fb21ba87"
+  integrity sha512-9TmSJdESIJJaTPPrHTDXVYa5ixuEzj2l6PpTtwdOfcQpsWAwadPoUTP00ulsDdpw8NREihFB2IcZyMRuxzTEmQ==
+
+"replicache@>=4.0.1 <6.0":
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/replicache/-/replicache-5.2.0.tgz"
   integrity sha512-ja+Swi4d1RlD8uUAsZr+ibQXmalQvN4IhFB9tom8w5KdpXdyeD2mGXvUlTQYdTjJuQ/2jE5zzz/djZyhWlhCSg==

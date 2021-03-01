@@ -16,16 +16,13 @@ export default function Home() {
 
     const isProd = location.host.indexOf(".vercel.app") > -1;
     const rep = new Replicache({
-      batchURL: "/api/replicache-push",
-      clientViewURL: "/api/replicache-pull",
-      diffServerURL: isProd
-        ? "https://serve.replicache.dev/pull"
-        : "http://localhost:7001/pull",
-      diffServerAuth: isProd ? "1000000" : "sandbox",
+      pushURL: "/api/replicache-push",
+      pullURL: "/api/replicache-pull",
       // TODO: Shouldn't have to manually load wasm
       wasmModule: isProd ? "/replicache.wasm" : "/replicache.dev.wasm",
       syncInterval: null,
       useMemstore: true,
+      pushDelay: 1,
     });
     rep.sync();
 

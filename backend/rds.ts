@@ -9,9 +9,12 @@ import {
   RDSDataClient,
   RollbackTransactionCommand,
 } from "@aws-sdk/client-rds-data";
+import { execute } from "fp-ts/lib/State";
 
 const region = "us-west-2";
-const dbName = "replicache_sample_replidraw__dev";
+const dbName =
+  process.env.REPLIDRAW_DB_NAME || "replicache_sample_replidraw__dev";
+console.log({ dbName });
 const resourceArn =
   "arn:aws:rds:us-west-2:712907626835:cluster:replicache-demo-notes";
 const secretArn =
@@ -89,12 +92,39 @@ export async function ensureDatabase() {
 
 async function createDatabase() {
   await executeStatementInDatabase(null, "CREATE DATABASE " + dbName);
-  await executeStatement(
-    "CREATE TABLE Client (Id VARCHAR(255) PRIMARY KEY NOT NULL, LastMutationID BIGINT NOT NULL)"
-  );
-  await executeStatement(
-    "CREATE TABLE Shape (Id VARCHAR(255) PRIMARY KEY NOT NULL, Content TEXT)"
-  );
+
+  await executeStatement(`CREATE TABLE Cookie (
+    Version BIGINT NOT NULL)`);
+  await executeStatement(`CREATE TABLE Client (
+    Id VARCHAR(255) PRIMARY KEY NOT NULL,
+    LastMutationID BIGINT NOT NULL)`);
+  await executeStatement(`CREATE TABLE Shape (
+    Id VARCHAR(255) PRIMARY KEY NOT NULL,
+    Content TEXT NOT NULL,
+    Version BIGINT NOT NULL)`);
+
+  await executeStatement(`INSERT INTO Cookie (Version) VALUES (0)`);
+
+  // To calculate which rows have changed for return in the pull endpoint, we
+  // use a very simply global version number. This is easy to understand but
+  // does serialize writes.
+  //
+  // There are many different strategies for calculating changed rows and the
+  // details are very dependent on what you are building. Contact us if you'd
+  // like help: https://replicache.dev/#contact.
+  await executeStatement(`CREATE PROCEDURE NextVersion (OUT result BIGINT)
+    BEGIN
+      UPDATE Cookie SET Version = Version + 1;
+      SELECT Version INTO result FROM Cookie;
+    END`);
+
+  await executeStatement(`CREATE PROCEDURE PutShape (IN pId VARCHAR(255), IN pContent TEXT)
+    BEGIN
+      SET @version = 0;
+      CALL NextVersion(@version);
+      INSERT INTO Shape (Id, Content, Version) VALUES (pId, pContent, @version) 
+        ON DUPLICATE KEY UPDATE Id = pId, Content = pContent, Version = @version;
+    END`);
 }
 
 async function executeStatement(
