@@ -43,7 +43,7 @@ export function Rect({
 function getStyle(blendMode: string, over: boolean): any {
   return {
     mixBlendMode: blendMode,
-    outlineColor: "#dedede",
+    outlineColor: "rgb(74,158,255)",
     outlineStyle: over ? "solid" : "none",
     outlineWidth: "2px",
   };
