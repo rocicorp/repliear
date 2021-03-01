@@ -62,7 +62,7 @@ export function Designer({ data }: { data: Data }) {
           onMouseUp,
         }}
       >
-        <svg width='100%' height='100%'>
+        <svg width="100%" height="100%">
           {ids.map((id) => (
             <Rect
               key={id}
@@ -85,12 +85,12 @@ const keyMap = {
 const styles = {
   container: {
     position: "relative",
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   } as CSSProperties,
   keyboardManager: {
     outline: "none",
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
 };

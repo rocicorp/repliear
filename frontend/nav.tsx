@@ -1,5 +1,5 @@
-import styles from './nav.module.css';
-import {Data} from './data';
+import styles from "./nav.module.css";
+import { Data } from "./data";
 import { newID } from "../shared/id";
 
 const colors = ["red", "blue", "white", "green", "yellow"];
@@ -7,9 +7,9 @@ const colors = ["red", "blue", "white", "green", "yellow"];
 function randInt(min: number, max: number): number {
   const range = max - min;
   return Math.round(Math.random() * range);
-};
+}
 
-export function Nav({data}: {data: Data|null}) {
+export function Nav({ data }: { data: Data | null }) {
   const onRectangle = async () => {
     if (!data) {
       return;
@@ -30,7 +30,7 @@ export function Nav({data}: {data: Data|null}) {
       },
     });
   };
-  
+
   return (
     <div className={styles.nav} style={{}}>
       <div className={styles.button} title="Move">
@@ -49,7 +49,11 @@ export function Nav({data}: {data: Data|null}) {
           ></path>
         </svg>
       </div>
-      <div onClick={() => onRectangle()} className={styles.button} title="Rectangle">
+      <div
+        onClick={() => onRectangle()}
+        className={styles.button}
+        title="Rectangle"
+      >
         <svg
           width="18"
           height="18"

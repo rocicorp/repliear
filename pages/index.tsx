@@ -22,7 +22,8 @@ export default function Home() {
         ? "https://serve.replicache.dev/pull"
         : "http://localhost:7001/pull",
       diffServerAuth: isProd ? "1000000" : "sandbox",
-      wasmModule: "/replicache/replicache.wasm",
+      // TODO: Shouldn't have to manually load wasm
+      wasmModule: isProd ? "/replicache.wasm" : "/replicache.dev.wasm",
       syncInterval: null,
       useMemstore: true,
     });
@@ -54,7 +55,7 @@ export default function Home() {
       }}
     >
       <Nav data={data} />
-      { data && <Designer {...{ data }} /> }
+      {data && <Designer {...{ data }} />}
     </div>
   );
 }
