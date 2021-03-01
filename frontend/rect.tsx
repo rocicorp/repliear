@@ -2,7 +2,7 @@ import React, { MouseEventHandler, useState } from "react";
 import { Shape } from "../shared/shape";
 import { Data } from "./data";
 
-export function Rect2({
+export function Rect({
   data,
   id,
   onMouseDown,

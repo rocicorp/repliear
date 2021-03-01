@@ -1,5 +1,5 @@
 import React, { CSSProperties, MouseEvent, useState } from "react";
-import { Rect2 } from "./rect";
+import { Rect } from "./rect";
 import { HotKeys } from "react-hotkeys";
 import { Data } from "./data";
 
@@ -64,7 +64,7 @@ export function Designer({ data }: { data: Data }) {
       >
         <svg width='100%' height='100%'>
           {ids.map((id) => (
-            <Rect2
+            <Rect
               key={id}
               {...{ data, id, onMouseDown: (e) => onMouseDown(e, id) }}
             />
