@@ -32,7 +32,7 @@ export default function Home() {
     });
     var channel = pusher.subscribe("default");
     channel.bind("poke", function (data: unknown) {
-      rep.sync();
+      rep.pull();
     });
 
     setData(new Data(rep));
