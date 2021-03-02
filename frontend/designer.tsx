@@ -89,15 +89,16 @@ export function Designer({ data }: { data: Data }) {
             // paint the highlighted object again in a special 'highlight'
             // mode.
             overID && (
-            <Rect
-              {...{
-                key: `highlight-${overID}`,
-                data,
-                id: overID,
-                highlight: true,
-              }}
-            />
-          )}
+              <Rect
+                {...{
+                  key: `highlight-${overID}`,
+                  data,
+                  id: overID,
+                  highlight: true,
+                }}
+              />
+            )
+          }
         </svg>
       </div>
     </HotKeys>

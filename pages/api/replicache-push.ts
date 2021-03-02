@@ -1,7 +1,6 @@
 import * as t from "io-ts";
 import { ExecuteStatementFn, transact } from "../../backend/rds";
 import {
-  MutatorStorage,
   createShape,
   createShapeArgs,
   moveShape,
@@ -11,13 +10,12 @@ import {
   overShapeArgs,
 } from "../../shared/mutators";
 import {
-  getClientState,
+  getObject,
+  putObject,
   getLastMutationID,
-  getShape,
-  putClientState,
-  putShape,
   setLastMutationID,
 } from "../../backend/data";
+import type Storage from "../../shared/storage";
 import { must } from "../../backend/decode";
 import Pusher from "pusher";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -49,16 +47,17 @@ type Mutation = t.TypeOf<typeof mutation>;
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const push = must(pushRequest.decode(req.body));
+  console.log("Processing push", push);
 
   for (let i = 0; i < push.mutations.length; i++) {
     await transact(async (executor) => {
-      console.log("Processing mutation", mutation);
-
       let lastMutationID = await getLastMutationID(executor, push.clientID);
-      console.log("lastMutationID:", lastMutationID);
+      console.log({ lastMutationID });
 
       // Scan forward from here collapsing any collapsable mutations.
       for (let mutation: Mutation; (mutation = push.mutations[i]); i++) {
+        console.log({ mutation });
+
         const expectedMutationID = lastMutationID + 1;
         if (mutation.id < expectedMutationID) {
           console.log(
@@ -83,17 +82,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           }
         }
 
-        const ms = mutatorStorage(executor);
+        const s = storage(executor);
 
         switch (mutation.name) {
           case "moveShape":
-            await moveShape(ms, mutation.args);
+            await moveShape(s, mutation.args);
             break;
           case "createShape":
-            await createShape(ms, must(createShapeArgs.decode(mutation.args)));
+            await createShape(s, mutation.args);
             break;
           case "overShape":
-            await overShape(ms, must(overShapeArgs.decode(mutation.args)));
+            await overShape(s, mutation.args);
             break;
         }
 
@@ -128,11 +127,9 @@ function collapse(prev: Mutation, next: Mutation): boolean {
   return false;
 }
 
-function mutatorStorage(executor: ExecuteStatementFn): MutatorStorage {
+function storage(executor: ExecuteStatementFn): Storage {
   return {
-    getShape: getShape.bind(null, executor),
-    putShape: putShape.bind(null, executor),
-    getClientState: getClientState.bind(null, executor),
-    putClientState: putClientState.bind(null, executor),
+    getObject: getObject.bind(null, executor),
+    putObject: putObject.bind(null, executor),
   };
 }

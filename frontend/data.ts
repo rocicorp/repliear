@@ -1,11 +1,7 @@
-import Replicache, {
-  JSONObject,
-  ReadTransaction,
-  WriteTransaction,
-} from "replicache";
+import Replicache, { ReadTransaction, WriteTransaction } from "replicache";
 import { useSubscribe } from "replicache-react-util";
-import { Shape } from "../shared/shape";
-import { ClientState } from "../shared/client-state";
+import { getShape, Shape } from "../shared/shape";
+import { getClientState } from "../shared/client-state";
 import {
   createShape,
   CreateShapeArgs,
@@ -14,9 +10,8 @@ import {
   overShape,
   OverShapeArgs,
 } from "../shared/mutators";
-import type { MutatorStorage } from "../shared/mutators";
+import type Storage from "../shared/storage";
 import { newID } from "../shared/id";
-import { Type } from "io-ts";
 
 /**
  * Abstracts Replicache storage (key/value pairs) to entities (Shape).
@@ -38,21 +33,21 @@ export class Data {
     this.createShape = rep.register(
       "createShape",
       async (tx: WriteTransaction, args: CreateShapeArgs) => {
-        await createShape(this.mutatorStorage(tx), args);
+        await createShape(this.writeStorage(tx), args);
       }
     );
 
     this.moveShape = rep.register(
       "moveShape",
       async (tx: WriteTransaction, args: MoveShapeArgs) => {
-        await moveShape(this.mutatorStorage(tx), args);
+        await moveShape(this.writeStorage(tx), args);
       }
     );
 
     this.overShape = rep.register(
       "overShape",
       async (tx: WriteTransaction, args: OverShapeArgs) => {
-        await overShape(this.mutatorStorage(tx), args);
+        await overShape(this.writeStorage(tx), args);
       }
     );
   }
@@ -77,7 +72,7 @@ export class Data {
     return useSubscribe(
       this.rep,
       (tx: ReadTransaction) => {
-        return this.getShape(tx, id);
+        return getShape(this.readStorage(tx), id);
       },
       null
     );
@@ -85,54 +80,22 @@ export class Data {
 
   useOverShapeID(): string | null {
     return useSubscribe(this.rep, async (tx: ReadTransaction) => {
-      return (await this.getClientState(tx, this.clientID)).overID;
+      return (await getClientState(this.readStorage(tx), this.clientID)).overID;
     });
   }
 
-  private async getShape(
-    tx: ReadTransaction,
-    id: string
-  ): Promise<Shape | null> {
-    // TODO: validate returned shape - can be wrong in case app reboots with
-    // new code and old storage. We can decode, but then what?
-    // See https://github.com/rocicorp/replicache-sdk-js/issues/285.
-    return ((await tx.get(`shape-${id}`)) as unknown) as Shape | null;
-  }
-
-  private async putShape(tx: WriteTransaction, id: string, shape: Shape) {
-    return await tx.put(`shape-${id}`, (shape as unknown) as JSONObject);
-  }
-
-  private async getClientState(
-    tx: ReadTransaction,
-    id: string
-  ): Promise<ClientState> {
-    return (
-      (((await tx.get(
-        `client-state-${id}`
-      )) as unknown) as ClientState | null) || {
-        overID: "",
-      }
-    );
-  }
-
-  private async putClientState(
-    tx: WriteTransaction,
-    id: string,
-    client: ClientState
-  ) {
-    return await tx.put(
-      `client-state-${id}`,
-      (client as unknown) as JSONObject
-    );
-  }
-
-  private mutatorStorage(tx: WriteTransaction): MutatorStorage {
+  private readStorage(tx: ReadTransaction): Storage {
     return {
-      getShape: this.getShape.bind(null, tx),
-      putShape: this.putShape.bind(null, tx),
-      getClientState: this.getClientState.bind(null, tx),
-      putClientState: this.putClientState.bind(null, tx),
+      getObject: tx.get.bind(tx),
+      putObject: () => {
+        throw new Error("Cannot write inside ReadTransaction");
+      },
     };
+  }
+
+  private writeStorage(tx: WriteTransaction): Storage {
+    return Object.assign(this.readStorage(tx), {
+      putObject: tx.put.bind(tx),
+    });
   }
 }

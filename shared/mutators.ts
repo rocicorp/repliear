@@ -7,26 +7,15 @@
  */
 
 import * as t from "io-ts";
-import { shape } from "./shape";
-import type { Shape } from "./shape";
-import { clientState } from "./client-state";
-import type { ClientState } from "./client-state";
-
-/**
- * Interface required of underlying storage.
- */
-export interface MutatorStorage {
-  getShape(id: string): Promise<Shape | null>;
-  putShape(id: string, shape: Shape): Promise<void>;
-  getClientState(id: string): Promise<ClientState>;
-  putClientState(id: string, client: ClientState): Promise<void>;
-}
+import { shape, getShape, putShape } from "./shape";
+import { getClientState, putClientState } from "./client-state";
+import Storage from "./storage";
 
 export async function createShape(
-  storage: MutatorStorage,
+  storage: Storage,
   args: CreateShapeArgs
 ): Promise<void> {
-  await storage.putShape(args.id, args.shape);
+  await putShape(storage, args.id, args.shape);
 }
 // TODO: Is there a way to make this a little less laborious?
 export const createShapeArgs = t.type({
@@ -36,17 +25,17 @@ export const createShapeArgs = t.type({
 export type CreateShapeArgs = t.TypeOf<typeof createShapeArgs>;
 
 export async function moveShape(
-  storage: MutatorStorage,
+  storage: Storage,
   args: MoveShapeArgs
 ): Promise<void> {
-  const shape = await storage.getShape(args.id);
+  const shape = await getShape(storage, args.id);
   if (!shape) {
     console.log(`Specified shape ${args.id} not found.`);
     return;
   }
   shape.x += args.dx;
   shape.y += args.dy;
-  await storage.putShape(args.id, shape);
+  await putShape(storage, args.id, shape);
 }
 export const moveShapeArgs = t.type({
   id: t.string,
@@ -56,12 +45,12 @@ export const moveShapeArgs = t.type({
 export type MoveShapeArgs = t.TypeOf<typeof moveShapeArgs>;
 
 export async function overShape(
-  storage: MutatorStorage,
+  storage: Storage,
   args: OverShapeArgs
 ): Promise<void> {
-  const client = await storage.getClientState(args.clientID);
+  const client = await getClientState(storage, args.clientID);
   client.overID = args.shapeID;
-  await storage.putClientState(args.clientID, client);
+  await putClientState(storage, args.clientID, client);
 }
 export const overShapeArgs = t.type({
   clientID: t.string,
