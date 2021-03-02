@@ -1,14 +1,5 @@
-/**
- * Abstract RDS (SQL) to entities (Shape, Client).
- */
-
-import { shape } from "../shared/shape";
-import { clientState } from "../shared/client-state";
-import { must } from "./decode";
-
 import type { ExecuteStatementFn } from "./rds";
-import type { Shape } from "../shared/shape";
-import type { ClientState } from "../shared/client-state";
+import { JSONValue } from "replicache";
 
 export async function getCookieVersion(
   executor: ExecuteStatementFn
@@ -49,60 +40,27 @@ export async function setLastMutationID(
   );
 }
 
-export async function getShape(
+export async function getObject<T extends JSONValue>(
   executor: ExecuteStatementFn,
-  id: string
-): Promise<Shape | null> {
-  const { records } = await executor(
-    "SELECT Content FROM Shape WHERE Id = :id",
-    {
-      id: { stringValue: id },
-    }
-  );
-  const content = records?.[0]?.[0]?.stringValue;
-  if (!content) {
+  key: string
+): Promise<T | null> {
+  const { records } = await executor("SELECT V FROM Object WHERE K = :key", {
+    key: { stringValue: key },
+  });
+  const value = records?.[0]?.[0]?.stringValue;
+  if (!value) {
     return null;
   }
-  return must(shape.decode(JSON.parse(content)));
+  return JSON.parse(value);
 }
 
-export async function putShape(
+export async function putObject<T extends JSONValue>(
   executor: ExecuteStatementFn,
-  id: string,
-  shape: Shape
+  key: string,
+  value: JSONValue
 ): Promise<void> {
-  await executor(`CALL PutShape(:id, :content)`, {
-    id: { stringValue: id },
-    content: { stringValue: JSON.stringify(shape) },
-  });
-}
-
-export async function getClientState(
-  executor: ExecuteStatementFn,
-  id: string
-): Promise<ClientState> {
-  const { records } = await executor(
-    "SELECT Content FROM ClientState WHERE Id = :id",
-    {
-      id: { stringValue: id },
-    }
-  );
-  const content = records?.[0]?.[0]?.stringValue;
-  if (!content) {
-    return {
-      overID: "",
-    };
-  }
-  return must(clientState.decode(JSON.parse(content)));
-}
-
-export async function putClientState(
-  executor: ExecuteStatementFn,
-  id: string,
-  clientState: ClientState
-): Promise<void> {
-  await executor(`CALL PutClientState(:id, :content)`, {
-    id: { stringValue: id },
-    content: { stringValue: JSON.stringify(clientState) },
+  await executor(`CALL PutObject(:key, :value)`, {
+    key: { stringValue: key },
+    value: { stringValue: JSON.stringify(value) },
   });
 }

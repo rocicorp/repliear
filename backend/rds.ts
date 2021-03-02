@@ -9,7 +9,6 @@ import {
   RDSDataClient,
   RollbackTransactionCommand,
 } from "@aws-sdk/client-rds-data";
-import { execute } from "fp-ts/lib/State";
 
 const region = "us-west-2";
 const dbName =
@@ -100,16 +99,9 @@ async function createDatabase() {
     LastMutationID BIGINT NOT NULL,
     LastModified TIMESTAMP NOT NULL
       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`);
-  await executeStatement(`CREATE TABLE ClientState (
-    Id VARCHAR(255) PRIMARY KEY NOT NULL,
-    Content TEXT NOT NULL,
-    Version BIGINT NOT NULL)`);
-  // TODO: When https://github.com/rocicorp/replicache-sdk-js/issues/275 is
-  // fixed, can enable this.
-  //FOREIGN KEY (Id) REFERENCES Client (Id),
-  await executeStatement(`CREATE TABLE Shape (
-    Id VARCHAR(255) PRIMARY KEY NOT NULL,
-    Content TEXT NOT NULL,
+  await executeStatement(`CREATE TABLE Object (
+    K VARCHAR(255) PRIMARY KEY NOT NULL,
+    V TEXT NOT NULL,
     Version BIGINT NOT NULL)`);
 
   await executeStatement(`INSERT INTO Cookie (Version) VALUES (0)`);
@@ -127,20 +119,12 @@ async function createDatabase() {
       SELECT Version INTO result FROM Cookie;
     END`);
 
-  await executeStatement(`CREATE PROCEDURE PutShape (IN pId VARCHAR(255), IN pContent TEXT)
+  await executeStatement(`CREATE PROCEDURE PutObject (IN pK VARCHAR(255), IN pV TEXT)
     BEGIN
       SET @version = 0;
       CALL NextVersion(@version);
-      INSERT INTO Shape (Id, Content, Version) VALUES (pId, pContent, @version) 
-        ON DUPLICATE KEY UPDATE Id = pId, Content = pContent, Version = @version;
-    END`);
-
-  await executeStatement(`CREATE PROCEDURE PutClientState (IN pId VARCHAR(255), IN pContent TEXT)
-    BEGIN
-      SET @version = 0;
-      CALL NextVersion(@version);
-      INSERT INTO ClientState (Id, Content, Version) VALUES (pId, pContent, @version) 
-        ON DUPLICATE KEY UPDATE Id = pId, Content = pContent, Version = @version;
+      INSERT INTO Object (K, V, Version) VALUES (pK, pV, @version) 
+        ON DUPLICATE KEY UPDATE V = pV, Version = @version;
     END`);
 }
 
