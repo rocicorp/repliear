@@ -5,33 +5,35 @@ import { Data } from "./data";
 export function Rect({
   data,
   id,
+  highlight,
+  onMouseEnter,
+  onMouseLeave,
   onMouseDown,
 }: {
   data: Data;
   id: string;
-  onMouseDown: MouseEventHandler;
+  highlight?: boolean;
+  onMouseEnter?: MouseEventHandler;
+  onMouseLeave?: MouseEventHandler;
+  onMouseDown?: MouseEventHandler;
 }) {
-  const [over, setOver] = useState(false);
   const shape = data.useShapeByID(id);
   if (!shape) {
     return null;
   }
 
-  console.log("Rendering shape", shape);
-
-  const onMouseEnter = () => setOver(true);
-  const onMouseLeave = () => setOver(false);
+  console.log("Rendering rect", shape, highlight);
 
   return (
     <rect
       {...{
-        style: getStyle(shape.blendMode, over),
+        style: getStyle(shape.blendMode, Boolean(highlight)),
         transform: getTransformMatrix(shape),
         x: shape.x,
         y: shape.y,
         width: shape.width,
         height: shape.width,
-        fill: shape.fill,
+        fill: highlight ? "none" : shape.fill,
         onMouseDown,
         onMouseEnter,
         onMouseLeave,
@@ -40,11 +42,11 @@ export function Rect({
   );
 }
 
-function getStyle(blendMode: string, over: boolean): any {
+function getStyle(blendMode: string, highlight: boolean): any {
   return {
     mixBlendMode: blendMode,
     outlineColor: "rgb(74,158,255)",
-    outlineStyle: over ? "solid" : "none",
+    outlineStyle: highlight ? "solid" : "none",
     outlineWidth: "2px",
   };
 }

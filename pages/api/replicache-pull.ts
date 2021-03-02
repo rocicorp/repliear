@@ -12,12 +12,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   let cookie = pull.baseStateID == "" ? 0 : parseInt(pull.baseStateID);
 
   console.time(`Reading all Shapes...`);
-  let entries;
+  let shapes, clientStates;
   let lastMutationID = 0;
 
   await transact(async (executor) => {
-    [entries, lastMutationID, cookie] = await Promise.all([
+    [shapes, clientStates, lastMutationID, cookie] = await Promise.all([
       executor("SELECT * FROM Shape WHERE Version > :version", {
+        version: { longValue: cookie },
+      }),
+      executor("SELECT * FROM ClientState WHERE Version > :version", {
         version: { longValue: cookie },
       }),
       getLastMutationID(executor, pull.clientID),
@@ -29,7 +32,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   // Grump. Typescript seems to not understand that the argument to transact()
   // is guaranteed to have been called before transact() exits.
-  entries = (entries as any) as ExecuteStatementCommandOutput;
+  shapes = (shapes as any) as ExecuteStatementCommandOutput;
+  clientStates = (clientStates as any) as ExecuteStatementCommandOutput;
 
   const resp: PullResponse = {
     lastMutationID,
@@ -42,28 +46,31 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     },
   };
 
-  if (entries.records) {
-    for (let row of entries.records) {
-      const [
-        { stringValue: id },
-        { stringValue: content },
-        { booleanValue: deleted },
-      ] = row as [
-        Field.StringValueMember,
-        Field.StringValueMember,
-        Field.BooleanValueMember
-      ];
-      if (deleted) {
-        resp.patch.push({
-          op: "remove",
-          path: `/shape-${id}`,
-        });
-      } else {
-        resp.patch.push({
-          op: "replace",
-          path: `/shape-${id}`,
-          valueString: content,
-        });
+  for (let entries of [shapes, clientStates]) {
+    if (entries.records) {
+      for (let row of entries.records) {
+        const [
+          { stringValue: id },
+          { stringValue: content },
+          { booleanValue: deleted },
+        ] = row as [
+          Field.StringValueMember,
+          Field.StringValueMember,
+          Field.BooleanValueMember
+        ];
+        const prefix = entries == shapes ? "shape" : "client-state";
+        if (deleted) {
+          resp.patch.push({
+            op: "remove",
+            path: `/${prefix}-${id}`,
+          });
+        } else {
+          resp.patch.push({
+            op: "replace",
+            path: `/${prefix}-${id}`,
+            valueString: content,
+          });
+        }
       }
     }
   }
