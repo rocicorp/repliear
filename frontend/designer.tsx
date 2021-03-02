@@ -7,6 +7,7 @@ type LastDrag = { x: number; y: number };
 
 export function Designer({ data }: { data: Data }) {
   const ids = data.useShapeIDs();
+  console.log({ ids });
 
   // TODO: This should be stored in Replicache too, since we will be rendering
   // other users' selections.

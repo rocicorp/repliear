@@ -8,6 +8,17 @@ import { must } from "./decode";
 import type { ExecuteStatementFn } from "./rds";
 import type { Shape } from "../shared/shape";
 
+export async function getCookieVersion(
+  executor: ExecuteStatementFn
+): Promise<number> {
+  const result = await executor("SELECT Version FROM Cookie LIMIT 1");
+  const version = result.records?.[0]?.[0]?.longValue;
+  if (version === undefined) {
+    throw new Error("Could not get version field");
+  }
+  return version;
+}
+
 export async function getLastMutationID(
   executor: ExecuteStatementFn,
   clientID: string
@@ -58,12 +69,8 @@ export async function putShape(
   id: string,
   shape: Shape
 ): Promise<void> {
-  await executor(
-    "INSERT INTO Shape (Id, Content) VALUES (:id, :content) " +
-      "ON DUPLICATE KEY UPDATE Id = :id, Content = :content",
-    {
-      id: { stringValue: id },
-      content: { stringValue: JSON.stringify(shape) },
-    }
-  );
+  await executor(`CALL PutShape(:id, :content)`, {
+    id: { stringValue: id },
+    content: { stringValue: JSON.stringify(shape) },
+  });
 }

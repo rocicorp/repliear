@@ -45,8 +45,8 @@ export class Data {
     return useSubscribe(
       this.rep,
       async (tx: ReadTransaction) => {
-        const shapes = await tx.scanAll({ prefix: "/shape/" });
-        return shapes.map(([k, _]) => k.split("/")[2]);
+        const shapes = await tx.scanAll({ prefix: "shape-" });
+        return shapes.map(([k, _]) => k.split("-")[1]);
       },
       []
     );
@@ -66,11 +66,11 @@ export class Data {
     // TODO: validate returned shape - can be wrong in case app reboots with
     // new code and old storage. We can decode, but then what?
     // See https://github.com/rocicorp/replicache-sdk-js/issues/285.
-    return ((await tx.get(`/shape/${id}`)) as unknown) as Shape;
+    return ((await tx.get(`shape-${id}`)) as unknown) as Shape;
   }
 
   private async putShape(tx: WriteTransaction, id: string, shape: Shape) {
-    return await tx.put(`/shape/${id}`, (shape as unknown) as JSONObject);
+    return await tx.put(`shape-${id}`, (shape as unknown) as JSONObject);
   }
 
   private mutatorStorage(tx: WriteTransaction): MutatorStorage {
