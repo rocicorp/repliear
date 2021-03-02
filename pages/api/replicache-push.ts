@@ -55,7 +55,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       console.log({ lastMutationID });
 
       // Scan forward from here collapsing any collapsable mutations.
-      for (let mutation: Mutation; (mutation = push.mutations[i]); i++) {
+      for (; i < push.mutations.length; i++) {
+        let mutation = push.mutations[i];
         console.log({ mutation });
 
         const expectedMutationID = lastMutationID + 1;
@@ -119,7 +120,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
 // If prev and next are collapsible, collapse them by mutating next.
 function collapse(prev: Mutation, next: Mutation): boolean {
-  if (prev.name == "moveShape" && next.name == "moveShape") {
+  if (prev.name === "moveShape" && next.name === "moveShape") {
     next.args.dx += prev.args.dx;
     next.args.dy += prev.args.dy;
     return true;

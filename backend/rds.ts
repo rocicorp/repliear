@@ -80,7 +80,7 @@ export async function transact(body: TransactionBodyFn) {
 export async function ensureDatabase() {
   const result = await executeStatementInDatabase(null, "SHOW DATABASES");
   if (result.records) {
-    if (result.records.find((record) => record[0].stringValue == dbName)) {
+    if (result.records.find((record) => record[0].stringValue === dbName)) {
       // TODO: Maybe migrate version
       return;
     }
@@ -102,7 +102,10 @@ async function createDatabase() {
   await executeStatement(`CREATE TABLE Object (
     K VARCHAR(255) PRIMARY KEY NOT NULL,
     V TEXT NOT NULL,
-    Version BIGINT NOT NULL)`);
+    Version BIGINT NOT NULL,
+    LastModified TIMESTAMP NOT NULL
+      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (Version))`);
 
   await executeStatement(`INSERT INTO Cookie (Version) VALUES (0)`);
 
