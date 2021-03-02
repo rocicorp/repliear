@@ -9,7 +9,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log(`Processing pull`, req.body);
 
   const pull = must(pullRequest.decode(req.body));
-  let cookie = pull.baseStateID == "" ? 0 : parseInt(pull.baseStateID);
+  let cookie = pull.baseStateID === "" ? 0 : parseInt(pull.baseStateID);
 
   console.time(`Reading all objects...`);
   let entries;

@@ -80,7 +80,7 @@ export async function transact(body: TransactionBodyFn) {
 export async function ensureDatabase() {
   const result = await executeStatementInDatabase(null, "SHOW DATABASES");
   if (result.records) {
-    if (result.records.find((record) => record[0].stringValue == dbName)) {
+    if (result.records.find((record) => record[0].stringValue === dbName)) {
       // TODO: Maybe migrate version
       return;
     }

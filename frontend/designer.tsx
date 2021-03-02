@@ -23,7 +23,7 @@ export function Designer({ data }: { data: Data }) {
   };
 
   const onMouseMove = (e: MouseEvent) => {
-    if (lastDrag == null) {
+    if (lastDrag === null) {
       return;
     }
     // This is subtle, and worth drawing attention to:
