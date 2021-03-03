@@ -18,3 +18,20 @@
   background-color: rgb(75, 158, 244);
   opacity: 1;
 }
+
+.user {
+  color: white;
+  display: flex;
+  margin-left: auto;
+  margin-right: 12px;
+  margin-top: auto;
+  margin-bottom: auto;
+  padding: 0 10px;
+  height: 30px;
+  align-items: center;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  border-radius: 6px;
+  line-height: 1em;
+}

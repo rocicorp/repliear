@@ -1,15 +1,14 @@
 import styles from "./nav.module.css";
 import { Data } from "./data";
 import { newID } from "../shared/id";
+import { randInt } from "../shared/rand";
 
 const colors = ["red", "blue", "white", "green", "yellow"];
 
-function randInt(min: number, max: number): number {
-  const range = max - min;
-  return Math.round(Math.random() * range);
-}
-
 export function Nav({ data }: { data: Data | null }) {
+  const userInfo = data?.useUserInfo();
+  console.log({ userInfo });
+
   const onRectangle = async () => {
     if (!data) {
       return;
@@ -98,6 +97,16 @@ export function Nav({ data }: { data: Data | null }) {
           ></path>
         </svg>
       </div>
+      {userInfo && (
+        <div
+          className={styles.user}
+          style={{
+            backgroundColor: userInfo.color,
+          }}
+        >
+          {userInfo.avatar} {userInfo.name}
+        </div>
+      )}
     </div>
   );
 }

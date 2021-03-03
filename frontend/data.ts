@@ -1,8 +1,13 @@
 import Replicache, { ReadTransaction, WriteTransaction } from "replicache";
 import { useSubscribe } from "replicache-react-util";
 import { getShape, Shape, putShape, moveShape } from "../shared/shape";
-import { getClientState, overShape } from "../shared/client-state";
+import {
+  getClientState,
+  overShape,
+  initClientState,
+} from "../shared/client-state";
 import type Storage from "../shared/storage";
+import type { UserInfo } from "../shared/client-state";
 import { newID } from "../shared/id";
 
 /**
@@ -39,6 +44,16 @@ export function createData(rep: Replicache) {
       }
     ),
 
+    initClientState: rep.register(
+      "initClientState",
+      async (
+        tx: WriteTransaction,
+        args: { id: string; defaultUserInfo: UserInfo }
+      ) => {
+        await initClientState(writeStorage(tx), args);
+      }
+    ),
+
     overShape: rep.register(
       "overShape",
       async (
@@ -66,6 +81,16 @@ export function createData(rep: Replicache) {
         rep,
         (tx: ReadTransaction) => {
           return getShape(readStorage(tx), id);
+        },
+        null
+      );
+    },
+
+    useUserInfo(): UserInfo | null {
+      return useSubscribe(
+        rep,
+        async (tx: ReadTransaction) => {
+          return (await getClientState(readStorage(tx), clientID)).userInfo;
         },
         null
       );
