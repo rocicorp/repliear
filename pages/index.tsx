@@ -6,6 +6,7 @@ import { Nav } from "../frontend/nav";
 import Pusher from "pusher-js";
 
 import type { Data } from "../frontend/data";
+import { randUserInfo } from "../shared/client-state";
 
 export default function Home() {
   const [data, setData] = useState<Data | null>(null);
@@ -26,6 +27,13 @@ export default function Home() {
       useMemstore: true,
       pushDelay: 1,
     });
+
+    const defaultUserInfo = randUserInfo();
+    const d = createData(rep);
+    d.initClientState({
+      id: d.clientID,
+      defaultUserInfo,
+    });
     rep.sync();
 
     Pusher.logToConsole = true;
@@ -37,7 +45,7 @@ export default function Home() {
       rep.pull();
     });
 
-    setData(createData(rep));
+    setData(d);
   });
 
   return (

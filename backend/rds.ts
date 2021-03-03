@@ -90,17 +90,21 @@ export async function ensureDatabase() {
 }
 
 async function createDatabase() {
-  await executeStatementInDatabase(null, "CREATE DATABASE " + dbName);
+  await executeStatementInDatabase(
+    null,
+    `CREATE DATABASE ${dbName}
+    CHARACTER SET utf8mb4`
+  );
 
   await executeStatement(`CREATE TABLE Cookie (
     Version BIGINT NOT NULL)`);
   await executeStatement(`CREATE TABLE Client (
-    Id VARCHAR(255) PRIMARY KEY NOT NULL,
+    Id VARCHAR(100) PRIMARY KEY NOT NULL,
     LastMutationID BIGINT NOT NULL,
     LastModified TIMESTAMP NOT NULL
       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`);
   await executeStatement(`CREATE TABLE Object (
-    K VARCHAR(255) PRIMARY KEY NOT NULL,
+    K VARCHAR(100) PRIMARY KEY NOT NULL,
     V TEXT NOT NULL,
     Version BIGINT NOT NULL,
     LastModified TIMESTAMP NOT NULL
