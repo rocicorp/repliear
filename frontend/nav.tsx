@@ -6,7 +6,7 @@ import { randInt } from "../shared/rand";
 const colors = ["red", "blue", "white", "green", "yellow"];
 
 export function Nav({ data }: { data: Data | null }) {
-  const userInfo = data?.useUserInfo();
+  const userInfo = data?.useUserInfo(data?.clientID);
   console.log({ userInfo });
 
   const onRectangle = async () => {
