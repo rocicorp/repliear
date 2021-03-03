@@ -30,10 +30,23 @@ export async function getShape(
 
 export function putShape(
   storage: Storage,
-  id: string,
-  shape: Shape
+  { id, shape }: { id: string; shape: Shape }
 ): Promise<void> {
   return storage.putObject(key(id), shape);
+}
+
+export async function moveShape(
+  storage: Storage,
+  { id, dx, dy }: { id: string; dx: number; dy: number }
+): Promise<void> {
+  const shape = await getShape(storage, id);
+  if (!shape) {
+    console.log(`Specified shape ${id} not found.`);
+    return;
+  }
+  shape.x += dx;
+  shape.y += dy;
+  await putShape(storage, { id, shape });
 }
 
 function key(id: string): string {

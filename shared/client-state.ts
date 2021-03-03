@@ -26,6 +26,15 @@ export function putClientState(
   return storage.putObject(key(id), clientState);
 }
 
+export async function overShape(
+  storage: Storage,
+  { clientID, shapeID }: { clientID: string; shapeID: string }
+): Promise<void> {
+  const client = await getClientState(storage, clientID);
+  client.overID = shapeID;
+  await putClientState(storage, clientID, client);
+}
+
 function key(id: string): string {
   return `client-state-${id}`;
 }

@@ -1,14 +1,7 @@
 import * as t from "io-ts";
 import { ExecuteStatementFn, transact } from "../../backend/rds";
-import {
-  createShape,
-  createShapeArgs,
-  moveShape,
-  moveShapeArgs,
-  MoveShapeArgs,
-  overShape,
-  overShapeArgs,
-} from "../../shared/mutators";
+import { putShape, moveShape, shape } from "../../shared/shape";
+import { overShape } from "../../shared/client-state";
 import {
   getObject,
   putObject,
@@ -24,17 +17,27 @@ const mutation = t.union([
   t.type({
     id: t.number,
     name: t.literal("createShape"),
-    args: createShapeArgs,
+    args: t.type({
+      id: t.string,
+      shape,
+    }),
   }),
   t.type({
     id: t.number,
     name: t.literal("moveShape"),
-    args: moveShapeArgs,
+    args: t.type({
+      id: t.string,
+      dx: t.number,
+      dy: t.number,
+    }),
   }),
   t.type({
     id: t.number,
     name: t.literal("overShape"),
-    args: overShapeArgs,
+    args: t.type({
+      clientID: t.string,
+      shapeID: t.string,
+    }),
   }),
 ]);
 
@@ -90,7 +93,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             await moveShape(s, mutation.args);
             break;
           case "createShape":
-            await createShape(s, mutation.args);
+            await putShape(s, mutation.args);
             break;
           case "overShape":
             await overShape(s, mutation.args);

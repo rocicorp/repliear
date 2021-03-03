@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import Replicache from "replicache";
-import { Data } from "../frontend/data";
+import { createData } from "../frontend/data";
 import { Designer } from "../frontend/designer";
 import { Nav } from "../frontend/nav";
 import Pusher from "pusher-js";
+
+import type { Data } from "../frontend/data";
 
 export default function Home() {
   const [data, setData] = useState<Data | null>(null);
@@ -35,7 +37,7 @@ export default function Home() {
       rep.pull();
     });
 
-    setData(new Data(rep));
+    setData(createData(rep));
   });
 
   return (
