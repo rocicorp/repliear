@@ -4,6 +4,7 @@ import { putShape, moveShape, shape } from "../../shared/shape";
 import {
   initClientState,
   overShape,
+  setCursor,
   userInfo,
 } from "../../shared/client-state";
 import {
@@ -41,6 +42,15 @@ const mutation = t.union([
     args: t.type({
       id: t.string,
       defaultUserInfo: userInfo,
+    }),
+  }),
+  t.type({
+    id: t.number,
+    name: t.literal("setCursor"),
+    args: t.type({
+      id: t.string,
+      x: t.number,
+      y: t.number,
     }),
   }),
   t.type({
@@ -107,11 +117,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           case "createShape":
             await putShape(s, mutation.args);
             break;
-          case "overShape":
-            await overShape(s, mutation.args);
-            break;
           case "initClientState":
             await initClientState(s, mutation.args);
+            break;
+          case "setCursor":
+            await setCursor(s, mutation.args);
+            break;
+          case "overShape":
+            await overShape(s, mutation.args);
             break;
         }
 
@@ -141,6 +154,11 @@ function collapse(prev: Mutation, next: Mutation): boolean {
   if (prev.name === "moveShape" && next.name === "moveShape") {
     next.args.dx += prev.args.dx;
     next.args.dy += prev.args.dy;
+    return true;
+  }
+  if (prev.name == "setCursor" && next.name == "setCursor") {
+    next.args.x = prev.args.x;
+    next.args.y = prev.args.y;
     return true;
   }
   return false;

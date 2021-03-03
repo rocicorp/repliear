@@ -2,6 +2,7 @@ import React, { CSSProperties, MouseEvent, useState } from "react";
 import { Rect } from "./rect";
 import { HotKeys } from "react-hotkeys";
 import { Data } from "./data";
+import { Cursor } from "./cursor";
 
 type LastDrag = { x: number; y: number };
 
@@ -11,6 +12,9 @@ export function Designer({ data }: { data: Data }) {
 
   const overID = data.useOverShapeID();
   console.log({ overID });
+
+  const collaboratorIDs = data.useCollaboratorIDs(data.clientID);
+  console.log({ collaboratorIDs });
 
   // TODO: This should be stored in Replicache too, since we will be rendering
   // other users' selections.
@@ -23,6 +27,12 @@ export function Designer({ data }: { data: Data }) {
   };
 
   const onMouseMove = (e: MouseEvent) => {
+    data.setCursor({
+      id: data.clientID,
+      x: e.nativeEvent.offsetX,
+      y: e.nativeEvent.offsetY,
+    });
+
     if (lastDrag === null) {
       return;
     }
@@ -68,6 +78,7 @@ export function Designer({ data }: { data: Data }) {
       >
         <svg width="100%" height="100%">
           {ids.map((id) => (
+            // shapes
             <Rect
               {...{
                 key: id,
@@ -84,10 +95,7 @@ export function Designer({ data }: { data: Data }) {
           ))}
 
           {
-            // This looks a little odd at first, but we want the selection
-            // rectangle to be stacked above all objects on the page, so we
-            // paint the highlighted object again in a special 'highlight'
-            // mode.
+            // self highlight
             overID && (
               <Rect
                 {...{
@@ -100,6 +108,17 @@ export function Designer({ data }: { data: Data }) {
             )
           }
         </svg>
+
+        {collaboratorIDs.map((id) => (
+          // collaborator cursors
+          <Cursor
+            {...{
+              key: `key-${id}`,
+              data,
+              clientID: id,
+            }}
+          />
+        ))}
       </div>
     </HotKeys>
   );

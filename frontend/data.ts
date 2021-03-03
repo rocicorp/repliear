@@ -5,6 +5,8 @@ import {
   getClientState,
   overShape,
   initClientState,
+  setCursor,
+  keyPrefix as clientStatePrefix,
 } from "../shared/client-state";
 import type Storage from "../shared/storage";
 import type { UserInfo } from "../shared/client-state";
@@ -54,6 +56,16 @@ export function createData(rep: Replicache) {
       }
     ),
 
+    setCursor: rep.register(
+      "setCursor",
+      async (
+        tx: WriteTransaction,
+        args: { id: string; x: number; y: number }
+      ) => {
+        await setCursor(writeStorage(tx), args);
+      }
+    ),
+
     overShape: rep.register(
       "overShape",
       async (
@@ -86,7 +98,8 @@ export function createData(rep: Replicache) {
       );
     },
 
-    useUserInfo(): UserInfo | null {
+    useUserInfo(clientID: string): UserInfo | null {
+      console.log("useUserInfo", { clientID });
       return useSubscribe(
         rep,
         async (tx: ReadTransaction) => {
@@ -101,6 +114,32 @@ export function createData(rep: Replicache) {
         rep,
         async (tx: ReadTransaction) => {
           return (await getClientState(readStorage(tx), clientID)).overID;
+        },
+        null
+      );
+    },
+
+    useCollaboratorIDs(clientID: string): Array<string> {
+      return useSubscribe(
+        rep,
+        async (tx: ReadTransaction) => {
+          const r = [];
+          for await (let k of tx.scan({ prefix: clientStatePrefix }).keys()) {
+            if (!k.endsWith(clientID)) {
+              r.push(k.substr(clientStatePrefix.length));
+            }
+          }
+          return r;
+        },
+        []
+      );
+    },
+
+    useCursor(clientID: string): { x: number; y: number } | null {
+      return useSubscribe(
+        rep,
+        async (tx: ReadTransaction) => {
+          return (await getClientState(readStorage(tx), clientID)).cursor;
         },
         null
       );
