@@ -1,6 +1,7 @@
 .nav {
   display: flex;
   background: rgb(44, 44, 44);
+  flex: 0 0  auto;
 }
 
 .button {
@@ -27,7 +28,7 @@
   margin-top: auto;
   margin-bottom: auto;
   padding: 0 10px;
-  height: 30px;
+  height: 25px;
   align-items: center;
   font-family: "Inter", sans-serif;
   font-size: 13px;
