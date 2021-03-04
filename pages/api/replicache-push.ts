@@ -72,17 +72,18 @@ type Mutation = t.TypeOf<typeof mutation>;
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const push = must(pushRequest.decode(req.body));
-  console.log("Processing push", push);
+  console.log("Processing push", JSON.stringify(push, null, ''));
 
+  const t0 = Date.now();
   for (let i = 0; i < push.mutations.length; i++) {
     await transact(async (executor) => {
       let lastMutationID = await getLastMutationID(executor, push.clientID);
-      console.log({ lastMutationID });
+      console.log('lastMutationID:', lastMutationID);
 
       // Scan forward from here collapsing any collapsable mutations.
       for (; i < push.mutations.length; i++) {
         let mutation = push.mutations[i];
-        console.log({ mutation });
+        console.log('mutation:', JSON.stringify(mutation, null, ''));
 
         const expectedMutationID = lastMutationID + 1;
         if (mutation.id < expectedMutationID) {
@@ -99,16 +100,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
 
         const next = push.mutations[i + 1];
-        console.log("Considering for collapse", mutation, next);
+        console.log("Considering for collapse", JSON.stringify(mutation, null, ''), JSON.stringify(next, null, ''));
         if (next) {
           if (collapse(mutation, next)) {
             lastMutationID = mutation.id;
-            console.log("Collapsed into", next);
+            console.log("Collapsed into", JSON.stringify(next, null, ''));
             continue;
           }
         }
 
         const s = storage(executor);
+        const t1 = Date.now();
 
         switch (mutation.name) {
           case "moveShape":
@@ -129,11 +131,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
 
         await setLastMutationID(executor, push.clientID, expectedMutationID);
-
+        console.log('Processed mutation in', Date.now() - t1);
         break;
       }
     });
   }
+
+  console.log('Processed all mutations in', Date.now() - t0);
 
   const pusher = new Pusher({
     appId: "1157097",
@@ -142,9 +146,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     cluster: "us3",
     useTLS: true,
   });
-  console.time(`sending poke...`);
+
+  const t2 = Date.now();
   await pusher.trigger("default", "poke", {});
-  console.timeEnd(`sending poke...`);
+  console.log('Sent poke in', Date.now() - t2);
 
   res.status(200).json({});
 };
