@@ -17,6 +17,7 @@
 .userinfo {
   margin: 20px 16px;
   padding: 5px;
+  white-space: nowrap;
 }
 
 .avatar {

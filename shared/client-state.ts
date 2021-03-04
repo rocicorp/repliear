@@ -115,7 +115,7 @@ export function randUserInfo() {
   const [avatar, name] = avatars[randInt(0, avatars.length - 1)];
   return {
     avatar,
-    name: "Anonymous " + name,
+    name: name,
     color: colors[randInt(0, colors.length - 1)],
   };
 }
