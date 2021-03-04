@@ -34,7 +34,6 @@ export default function Home() {
       id: d.clientID,
       defaultUserInfo,
     });
-    rep.sync();
 
     Pusher.logToConsole = true;
     var pusher = new Pusher("d9088b47d2371d532c4c", {
