@@ -86,8 +86,8 @@ const pushRequest = t.type({
 type Mutation = t.TypeOf<typeof mutation>;
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
+  console.log("Processing push", JSON.stringify(req.body, null, ""));
   const push = must(pushRequest.decode(req.body));
-  console.log("Processing push", JSON.stringify(push, null, ""));
 
   const t0 = Date.now();
   await transact(async (executor) => {

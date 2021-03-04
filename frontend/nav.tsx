@@ -21,11 +21,8 @@ export function Nav({ data }: { data: Data | null }) {
         y: randInt(0, 400),
         width: randInt(100, 400),
         height: randInt(100, 400),
-        rotate: 0,
-        strokeWidth: randInt(1, 5),
-        fill: colors[randInt(0, colors.length)],
-        radius: 0,
-        blendMode: "normal",
+        rotate: randInt(0, 360),
+        fill: colors[randInt(0, colors.length - 1)],
       },
     });
   };
