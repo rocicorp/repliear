@@ -4,7 +4,13 @@ import Replicache, {
   WriteTransaction,
 } from "replicache";
 import { useSubscribe } from "replicache-react-util";
-import { getShape, Shape, putShape, moveShape } from "../shared/shape";
+import {
+  getShape,
+  Shape,
+  putShape,
+  moveShape,
+  deleteShape,
+} from "../shared/shape";
 import {
   getClientState,
   overShape,
@@ -45,6 +51,13 @@ export function createData(rep: Replicache) {
       "createShape",
       async (tx: WriteTransaction, args: { id: string; shape: Shape }) => {
         await putShape(writeStorage(tx), args);
+      }
+    ),
+
+    deleteShape: rep.register(
+      "deleteShape",
+      async (tx: WriteTransaction, id: string) => {
+        await deleteShape(writeStorage(tx), id);
       }
     ),
 
@@ -149,11 +162,15 @@ function readStorage(tx: ReadTransaction): Storage {
     putObject: () => {
       throw new Error("Cannot write inside ReadTransaction");
     },
+    delObject: () => {
+      throw new Error("Cannot delete inside ReadTransaction");
+    },
   };
 }
 
 function writeStorage(tx: WriteTransaction): Storage {
   return Object.assign(readStorage(tx), {
     putObject: tx.put.bind(tx),
+    delObject: tx.del.bind(tx),
   });
 }

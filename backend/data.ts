@@ -44,9 +44,12 @@ export async function getObject<T extends JSONValue>(
   executor: ExecuteStatementFn,
   key: string
 ): Promise<T | null> {
-  const { records } = await executor("SELECT V FROM Object WHERE K = :key", {
-    key: { stringValue: key },
-  });
+  const { records } = await executor(
+    "SELECT V FROM Object WHERE K = :key AND Deleted = False",
+    {
+      key: { stringValue: key },
+    }
+  );
   const value = records?.[0]?.[0]?.stringValue;
   if (!value) {
     return null;
@@ -59,8 +62,20 @@ export async function putObject<T extends JSONValue>(
   key: string,
   value: JSONValue
 ): Promise<void> {
-  await executor(`CALL PutObject(:key, :value)`, {
+  await executor(`CALL PutObject(:key, :value, :deleted)`, {
     key: { stringValue: key },
     value: { stringValue: JSON.stringify(value) },
+    deleted: { booleanValue: false },
+  });
+}
+
+export async function delObject<T extends JSONValue>(
+  executor: ExecuteStatementFn,
+  key: string
+): Promise<void> {
+  await executor(`CALL PutObject(:key, :value, :deleted)`, {
+    key: { stringValue: key },
+    value: { stringValue: "" },
+    deleted: { booleanValue: true },
   });
 }

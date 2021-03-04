@@ -35,6 +35,10 @@ export function putShape(
   return storage.putObject(key(id), shape);
 }
 
+export function deleteShape(storage: Storage, id: string): Promise<void> {
+  return storage.delObject(key(id));
+}
+
 export async function moveShape(
   storage: Storage,
   { id, dx, dy }: { id: string; dx: number; dy: number }

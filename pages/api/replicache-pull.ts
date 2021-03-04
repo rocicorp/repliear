@@ -17,7 +17,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   await transact(async (executor) => {
     [entries, lastMutationID, cookie] = await Promise.all([
-      executor("SELECT * FROM Object WHERE Version > :version", {
+      executor("SELECT K, V, Deleted FROM Object WHERE Version > :version", {
         version: { longValue: cookie },
       }),
       getLastMutationID(executor, pull.clientID),

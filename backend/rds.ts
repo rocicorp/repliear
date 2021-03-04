@@ -106,6 +106,7 @@ async function createDatabase() {
   await executeStatement(`CREATE TABLE Object (
     K VARCHAR(100) PRIMARY KEY NOT NULL,
     V TEXT NOT NULL,
+    Deleted BOOL NOT NULL DEFAULT False,
     Version BIGINT NOT NULL,
     LastModified TIMESTAMP NOT NULL
       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -126,12 +127,12 @@ async function createDatabase() {
       SELECT Version INTO result FROM Cookie;
     END`);
 
-  await executeStatement(`CREATE PROCEDURE PutObject (IN pK VARCHAR(255), IN pV TEXT)
+  await executeStatement(`CREATE PROCEDURE PutObject (IN pK VARCHAR(255), IN pV TEXT, IN pDeleted BOOL)
     BEGIN
       SET @version = 0;
       CALL NextVersion(@version);
-      INSERT INTO Object (K, V, Version) VALUES (pK, pV, @version) 
-        ON DUPLICATE KEY UPDATE V = pV, Version = @version;
+      INSERT INTO Object (K, V, Deleted, Version) VALUES (pK, pV, pDeleted, @version) 
+        ON DUPLICATE KEY UPDATE V = pV, Deleted = pDeleted, Version = @version;
     END`);
 }
 

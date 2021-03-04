@@ -6,4 +6,5 @@ import { JSONValue } from "replicache";
 export default interface Storage {
   getObject(key: string): Promise<JSONValue | undefined>;
   putObject(key: string, value: JSONValue): Promise<void>;
+  delObject(key: string): Promise<void>;
 }

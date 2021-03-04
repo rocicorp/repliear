@@ -57,6 +57,11 @@ export function Designer({ data }: { data: Data }) {
     moveRight: () => data.moveShape({ id: selectedID, dx: 20, dy: 0 }),
     moveUp: () => data.moveShape({ id: selectedID, dx: 0, dy: -20 }),
     moveDown: () => data.moveShape({ id: selectedID, dx: 0, dy: 20 }),
+    deleteShape: () => {
+      // Prevent navigating backward on some browsers.
+      event?.preventDefault();
+      data.deleteShape(selectedID);
+    },
   };
 
   return (
@@ -122,6 +127,7 @@ const keyMap = {
   moveRight: ["right", "shift+right"],
   moveUp: ["up", "shift+up"],
   moveDown: ["down", "shift+down"],
+  deleteShape: ["del", "backspace"],
 };
 
 const styles = {
