@@ -1,7 +1,7 @@
 .nav {
   display: flex;
   background: rgb(44, 44, 44);
-  flex: 0 0  auto;
+  flex: 0 0 auto;
 }
 
 .button {

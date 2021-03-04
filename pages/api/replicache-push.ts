@@ -4,6 +4,7 @@ import { putShape, moveShape, shape } from "../../shared/shape";
 import {
   initClientState,
   overShape,
+  selectShape,
   setCursor,
   userInfo,
 } from "../../shared/client-state";
@@ -13,7 +14,6 @@ import {
   getLastMutationID,
   setLastMutationID,
 } from "../../backend/data";
-import type Storage from "../../shared/storage";
 import { must } from "../../backend/decode";
 import Pusher from "pusher";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -57,6 +57,14 @@ const mutation = t.union([
   t.type({
     id: t.number,
     name: t.literal("overShape"),
+    args: t.type({
+      clientID: t.string,
+      shapeID: t.string,
+    }),
+  }),
+  t.type({
+    id: t.number,
+    name: t.literal("selectShape"),
     args: t.type({
       clientID: t.string,
       shapeID: t.string,
@@ -115,6 +123,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           break;
         case "overShape":
           await overShape(s, mutation.args);
+          break;
+        case "selectShape":
+          await selectShape(s, mutation.args);
           break;
       }
 

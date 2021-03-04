@@ -48,6 +48,7 @@ export const clientState = t.type({
     y: t.number,
   }),
   overID: t.string,
+  selectedID: t.string,
   userInfo: userInfo,
 });
 
@@ -69,6 +70,7 @@ export async function initClientState(
         y: 0,
       },
       overID: "",
+      selectedID: "",
       userInfo: defaultUserInfo,
     },
   });
@@ -108,6 +110,15 @@ export async function overShape(
 ): Promise<void> {
   const client = await getClientState(storage, clientID);
   client.overID = shapeID;
+  await putClientState(storage, { id: clientID, clientState: client });
+}
+
+export async function selectShape(
+  storage: Storage,
+  { clientID, shapeID }: { clientID: string; shapeID: string }
+): Promise<void> {
+  const client = await getClientState(storage, clientID);
+  client.selectedID = shapeID;
   await putClientState(storage, { id: clientID, clientState: client });
 }
 
