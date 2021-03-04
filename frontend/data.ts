@@ -1,4 +1,8 @@
-import Replicache, { ReadTransaction, WriteTransaction } from "replicache";
+import Replicache, {
+  JSONValue,
+  ReadTransaction,
+  WriteTransaction,
+} from "replicache";
 import { useSubscribe } from "replicache-react-util";
 import { getShape, Shape, putShape, moveShape } from "../shared/shape";
 import {
@@ -7,6 +11,7 @@ import {
   initClientState,
   setCursor,
   keyPrefix as clientStatePrefix,
+  selectShape,
 } from "../shared/client-state";
 import type Storage from "../shared/storage";
 import type { UserInfo } from "../shared/client-state";
@@ -23,6 +28,13 @@ export function createData(rep: Replicache) {
   let clientID = localStorage.clientID;
   if (!clientID) {
     clientID = localStorage.clientID = newID();
+  }
+
+  function subscribe<T extends JSONValue>(
+    def: T,
+    f: (tx: ReadTransaction) => Promise<T>
+  ): T {
+    return useSubscribe(rep, f, def);
   }
 
   return {
@@ -76,74 +88,58 @@ export function createData(rep: Replicache) {
       }
     ),
 
+    selectShape: rep.register(
+      "selectShape",
+      async (
+        tx: WriteTransaction,
+        args: { clientID: string; shapeID: string }
+      ) => {
+        await selectShape(writeStorage(tx), args);
+      }
+    ),
+
     // subscriptions
-    useShapeIDs(): Array<string> {
-      return useSubscribe(
-        rep,
-        async (tx: ReadTransaction) => {
-          const shapes = await tx.scanAll({ prefix: "shape-" });
-          return shapes.map(([k, _]) => k.split("-")[1]);
-        },
-        []
-      );
-    },
+    useShapeIDs: () =>
+      subscribe([], async (tx: ReadTransaction) => {
+        const shapes = await tx.scanAll({ prefix: "shape-" });
+        return shapes.map(([k, _]) => k.split("-")[1]);
+      }),
 
-    useShapeByID(id: string): Shape | null {
-      return useSubscribe(
-        rep,
-        (tx: ReadTransaction) => {
-          return getShape(readStorage(tx), id);
-        },
-        null
-      );
-    },
+    useShapeByID: (id: string) =>
+      subscribe(null, (tx: ReadTransaction) => {
+        return getShape(readStorage(tx), id);
+      }),
 
-    useUserInfo(clientID: string): UserInfo | null {
-      console.log("useUserInfo", { clientID });
-      return useSubscribe(
-        rep,
-        async (tx: ReadTransaction) => {
-          return (await getClientState(readStorage(tx), clientID)).userInfo;
-        },
-        null
-      );
-    },
+    useUserInfo: (clientID: string) =>
+      subscribe(null, async (tx: ReadTransaction) => {
+        return (await getClientState(readStorage(tx), clientID)).userInfo;
+      }),
 
-    useOverShapeID(): string | null {
-      return useSubscribe(
-        rep,
-        async (tx: ReadTransaction) => {
-          return (await getClientState(readStorage(tx), clientID)).overID;
-        },
-        null
-      );
-    },
+    useOverShapeID: () =>
+      subscribe("", async (tx: ReadTransaction) => {
+        return (await getClientState(readStorage(tx), clientID)).overID;
+      }),
 
-    useCollaboratorIDs(clientID: string): Array<string> {
-      return useSubscribe(
-        rep,
-        async (tx: ReadTransaction) => {
-          const r = [];
-          for await (let k of tx.scan({ prefix: clientStatePrefix }).keys()) {
-            if (!k.endsWith(clientID)) {
-              r.push(k.substr(clientStatePrefix.length));
-            }
+    useSelectedShapeID: () =>
+      subscribe("", async (tx: ReadTransaction) => {
+        return (await getClientState(readStorage(tx), clientID)).selectedID;
+      }),
+
+    useCollaboratorIDs: (clientID: string) =>
+      subscribe([], async (tx: ReadTransaction) => {
+        const r = [];
+        for await (let k of tx.scan({ prefix: clientStatePrefix }).keys()) {
+          if (!k.endsWith(clientID)) {
+            r.push(k.substr(clientStatePrefix.length));
           }
-          return r;
-        },
-        []
-      );
-    },
+        }
+        return r;
+      }),
 
-    useCursor(clientID: string): { x: number; y: number } | null {
-      return useSubscribe(
-        rep,
-        async (tx: ReadTransaction) => {
-          return (await getClientState(readStorage(tx), clientID)).cursor;
-        },
-        null
-      );
-    },
+    useCursor: (clientID: string) =>
+      subscribe(null, async (tx: ReadTransaction) => {
+        return (await getClientState(readStorage(tx), clientID)).cursor;
+      }),
   };
 }
 

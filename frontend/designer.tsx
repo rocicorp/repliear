@@ -8,21 +8,14 @@ type LastDrag = { x: number; y: number };
 
 export function Designer({ data }: { data: Data }) {
   const ids = data.useShapeIDs();
-  console.log({ ids });
-
   const overID = data.useOverShapeID();
-  console.log({ overID });
-
+  const selectedID = data.useSelectedShapeID();
   const collaboratorIDs = data.useCollaboratorIDs(data.clientID);
-  console.log({ collaboratorIDs });
 
-  // TODO: This should be stored in Replicache too, since we will be rendering
-  // other users' selections.
-  const [selectedID, setSelectedID] = useState("");
   const [lastDrag, setLastDrag] = useState<LastDrag | null>(null);
 
   const onMouseDown = (e: MouseEvent, id: string) => {
-    setSelectedID(id);
+    data.selectShape({ clientID: data.clientID, shapeID: id });
     updateLastDrag(e);
   };
 
