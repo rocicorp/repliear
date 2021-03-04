@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 import { ExecuteStatementFn, transact } from "../../backend/rds";
-import { putShape, moveShape, shape } from "../../shared/shape";
+import { putShape, moveShape, shape, deleteShape } from "../../shared/shape";
 import {
   initClientState,
   overShape,
@@ -11,6 +11,7 @@ import {
 import {
   getObject,
   putObject,
+  delObject,
   getLastMutationID,
   setLastMutationID,
 } from "../../backend/data";
@@ -27,6 +28,11 @@ const mutation = t.union([
       id: t.string,
       shape,
     }),
+  }),
+  t.type({
+    id: t.number,
+    name: t.literal("deleteShape"),
+    args: t.string,
   }),
   t.type({
     id: t.number,
@@ -109,11 +115,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       const t1 = Date.now();
       switch (mutation.name) {
-        case "moveShape":
-          await moveShape(s, mutation.args);
-          break;
         case "createShape":
           await putShape(s, mutation.args);
+          break;
+        case "deleteShape":
+          await deleteShape(s, mutation.args);
+          break;
+        case "moveShape":
+          await moveShape(s, mutation.args);
           break;
         case "initClientState":
           await initClientState(s, mutation.args);
@@ -159,7 +168,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 function storage(executor: ExecuteStatementFn) {
   // TODO: When we have the real mysql client, check whether it appears to do
   // this caching internally.
-  const cache: { [key: string]: { value: JSONValue; dirty: boolean } } = {};
+  const cache: {
+    [key: string]: { value: JSONValue | undefined; dirty: boolean };
+  } = {};
   return {
     getObject: async (key: string) => {
       const entry = cache[key];
@@ -173,11 +184,20 @@ function storage(executor: ExecuteStatementFn) {
     putObject: async (key: string, value: JSONValue) => {
       cache[key] = { value, dirty: true };
     },
+    delObject: async (key: string) => {
+      cache[key] = { value: undefined, dirty: true };
+    },
     flush: async () => {
       await Promise.all(
         Object.entries(cache)
           .filter(([, { dirty }]) => dirty)
-          .map(([k, { value }]) => putObject(executor, k, value))
+          .map(([k, { value }]) => {
+            if (value === undefined) {
+              return delObject(executor, k);
+            } else {
+              return putObject(executor, k, value);
+            }
+          })
       );
     },
   };
