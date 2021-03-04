@@ -19,7 +19,7 @@ import {
   keyPrefix as clientStatePrefix,
   selectShape,
 } from "../shared/client-state";
-import type Storage from "../shared/storage";
+import type { ReadStorage, WriteStorage } from "../shared/storage";
 import type { UserInfo } from "../shared/client-state";
 import { newID } from "../shared/id";
 
@@ -156,21 +156,15 @@ export function createData(rep: Replicache) {
   };
 }
 
-function readStorage(tx: ReadTransaction): Storage {
+function readStorage(tx: ReadTransaction): ReadStorage {
   return {
-    getObject: tx.get.bind(tx),
-    putObject: () => {
-      throw new Error("Cannot write inside ReadTransaction");
-    },
-    delObject: () => {
-      throw new Error("Cannot delete inside ReadTransaction");
-    },
+    getObject: (key: string) => tx.get(key),
   };
 }
 
-function writeStorage(tx: WriteTransaction): Storage {
+function writeStorage(tx: WriteTransaction): WriteStorage {
   return Object.assign(readStorage(tx), {
-    putObject: tx.put.bind(tx),
-    delObject: tx.del.bind(tx),
+    putObject: (key: string, value: JSONValue) => tx.put(key, value),
+    delObject: async (key: string) => void (await tx.del(key)),
   });
 }
