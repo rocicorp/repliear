@@ -3,16 +3,13 @@ import { must } from "../backend/decode";
 import Storage from "./storage";
 
 export const shape = t.type({
-  type: t.string,
+  type: t.literal("rect"),
   x: t.number,
   y: t.number,
   width: t.number,
   height: t.number,
   rotate: t.number,
-  strokeWidth: t.number,
   fill: t.string,
-  radius: t.number,
-  blendMode: t.string,
 });
 
 export type Shape = t.TypeOf<typeof shape>;

@@ -27,7 +27,6 @@ export function Rect({
   return (
     <rect
       {...{
-        style: getStyle(shape.blendMode, Boolean(highlight)),
         strokeWidth: highlight ? "2px" : "0",
         stroke: "rgb(74,158,255)",
         transform: getTransformMatrix(shape),
@@ -42,12 +41,6 @@ export function Rect({
       }}
     />
   );
-}
-
-function getStyle(blendMode: string, highlight: boolean): any {
-  return {
-    mixBlendMode: blendMode,
-  };
 }
 
 function getTransformMatrix(shape: Shape): any {
