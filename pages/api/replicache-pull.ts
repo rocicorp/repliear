@@ -6,7 +6,7 @@ import { getCookieVersion, getLastMutationID } from "../../backend/data";
 import { must } from "../../backend/decode";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-  console.log(`Processing pull`, JSON.stringify(req.body, null, ''));
+  console.log(`Processing pull`, JSON.stringify(req.body, null, ""));
 
   const pull = must(pullRequest.decode(req.body));
   let cookie = pull.baseStateID === "" ? 0 : parseInt(pull.baseStateID);
@@ -24,8 +24,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       getCookieVersion(executor),
     ]);
   });
-  console.log('lastMutationID: ', lastMutationID);
-  console.log('Read all objects in', Date.now() - t0);
+  console.log("lastMutationID: ", lastMutationID);
+  console.log("Read all objects in", Date.now() - t0);
 
   // Grump. Typescript seems to not understand that the argument to transact()
   // is guaranteed to have been called before transact() exits.
@@ -68,7 +68,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     }
   }
 
-  console.log(`Returning`, JSON.stringify(resp, null, ''));
+  console.log(`Returning`, JSON.stringify(resp, null, ""));
   res.json(resp);
   res.end();
 };
