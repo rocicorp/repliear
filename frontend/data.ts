@@ -1,8 +1,5 @@
-import Replicache, {
-  JSONValue,
-  ReadTransaction,
-  WriteTransaction,
-} from "replicache";
+import Replicache, { ReadTransaction, WriteTransaction } from "replicache";
+import type { JSONValue } from "replicache";
 import { useSubscribe } from "replicache-react-util";
 import {
   getShape,
