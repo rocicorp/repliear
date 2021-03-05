@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 import { must } from "../backend/decode";
-import Storage from "./storage";
+import { ReadStorage, WriteStorage } from "./storage";
 import { randInt } from "./rand";
 
 const colors = [
@@ -56,7 +56,7 @@ export type UserInfo = t.TypeOf<typeof userInfo>;
 export type ClientState = t.TypeOf<typeof clientState>;
 
 export async function initClientState(
-  storage: Storage,
+  storage: WriteStorage,
   { id, defaultUserInfo }: { id: string; defaultUserInfo: UserInfo }
 ): Promise<void> {
   if (await storage.getObject(key(id))) {
@@ -77,7 +77,7 @@ export async function initClientState(
 }
 
 export async function getClientState(
-  storage: Storage,
+  storage: ReadStorage,
   id: string
 ): Promise<ClientState> {
   const jv = await storage.getObject(key(id));
@@ -88,14 +88,14 @@ export async function getClientState(
 }
 
 export function putClientState(
-  storage: Storage,
+  storage: WriteStorage,
   { id, clientState }: { id: string; clientState: ClientState }
 ): Promise<void> {
   return storage.putObject(key(id), clientState);
 }
 
 export async function setCursor(
-  storage: Storage,
+  storage: WriteStorage,
   { id, x, y }: { id: string; x: number; y: number }
 ): Promise<void> {
   const clientState = await getClientState(storage, id);
@@ -105,7 +105,7 @@ export async function setCursor(
 }
 
 export async function overShape(
-  storage: Storage,
+  storage: WriteStorage,
   { clientID, shapeID }: { clientID: string; shapeID: string }
 ): Promise<void> {
   const client = await getClientState(storage, clientID);
@@ -114,7 +114,7 @@ export async function overShape(
 }
 
 export async function selectShape(
-  storage: Storage,
+  storage: WriteStorage,
   { clientID, shapeID }: { clientID: string; shapeID: string }
 ): Promise<void> {
   const client = await getClientState(storage, clientID);

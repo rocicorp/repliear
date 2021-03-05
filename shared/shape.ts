@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 import { must } from "../backend/decode";
-import Storage from "./storage";
+import { ReadStorage, WriteStorage } from "./storage";
 
 export const shape = t.type({
   type: t.literal("rect"),
@@ -15,7 +15,7 @@ export const shape = t.type({
 export type Shape = t.TypeOf<typeof shape>;
 
 export async function getShape(
-  storage: Storage,
+  storage: ReadStorage,
   id: string
 ): Promise<Shape | null> {
   const jv = await storage.getObject(key(id));
@@ -26,18 +26,18 @@ export async function getShape(
 }
 
 export function putShape(
-  storage: Storage,
+  storage: WriteStorage,
   { id, shape }: { id: string; shape: Shape }
 ): Promise<void> {
   return storage.putObject(key(id), shape);
 }
 
-export function deleteShape(storage: Storage, id: string): Promise<void> {
+export function deleteShape(storage: WriteStorage, id: string): Promise<void> {
   return storage.delObject(key(id));
 }
 
 export async function moveShape(
-  storage: Storage,
+  storage: WriteStorage,
   { id, dx, dy }: { id: string; dx: number; dy: number }
 ): Promise<void> {
   const shape = await getShape(storage, id);

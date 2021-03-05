@@ -23,10 +23,7 @@
 .user {
   color: white;
   display: flex;
-  margin-left: auto;
-  margin-right: 12px;
-  margin-top: auto;
-  margin-bottom: auto;
+  margin: auto 12px auto auto;
   padding: 0 10px;
   height: 25px;
   align-items: center;

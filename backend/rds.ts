@@ -103,6 +103,15 @@ async function createDatabase() {
     LastMutationID BIGINT NOT NULL,
     LastModified TIMESTAMP NOT NULL
       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`);
+
+  // For simplicity of demo purposes, and because we don't really need any
+  // advanced backend features, we model backend storage as a kv store. This
+  // allows us to share code more easily and reduces the amount of schema
+  // management goop.
+  //
+  // There's no particular reason that you couldn't use a fully-normalized
+  // relational model on the backend if you want (or need to for legacy)
+  // reasons. Just more work!
   await executeStatement(`CREATE TABLE Object (
     K VARCHAR(100) PRIMARY KEY NOT NULL,
     V TEXT NOT NULL,

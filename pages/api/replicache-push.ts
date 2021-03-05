@@ -89,6 +89,37 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log("Processing push", JSON.stringify(req.body, null, ""));
   const push = must(pushRequest.decode(req.body));
 
+  // Because we are implementing multiplayer, our pushes will tend to have
+  // *lots* of very fine-grained events. Think, for example, of mouse moves.
+  //
+  // I hear you saying, dear reader: "It's silly to send and process all these
+  // little teeny movemove events. Why not collapse consecutive runs of the
+  // same mutation type either on client before sending, or server before
+  // processing.
+  //
+  // We could do that, but there are cases that are more complicated. Consider
+  // drags for example: when a user drags an object, the mutations we get are
+  // like: moveCursor,moveShape,moveCursor,moveShape,etc.
+  //
+  // It's less clear how to collapse sequences like this. In the specific case
+  // of moveCursor/moveShape, you could come up with something that make sense,
+  // but generally Replicache mutations are arbitrary functions of the data
+  // at a moment in time. We can't re-order or collapse them and get a correct
+  // result without re-running them.
+  //
+  // Instead, we take a different tack:
+  // * We send all the mutations, faithfully, from the client (and rely on gzip
+  //   to compress it).
+  // * We open a single, exclusive transaction against MySQL to process all
+  //   mutations in a push.
+  // * We heavily cache (in memory) within that transaction so that we don't
+  //   have to go all the way back to MySQL for each tiny mutation.
+  // * We flush all the mutations to MySQL in parallel at the end.
+  //
+  // As a nice bonus this means that (a) we don't have to have any special-case
+  // collapse logic anywhere, and (b) we get a nice perf boost by parallelizing
+  // the flush at the end.
+
   const t0 = Date.now();
   await transact(async (executor) => {
     const s = storage(executor);
