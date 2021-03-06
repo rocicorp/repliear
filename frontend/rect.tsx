@@ -5,7 +5,8 @@ import { Data } from "./data";
 export function Rect({
   data,
   id,
-  highlight,
+  highlight = false,
+  highlightColor = "rgb(74,158,255)",
   onMouseEnter,
   onMouseLeave,
   onMouseDown,
@@ -13,6 +14,7 @@ export function Rect({
   data: Data;
   id: string;
   highlight?: boolean;
+  highlightColor?: string;
   onMouseEnter?: MouseEventHandler;
   onMouseLeave?: MouseEventHandler;
   onMouseDown?: MouseEventHandler;
@@ -22,13 +24,14 @@ export function Rect({
     return null;
   }
 
-  console.log("Rendering rect", shape, highlight);
-
   return (
     <rect
       {...{
+        style: {
+          pointerEvents: highlight ? "none" : "all",
+        },
         strokeWidth: highlight ? "2px" : "0",
-        stroke: "rgb(74,158,255)",
+        stroke: highlightColor,
         transform: getTransformMatrix(shape),
         x: shape.x,
         y: shape.y,

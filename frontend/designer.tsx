@@ -2,7 +2,8 @@ import React, { CSSProperties, MouseEvent, useState } from "react";
 import { Rect } from "./rect";
 import { HotKeys } from "react-hotkeys";
 import { Data } from "./data";
-import { Cursor } from "./cursor";
+import { Collaborator } from "./collaborator";
+import { Selection } from "./selection";
 
 export function Designer({ data }: { data: Data }) {
   const ids = data.useShapeIDs();
@@ -74,7 +75,7 @@ export function Designer({ data }: { data: Data }) {
             // shapes
             <Rect
               {...{
-                key: id,
+                key: `shape-${id}`,
                 data,
                 id,
                 onMouseEnter: () =>
@@ -83,12 +84,11 @@ export function Designer({ data }: { data: Data }) {
                   data.overShape({ clientID: data.clientID, shapeID: "" }),
                 onMouseDown: (e) => onMouseDown(e, id),
               }}
-              highlight={false}
             />
           ))}
 
           {
-            // self highlight
+            // self-highlight
             !isDragging && overID && (
               <Rect
                 {...{
@@ -100,18 +100,33 @@ export function Designer({ data }: { data: Data }) {
               />
             )
           }
-        </svg>
 
-        {collaboratorIDs.map((id) => (
-          // collaborator cursors
-          <Cursor
-            {...{
-              key: `key-${id}`,
-              data,
-              clientID: id,
-            }}
-          />
-        ))}
+          {
+            // self-selection
+            selectedID && (
+              <Selection
+                {...{
+                  key: `selection-${selectedID}`,
+                  data,
+                  shapeID: selectedID,
+                }}
+              />
+            )
+          }
+
+          {
+            // collaborators
+            collaboratorIDs.map((id) => (
+              <Collaborator
+                {...{
+                  key: `key-${id}`,
+                  data,
+                  clientID: id,
+                }}
+              />
+            ))
+          }
+        </svg>
       </div>
     </HotKeys>
   );

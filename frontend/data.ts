@@ -146,9 +146,9 @@ export function createData(rep: Replicache) {
         return r;
       }),
 
-    useCursor: (clientID: string) =>
+    useClientInfo: (clientID: string) =>
       subscribe(null, async (tx: ReadTransaction) => {
-        return (await getClientState(readStorage(tx), clientID)).cursor;
+        return await getClientState(readStorage(tx), clientID);
       }),
   };
 }
