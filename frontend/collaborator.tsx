@@ -20,41 +20,32 @@ export function Collaborator({
   data: Data;
   clientID: string;
 }) {
-  // The goal here is we want to hide the collaborator if they stop moving for
-  // 5s. However this is a little tricky since in order to detect movement we
-  // actually need to wait for the second change, since the first one is always
-  // going to look like a change, as we are comparing to nothing.
   const clientInfo = data.useClientInfo(clientID);
-  const [lastPosition, setLastPosition] = useState<Position | null>(null);
-  const [seenFirstChange, setSeenFirstChange] = useState(false);
+  const [lastPos, setLastPos] = useState<Position | null>(null);
   const [, setPoke] = useState({});
 
-  let cursor = null;
+  let curPos = null;
   let userInfo = null;
   if (clientInfo) {
-    cursor = clientInfo.cursor;
+    curPos = clientInfo.cursor;
     userInfo = clientInfo.userInfo;
   }
 
-  if (cursor) {
-    if (lastPosition == null) {
-      setLastPosition({ pos: cursor, ts: Date.now() });
-    } else if (
-      lastPosition.pos.x != cursor.x ||
-      lastPosition.pos.y != cursor.y
-    ) {
-      setLastPosition({ pos: cursor, ts: Date.now() });
-      setSeenFirstChange(true);
-    }
-  }
-
-  let visible = false;
-  let elapsed = null;
+  let elapsed = 0;
   let remaining = 0;
-  if (seenFirstChange && lastPosition) {
-    elapsed = Date.now() - lastPosition.ts;
-    remaining = hideCollaboratorDelay - elapsed;
-    visible = remaining > 0;
+  let visible = false;
+
+  if (curPos) {
+    if (!lastPos) {
+      setLastPos({ pos: curPos, ts: Date.now() });
+    } else {
+      elapsed = Date.now() - lastPos.ts;
+      remaining = hideCollaboratorDelay - elapsed;
+      visible = remaining > 0;
+      if (lastPos.pos.x != curPos.x || lastPos.pos.y != curPos.y) {
+        setLastPos({ pos: curPos, ts: Date.now() });
+      }
+    }
   }
 
   useEffect(() => {
@@ -68,7 +59,7 @@ export function Collaborator({
   console.log(
     `Cursor ${clientID} - elapsed ${elapsed}, remaining: ${remaining}, visible: ${visible}`
   );
-  if (!clientInfo || !cursor || !userInfo) {
+  if (!clientInfo || !curPos || !userInfo) {
     return null;
   }
 
@@ -87,8 +78,8 @@ export function Collaborator({
       )}
 
       <foreignObject
-        x={cursor.x}
-        y={cursor.y}
+        x={curPos.x}
+        y={curPos.y}
         overflow="auto"
         className={styles.cursor}
       >
