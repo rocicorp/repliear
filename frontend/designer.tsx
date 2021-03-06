@@ -4,19 +4,17 @@ import { HotKeys } from "react-hotkeys";
 import { Data } from "./data";
 import { Cursor } from "./cursor";
 
-type LastDrag = { x: number; y: number };
-
 export function Designer({ data }: { data: Data }) {
   const ids = data.useShapeIDs();
   const overID = data.useOverShapeID();
   const selectedID = data.useSelectedShapeID();
   const collaboratorIDs = data.useCollaboratorIDs(data.clientID);
 
-  const [lastDrag, setLastDrag] = useState<LastDrag | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const onMouseDown = (e: MouseEvent, id: string) => {
     data.selectShape({ clientID: data.clientID, shapeID: id });
-    updateLastDrag(e);
+    setIsDragging(true);
   };
 
   const onMouseMove = (e: MouseEvent) => {
@@ -26,9 +24,10 @@ export function Designer({ data }: { data: Data }) {
       y: e.nativeEvent.offsetY,
     });
 
-    if (lastDrag === null) {
+    if (!isDragging) {
       return;
     }
+
     // This is subtle, and worth drawing attention to:
     // In order to properly resolve conflicts, what we want to capture in
     // mutation arguments is the *intent* of the mutation, not the effect.
@@ -38,18 +37,14 @@ export function Designer({ data }: { data: Data }) {
     // then end up with a union of the two vectors, which is what we want!
     data.moveShape({
       id: selectedID,
-      dx: e.clientX - lastDrag.x,
-      dy: e.clientY - lastDrag.y,
+      dx: e.movementX,
+      dy: e.movementY,
     });
-    updateLastDrag(e);
+    setIsDragging(true);
   };
 
   const onMouseUp = (e: MouseEvent) => {
-    setLastDrag(null);
-  };
-
-  const updateLastDrag = (e: MouseEvent) => {
-    setLastDrag({ x: e.clientX, y: e.clientY });
+    setIsDragging(false);
   };
 
   const handlers = {
