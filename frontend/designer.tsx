@@ -89,7 +89,7 @@ export function Designer({ data }: { data: Data }) {
 
           {
             // self highlight
-            overID && (
+            !isDragging && overID && (
               <Rect
                 {...{
                   key: `highlight-${overID}`,
