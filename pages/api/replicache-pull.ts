@@ -9,7 +9,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log(`Processing pull`, JSON.stringify(req.body, null, ""));
 
   const pull = must(pullRequest.decode(req.body));
-  let cookie = pull.baseStateID === "" ? 0 : parseInt(pull.baseStateID);
+  let cookie = pull.cookie ?? 0;
 
   const t0 = Date.now();
   let entries;
@@ -33,7 +33,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const resp: PullResponse = {
     lastMutationID,
-    stateID: String(cookie),
+    cookie,
     patch: [],
     // TODO: Remove this as soon as Replicache stops requiring it.
     httpRequestInfo: {
@@ -55,14 +55,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       ];
       if (deleted) {
         resp.patch.push({
-          op: "remove",
-          path: `/${key}`,
+          op: "del",
+          key,
         });
       } else {
         resp.patch.push({
-          op: "replace",
-          path: `/${key}`,
-          valueString: content,
+          op: "put",
+          key,
+          value: JSON.parse(content),
         });
       }
     }
@@ -75,28 +75,22 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
 const pullRequest = t.type({
   clientID: t.string,
-  baseStateID: t.string,
+  cookie: t.union([t.number, t.null]),
 });
 
 const pullResponse = t.type({
-  stateID: t.string,
+  cookie: t.number,
   lastMutationID: t.number,
   patch: t.array(
     t.union([
       t.type({
-        op: t.literal("replace"),
-        path: t.string,
-        // TODO: This will change to be arbitrary JSON
-        valueString: t.string,
+        op: t.literal("put"),
+        key: t.string,
+        value: t.any,  // TODO: Define a JSON type?
       }),
       t.type({
-        op: t.literal("add"),
-        path: t.string,
-        valueString: t.string,
-      }),
-      t.type({
-        op: t.literal("remove"),
-        path: t.string,
+        op: t.literal("del"),
+        key: t.string,
       }),
     ])
   ),
