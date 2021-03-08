@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useState } from "react";
+import React, { MouseEventHandler, TouchEventHandler, useState } from "react";
 import { Shape } from "../shared/shape";
 import { Data } from "./data";
 
@@ -10,6 +10,7 @@ export function Rect({
   onMouseEnter,
   onMouseLeave,
   onMouseDown,
+  onTouchStart,
 }: {
   data: Data;
   id: string;
@@ -18,6 +19,7 @@ export function Rect({
   onMouseEnter?: MouseEventHandler;
   onMouseLeave?: MouseEventHandler;
   onMouseDown?: MouseEventHandler;
+  onTouchStart?: TouchEventHandler;
 }) {
   const shape = data.useShapeByID(id);
   if (!shape) {
@@ -39,6 +41,7 @@ export function Rect({
         height: shape.width,
         fill: highlight ? "none" : shape.fill,
         onMouseDown,
+        onTouchStart,
         onMouseEnter,
         onMouseLeave,
       }}
