@@ -22,6 +22,7 @@ export function Collaborator({
 }) {
   const clientInfo = data.useClientInfo(clientID);
   const [lastPos, setLastPos] = useState<Position | null>(null);
+  const [gotFirstChange, setGotFirstChange] = useState(false);
   const [, setPoke] = useState({});
 
   let curPos = null;
@@ -37,13 +38,18 @@ export function Collaborator({
 
   if (curPos) {
     if (!lastPos) {
+      console.log(`Cursor ${clientID} - got initial position`, curPos);
       setLastPos({ pos: curPos, ts: Date.now() });
     } else {
-      elapsed = Date.now() - lastPos.ts;
-      remaining = hideCollaboratorDelay - elapsed;
-      visible = remaining > 0;
       if (lastPos.pos.x != curPos.x || lastPos.pos.y != curPos.y) {
+        console.log(`Cursor ${clientID} - got change to`, curPos);
         setLastPos({ pos: curPos, ts: Date.now() });
+        setGotFirstChange(true);
+      }
+      if (gotFirstChange) {
+        elapsed = Date.now() - lastPos.ts;
+        remaining = hideCollaboratorDelay - elapsed;
+        visible = remaining > 0;
       }
     }
   }
