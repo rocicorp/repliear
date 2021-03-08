@@ -70,40 +70,42 @@ export function Collaborator({
   }
 
   return (
-    <svg className={styles.collaborator} style={{ opacity: visible ? 1 : 0 }}>
+    <div className={styles.collaborator} style={{ opacity: visible ? 1 : 0 }}>
       {clientInfo.selectedID && (
-        <Rect
-          {...{
-            data,
-            key: `selection-${clientInfo.selectedID}`,
-            id: clientInfo.selectedID,
-            highlight: true,
-            highlightColor: userInfo.color,
-          }}
-        />
+        <svg>
+          <Rect
+            {...{
+              data,
+              key: `selection-${clientInfo.selectedID}`,
+              id: clientInfo.selectedID,
+              highlight: true,
+              highlightColor: userInfo.color,
+            }}
+          />
+        </svg>
       )}
 
-      <foreignObject
-        x={curPos.x}
-        y={curPos.y}
-        overflow="auto"
+      <div
         className={styles.cursor}
+        style={{
+          left: curPos.x,
+          top: curPos.y,
+          overflow: "auto",
+        }}
       >
-        <div>
-          <div className={styles.pointer} style={{ color: userInfo.color }}>
-            ➤
-          </div>
-          <div
-            className={styles.userinfo}
-            style={{
-              backgroundColor: userInfo.color,
-              color: "white",
-            }}
-          >
-            {userInfo.avatar}&nbsp;{userInfo.name}
-          </div>
+        <div className={styles.pointer} style={{ color: userInfo.color }}>
+          ➤
         </div>
-      </foreignObject>
-    </svg>
+        <div
+          className={styles.userinfo}
+          style={{
+            backgroundColor: userInfo.color,
+            color: "white",
+          }}
+        >
+          {userInfo.avatar}&nbsp;{userInfo.name}
+        </div>
+      </div>
+    </div>
   );
 }
