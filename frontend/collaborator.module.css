@@ -1,17 +1,25 @@
 .collaborator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
   transition: opacity 100ms linear;
-  opacity: 0;
+  pointer-events: none;
+}
+
+.collaborator > svg {
+  width: 100%;
+  height: 100%;
 }
 
 .cursor {
+  position: absolute;
   font-family: "Inter", sans-serif;
   font-size: 11px;
   font-weight: 400;
   line-height: 1em;
-  pointer-events: none;
   cursor: pointer;
-  width: 100px;
-  height: 100px;
 }
 
 .pointer {

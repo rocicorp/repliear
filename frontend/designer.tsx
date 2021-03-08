@@ -113,20 +113,22 @@ export function Designer({ data }: { data: Data }) {
               />
             )
           }
-
-          {
-            // collaborators
-            collaboratorIDs.map((id) => (
-              <Collaborator
-                {...{
-                  key: `key-${id}`,
-                  data,
-                  clientID: id,
-                }}
-              />
-            ))
-          }
         </svg>
+        {
+          // collaborators
+          // foreignObject seems super buggy in Safari, so instead we do the
+          // text labels in an HTML context, then do collaborator selection
+          // rectangles as their own independent svg content. Le. Sigh.
+          collaboratorIDs.map((id) => (
+            <Collaborator
+              {...{
+                key: `key-${id}`,
+                data,
+                clientID: id,
+              }}
+            />
+          ))
+        }
       </div>
     </HotKeys>
   );
