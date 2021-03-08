@@ -1,4 +1,4 @@
-import React, { CSSProperties, MouseEvent, useState } from "react";
+import React, { TouchEvent, useRef, useState } from "react";
 import { Rect } from "./rect";
 import { HotKeys } from "react-hotkeys";
 import { Data } from "./data";
@@ -11,21 +11,29 @@ export function Designer({ data }: { data: Data }) {
   const selectedID = data.useSelectedShapeID();
   const collaboratorIDs = data.useCollaboratorIDs(data.clientID);
 
-  const [isDragging, setIsDragging] = useState(false);
+  const [lastDrag, setLastDrag] = useState<{
+    pageX: number;
+    pageY: number;
+  } | null>(null);
+  const nodeRef = useRef<HTMLDivElement | null>(null);
 
-  const onMouseDown = (e: MouseEvent, id: string) => {
+  const onMouseDown = (id: string, pageX: number, pageY: number) => {
     data.selectShape({ clientID: data.clientID, shapeID: id });
-    setIsDragging(true);
+    setLastDrag({ pageX, pageY });
   };
 
-  const onMouseMove = (e: MouseEvent) => {
+  const onMouseMove = (pageX: number, pageY: number) => {
+    if (!nodeRef.current) {
+      return;
+    }
+
     data.setCursor({
       id: data.clientID,
-      x: e.nativeEvent.offsetX,
-      y: e.nativeEvent.offsetY,
+      x: pageX,
+      y: pageY - nodeRef.current.offsetTop,
     });
 
-    if (!isDragging) {
+    if (!lastDrag) {
       return;
     }
 
@@ -38,14 +46,14 @@ export function Designer({ data }: { data: Data }) {
     // then end up with a union of the two vectors, which is what we want!
     data.moveShape({
       id: selectedID,
-      dx: e.movementX,
-      dy: e.movementY,
+      dx: pageX - lastDrag.pageX,
+      dy: pageY - lastDrag.pageY,
     });
-    setIsDragging(true);
+    setLastDrag({ pageX, pageY });
   };
 
-  const onMouseUp = (e: MouseEvent) => {
-    setIsDragging(false);
+  const onMouseUp = () => {
+    setLastDrag(null);
   };
 
   const handlers = {
@@ -61,16 +69,33 @@ export function Designer({ data }: { data: Data }) {
   };
 
   return (
-    <HotKeys {...{ keyMap, style: styles.keyboardManager, handlers }}>
+    <HotKeys
+      {...{
+        style: { outline: "none", display: "flex", flex: 1 },
+        keyMap,
+        handlers,
+      }}
+    >
       <div
         {...{
+          ref: nodeRef,
           className: "container",
-          style: styles.container,
-          onMouseMove,
+          style: { position: "relative", display: "flex", flex: 1 },
+          onMouseMove: (e) => onMouseMove(e.pageX, e.pageY),
+          onTouchMove: (e) => touchToMouse(e, onMouseMove),
           onMouseUp,
+          onTouchEnd: () => onMouseUp(),
         }}
       >
-        <svg width="100%" height="100%">
+        <svg
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: "100%",
+            height: "100%",
+          }}
+        >
           {ids.map((id) => (
             // shapes
             <Rect
@@ -82,14 +107,18 @@ export function Designer({ data }: { data: Data }) {
                   data.overShape({ clientID: data.clientID, shapeID: id }),
                 onMouseLeave: () =>
                   data.overShape({ clientID: data.clientID, shapeID: "" }),
-                onMouseDown: (e) => onMouseDown(e, id),
+                onMouseDown: (e) => onMouseDown(id, e.pageX, e.pageY),
+                onTouchStart: (e) =>
+                  touchToMouse(e, (pageX, pageY) =>
+                    onMouseDown(id, pageX, pageY)
+                  ),
               }}
             />
           ))}
 
           {
             // self-highlight
-            !isDragging && overID && (
+            !lastDrag && overID && (
               <Rect
                 {...{
                   key: `highlight-${overID}`,
@@ -142,15 +171,12 @@ const keyMap = {
   deleteShape: ["del", "backspace"],
 };
 
-const styles = {
-  container: {
-    position: "relative",
-    width: "100%",
-    height: "100%",
-  } as CSSProperties,
-  keyboardManager: {
-    outline: "none",
-    width: "100%",
-    height: "100%",
-  },
-};
+function touchToMouse(
+  e: TouchEvent,
+  handler: (pageX: number, pageY: number) => void
+) {
+  if (e.touches.length == 1) {
+    const t = e.touches[0];
+    handler(t.pageX, t.pageY);
+  }
+}
