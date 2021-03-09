@@ -80,7 +80,7 @@ export function Designer({ data }: { data: Data }) {
         {...{
           ref: nodeRef,
           className: "container",
-          style: { position: "relative", display: "flex", flex: 1 },
+          style: { position: "relative", display: "flex", flex: 1, overflow: "hidden" },
           onMouseMove: (e) => onMouseMove(e.pageX, e.pageY),
           onTouchMove: (e) => touchToMouse(e, onMouseMove),
           onMouseUp,
