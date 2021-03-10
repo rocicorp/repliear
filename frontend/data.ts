@@ -7,6 +7,7 @@ import {
   putShape,
   moveShape,
   resizeShape,
+  rotateShape,
   deleteShape,
 } from "../shared/shape";
 import {
@@ -73,6 +74,13 @@ export function createData(rep: Replicache) {
       "resizeShape",
       async (tx: WriteTransaction, args: { id: string; ds: number }) => {
         await resizeShape(writeStorage(tx), args);
+      }
+    ),
+
+    rotateShape: rep.register(
+      "rotateShape",
+      async (tx: WriteTransaction, args: { id: string; ddeg: number }) => {
+        await rotateShape(writeStorage(tx), args);
       }
     ),
 

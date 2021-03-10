@@ -101,6 +101,7 @@ export function Designer({ data }: { data: Data }) {
                 data,
                 id: selectedID,
                 highlight: true,
+                containerOffsetTop: ref.current && ref.current.offsetTop,
               }}
             />
           )

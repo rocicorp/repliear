@@ -4,6 +4,7 @@ import {
   putShape,
   moveShape,
   resizeShape,
+  rotateShape,
   shape,
   deleteShape,
 } from "../../shared/shape";
@@ -55,6 +56,14 @@ const mutation = t.union([
     args: t.type({
       id: t.string,
       ds: t.number,
+    }),
+  }),
+  t.type({
+    id: t.number,
+    name: t.literal("rotateShape"),
+    args: t.type({
+      id: t.string,
+      ddeg: t.number,
     }),
   }),
   t.type({
@@ -171,6 +180,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           break;
         case "resizeShape":
           await resizeShape(s, mutation.args);
+          break;
+        case "rotateShape":
+          await rotateShape(s, mutation.args);
           break;
         case "initClientState":
           await initClientState(s, mutation.args);
