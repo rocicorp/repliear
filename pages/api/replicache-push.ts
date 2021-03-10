@@ -1,6 +1,12 @@
 import * as t from "io-ts";
 import { ExecuteStatementFn, transact } from "../../backend/rds";
-import { putShape, moveShape, shape, deleteShape } from "../../shared/shape";
+import {
+  putShape,
+  moveShape,
+  resizeShape,
+  shape,
+  deleteShape,
+} from "../../shared/shape";
 import {
   initClientState,
   overShape,
@@ -41,6 +47,14 @@ const mutation = t.union([
       id: t.string,
       dx: t.number,
       dy: t.number,
+    }),
+  }),
+  t.type({
+    id: t.number,
+    name: t.literal("resizeShape"),
+    args: t.type({
+      id: t.string,
+      ds: t.number,
     }),
   }),
   t.type({
@@ -154,6 +168,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           break;
         case "moveShape":
           await moveShape(s, mutation.args);
+          break;
+        case "resizeShape":
+          await resizeShape(s, mutation.args);
           break;
         case "initClientState":
           await initClientState(s, mutation.args);

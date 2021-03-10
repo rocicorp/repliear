@@ -20,6 +20,7 @@ export async function getShape(
 ): Promise<Shape | null> {
   const jv = await storage.getObject(key(id));
   if (!jv) {
+    console.log(`Specified shape ${id} not found.`);
     return null;
   }
   return must(shape.decode(jv));
@@ -41,13 +42,28 @@ export async function moveShape(
   { id, dx, dy }: { id: string; dx: number; dy: number }
 ): Promise<void> {
   const shape = await getShape(storage, id);
-  if (!shape) {
-    console.log(`Specified shape ${id} not found.`);
-    return;
+  if (shape) {
+    shape.x += dx;
+    shape.y += dy;
+    await putShape(storage, { id, shape });
   }
-  shape.x += dx;
-  shape.y += dy;
-  await putShape(storage, { id, shape });
+}
+
+export async function resizeShape(
+  storage: WriteStorage,
+  { id, ds }: { id: string; ds: number }
+): Promise<void> {
+  const shape = await getShape(storage, id);
+  if (shape) {
+    const minSize = 10;
+    const dw = Math.max(minSize - shape.width, ds);
+    const dh = Math.max(minSize - shape.height, ds);
+    shape.width += dw;
+    shape.height += dh;
+    shape.x -= dw / 2;
+    shape.y -= dh / 2;
+    await putShape(storage, { id, shape });
+  }
 }
 
 function key(id: string): string {

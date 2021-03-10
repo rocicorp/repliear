@@ -5,6 +5,8 @@ import { Data } from "./data";
 import { Collaborator } from "./collaborator";
 import { RectController } from "./rect-controller";
 import { touchToMouse } from "./events";
+import { Selection } from "./selection";
+import { useDrag } from "./drag";
 
 export function Designer({ data }: { data: Data }) {
   const ids = data.useShapeIDs();
@@ -37,6 +39,11 @@ export function Designer({ data }: { data: Data }) {
     }
   };
 
+  const drag = useDrag({
+    onDragStart: () => setDragging(true),
+    onDragEnd: () => setDragging(false),
+  });
+
   return (
     <HotKeys
       {...{
@@ -57,6 +64,7 @@ export function Designer({ data }: { data: Data }) {
           },
           onMouseMove,
           onTouchMove: (e) => touchToMouse(e, onMouseMove),
+          ...drag,
         }}
       >
         {ids.map((id) => (
@@ -66,7 +74,6 @@ export function Designer({ data }: { data: Data }) {
               key: `shape-${id}`,
               data,
               id,
-              onDrag: setDragging,
             }}
           />
         ))}
@@ -88,7 +95,7 @@ export function Designer({ data }: { data: Data }) {
         {
           // self-selection
           selectedID && (
-            <Rect
+            <Selection
               {...{
                 key: `selection-${selectedID}`,
                 data,
