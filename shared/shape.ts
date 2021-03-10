@@ -66,6 +66,17 @@ export async function resizeShape(
   }
 }
 
+export async function rotateShape(
+  storage: WriteStorage,
+  { id, ddeg }: { id: string; ddeg: number }
+): Promise<void> {
+  const shape = await getShape(storage, id);
+  if (shape) {
+    shape.rotate += ddeg;
+    await putShape(storage, { id, shape });
+  }
+}
+
 function key(id: string): string {
   return `shape-${id}`;
 }
