@@ -1,5 +1,4 @@
-import React, { MouseEventHandler, TouchEventHandler, useState } from "react";
-import { Shape } from "../shared/shape";
+import React, { MouseEventHandler, TouchEventHandler } from "react";
 import { Data } from "./data";
 
 export function Rect({
@@ -7,53 +6,59 @@ export function Rect({
   id,
   highlight = false,
   highlightColor = "rgb(74,158,255)",
-  onMouseEnter,
-  onMouseLeave,
   onMouseDown,
   onTouchStart,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   data: Data;
   id: string;
   highlight?: boolean;
   highlightColor?: string;
-  onMouseEnter?: MouseEventHandler;
-  onMouseLeave?: MouseEventHandler;
   onMouseDown?: MouseEventHandler;
   onTouchStart?: TouchEventHandler;
+  onMouseEnter?: MouseEventHandler;
+  onMouseLeave?: MouseEventHandler;
 }) {
   const shape = data.useShapeByID(id);
   if (!shape) {
     return null;
   }
 
+  const enableEvents =
+    onMouseDown || onTouchStart || onMouseEnter || onMouseLeave;
+
   return (
-    <rect
+    <svg
       {...{
         style: {
-          pointerEvents: highlight ? "none" : "all",
+          position: "absolute",
+          left: -1,
+          top: -1,
+          transform:
+            `translate3d(${shape.x}px, ${shape.y}px, 0) ` +
+            `rotate(${shape.rotate}deg)`,
+          pointerEvents: enableEvents ? "all" : "none",
         },
-        strokeWidth: highlight ? "2px" : "0",
-        stroke: highlightColor,
-        transform: getTransformMatrix(shape),
-        x: shape.x,
-        y: shape.y,
-        width: shape.width,
-        height: shape.width,
-        fill: highlight ? "none" : shape.fill,
+        width: shape.width + 2,
+        height: shape.height + 2,
         onMouseDown,
         onTouchStart,
         onMouseEnter,
         onMouseLeave,
       }}
-    />
+    >
+      <rect
+        {...{
+          x: 1, // To make room for stroke
+          y: 1,
+          strokeWidth: highlight ? "2px" : "0",
+          stroke: highlightColor,
+          width: shape.width,
+          height: shape.height,
+          fill: highlight ? "none" : shape.fill,
+        }}
+      />
+    </svg>
   );
-}
-
-function getTransformMatrix(shape: Shape): any {
-  if (!shape.rotate) {
-    return null;
-  }
-  let centerX = shape.width / 2 + shape.x;
-  let centerY = shape.height / 2 + shape.y;
-  return `rotate(${shape.rotate} ${centerX} ${centerY})`;
 }

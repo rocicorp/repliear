@@ -1,9 +1,10 @@
-import React, { TouchEvent, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Rect } from "./rect";
 import { HotKeys } from "react-hotkeys";
 import { Data } from "./data";
 import { Collaborator } from "./collaborator";
-import { Selection } from "./selection";
+import { RectController } from "./rect-controller";
+import { touchToMouse } from "./events";
 
 export function Designer({ data }: { data: Data }) {
   const ids = data.useShapeIDs();
@@ -11,50 +12,8 @@ export function Designer({ data }: { data: Data }) {
   const selectedID = data.useSelectedShapeID();
   const collaboratorIDs = data.useCollaboratorIDs(data.clientID);
 
-  const [lastDrag, setLastDrag] = useState<{
-    pageX: number;
-    pageY: number;
-  } | null>(null);
-  const nodeRef = useRef<HTMLDivElement | null>(null);
-
-  const onMouseDown = (id: string, pageX: number, pageY: number) => {
-    data.selectShape({ clientID: data.clientID, shapeID: id });
-    setLastDrag({ pageX, pageY });
-  };
-
-  const onMouseMove = (pageX: number, pageY: number) => {
-    if (!nodeRef.current) {
-      return;
-    }
-
-    data.setCursor({
-      id: data.clientID,
-      x: pageX,
-      y: pageY - nodeRef.current.offsetTop,
-    });
-
-    if (!lastDrag) {
-      return;
-    }
-
-    // This is subtle, and worth drawing attention to:
-    // In order to properly resolve conflicts, what we want to capture in
-    // mutation arguments is the *intent* of the mutation, not the effect.
-    // In this case, the intent is the amount the mouse was moved by, locally.
-    // We will apply this movement to whatever the state happens to be when we
-    // replay. If somebody else was moving the object at the same moment, we'll
-    // then end up with a union of the two vectors, which is what we want!
-    data.moveShape({
-      id: selectedID,
-      dx: pageX - lastDrag.pageX,
-      dy: pageY - lastDrag.pageY,
-    });
-    setLastDrag({ pageX, pageY });
-  };
-
-  const onMouseUp = () => {
-    setLastDrag(null);
-  };
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   const handlers = {
     moveLeft: () => data.moveShape({ id: selectedID, dx: -20, dy: 0 }),
@@ -68,6 +27,16 @@ export function Designer({ data }: { data: Data }) {
     },
   };
 
+  const onMouseMove = ({ pageX, pageY }: { pageX: number; pageY: number }) => {
+    if (ref && ref.current) {
+      data.setCursor({
+        id: data.clientID,
+        x: pageX,
+        y: pageY - ref.current.offsetTop,
+      });
+    }
+  };
+
   return (
     <HotKeys
       {...{
@@ -78,71 +47,58 @@ export function Designer({ data }: { data: Data }) {
     >
       <div
         {...{
-          ref: nodeRef,
+          ref,
           className: "container",
-          style: { position: "relative", display: "flex", flex: 1, overflow: "hidden" },
-          onMouseMove: (e) => onMouseMove(e.pageX, e.pageY),
+          style: {
+            position: "relative",
+            display: "flex",
+            flex: 1,
+            overflow: "hidden",
+          },
+          onMouseMove,
           onTouchMove: (e) => touchToMouse(e, onMouseMove),
-          onMouseUp,
-          onTouchEnd: () => onMouseUp(),
         }}
       >
-        <svg
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          {ids.map((id) => (
-            // shapes
+        {ids.map((id) => (
+          // draggable rects
+          <RectController
+            {...{
+              key: `shape-${id}`,
+              data,
+              id,
+              onDrag: setDragging,
+            }}
+          />
+        ))}
+
+        {
+          // self-highlight
+          !dragging && overID && (
             <Rect
               {...{
-                key: `shape-${id}`,
+                key: `highlight-${overID}`,
                 data,
-                id,
-                onMouseEnter: () =>
-                  data.overShape({ clientID: data.clientID, shapeID: id }),
-                onMouseLeave: () =>
-                  data.overShape({ clientID: data.clientID, shapeID: "" }),
-                onMouseDown: (e) => onMouseDown(id, e.pageX, e.pageY),
-                onTouchStart: (e) =>
-                  touchToMouse(e, (pageX, pageY) =>
-                    onMouseDown(id, pageX, pageY)
-                  ),
+                id: overID,
+                highlight: true,
               }}
             />
-          ))}
+          )
+        }
 
-          {
-            // self-highlight
-            !lastDrag && overID && (
-              <Rect
-                {...{
-                  key: `highlight-${overID}`,
-                  data,
-                  id: overID,
-                  highlight: true,
-                }}
-              />
-            )
-          }
+        {
+          // self-selection
+          selectedID && (
+            <Rect
+              {...{
+                key: `selection-${selectedID}`,
+                data,
+                id: selectedID,
+                highlight: true,
+              }}
+            />
+          )
+        }
 
-          {
-            // self-selection
-            selectedID && (
-              <Selection
-                {...{
-                  key: `selection-${selectedID}`,
-                  data,
-                  shapeID: selectedID,
-                }}
-              />
-            )
-          }
-        </svg>
         {
           // collaborators
           // foreignObject seems super buggy in Safari, so instead we do the
@@ -170,13 +126,3 @@ const keyMap = {
   moveDown: ["down", "shift+down"],
   deleteShape: ["del", "backspace"],
 };
-
-function touchToMouse(
-  e: TouchEvent,
-  handler: (pageX: number, pageY: number) => void
-) {
-  if (e.touches.length == 1) {
-    const t = e.touches[0];
-    handler(t.pageX, t.pageY);
-  }
-}
