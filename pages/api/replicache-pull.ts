@@ -86,7 +86,7 @@ const pullResponse = t.type({
       t.type({
         op: t.literal("put"),
         key: t.string,
-        value: t.any,  // TODO: Define a JSON type?
+        value: t.any, // TODO: Define a JSON type?
       }),
       t.type({
         op: t.literal("del"),

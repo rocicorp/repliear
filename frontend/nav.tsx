@@ -13,14 +13,15 @@ export function Nav({ data }: { data: Data | null }) {
     if (!data) {
       return;
     }
+    const s = randInt(100, 400);
     await data.createShape({
       id: newID(),
       shape: {
         type: "rect",
         x: randInt(0, 400),
         y: randInt(0, 400),
-        width: randInt(100, 400),
-        height: randInt(100, 400),
+        width: s,
+        height: s,
         rotate: randInt(0, 359),
         fill: colors[randInt(0, colors.length - 1)],
       },

@@ -72,17 +72,15 @@ export function Collaborator({
   return (
     <div className={styles.collaborator} style={{ opacity: visible ? 1 : 0 }}>
       {clientInfo.selectedID && (
-        <svg>
-          <Rect
-            {...{
-              data,
-              key: `selection-${clientInfo.selectedID}`,
-              id: clientInfo.selectedID,
-              highlight: true,
-              highlightColor: userInfo.color,
-            }}
-          />
-        </svg>
+        <Rect
+          {...{
+            data,
+            key: `selection-${clientInfo.selectedID}`,
+            id: clientInfo.selectedID,
+            highlight: true,
+            highlightColor: userInfo.color,
+          }}
+        />
       )}
 
       <div
