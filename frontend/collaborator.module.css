@@ -24,7 +24,7 @@
 }
 
 .userinfo {
-  display: inline-block;
+  display: block;
   margin: 4px 16px;
   padding: 5px;
   white-space: nowrap;
