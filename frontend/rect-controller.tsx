@@ -1,23 +1,10 @@
-import { useEffect, useState } from "react";
 import { Data } from "./data";
-import { touchToMouse } from "./events";
 import { Rect } from "./rect";
+import { DragEvent, useDrag } from "./drag";
 
 // TODO: In the future I imagine this becoming ShapeController and
 // there also be a Shape that wraps Rect and also knows how to draw Circle, etc.
-export function RectController({
-  data,
-  id,
-  onDrag,
-}: {
-  data: Data;
-  id: string;
-  onDrag: (dragging: boolean) => void;
-}) {
-  const [lastDrag, setLastDrag] = useState<{
-    pageX: number;
-    pageY: number;
-  } | null>(null);
+export function RectController({ data, id }: { data: Data; id: string }) {
   const shape = data.useShapeByID(id);
 
   const onMouseEnter = () =>
@@ -25,18 +12,10 @@ export function RectController({
   const onMouseLeave = () =>
     data.overShape({ clientID: data.clientID, shapeID: "" });
 
-  const onMouseDown = ({ pageX, pageY }: { pageX: number; pageY: number }) => {
+  const onDragStart = () => {
     data.selectShape({ clientID: data.clientID, shapeID: id });
-    setLastDrag({ pageX, pageY });
-    onDrag && onDrag(true);
   };
-
-  const onTouchMove = (e: any) => touchToMouse(e, onMouseMove);
-  const onMouseMove = ({ pageX, pageY }: { pageX: number; pageY: number }) => {
-    if (!lastDrag) {
-      return;
-    }
-
+  const onDrag = (e: DragEvent) => {
     // This is subtle, and worth drawing attention to:
     // In order to properly resolve conflicts, what we want to capture in
     // mutation arguments is the *intent* of the mutation, not the effect.
@@ -46,36 +25,14 @@ export function RectController({
     // then end up with a union of the two vectors, which is what we want!
     data.moveShape({
       id,
-      dx: pageX - lastDrag.pageX,
-      dy: pageY - lastDrag.pageY,
+      dx: e.movementX,
+      dy: e.movementY,
     });
-    setLastDrag({ pageX, pageY });
   };
 
-  const onMouseUp = () => {
-    setLastDrag(null);
-    onDrag && onDrag(false);
-  };
-
-  const dragListeners = {
-    mousemove: (e: any) => onMouseMove(e),
-    touchmove: (e: any) => onTouchMove(e),
-    mouseup: onMouseUp,
-    touchend: onMouseUp,
-  };
-
-  useEffect(() => {
-    if (!lastDrag) {
-      return;
-    }
-    Object.entries(dragListeners).forEach(([key, val]) =>
-      window.addEventListener(key, val)
-    );
-    return () => {
-      Object.entries(dragListeners).forEach(([key, val]) =>
-        window.removeEventListener(key, val)
-      );
-    };
+  const drag = useDrag({
+    onDragStart,
+    onDrag,
   });
 
   if (!shape) {
@@ -88,10 +45,9 @@ export function RectController({
         data,
         id,
         highlight: false,
-        onMouseDown: (e: any) => onMouseDown(e),
-        onTouchStart: (e: any) => touchToMouse(e, onMouseDown),
         onMouseEnter,
         onMouseLeave,
+        ...drag,
       }}
     />
   );

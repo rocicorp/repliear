@@ -22,7 +22,7 @@ export function Nav({ data }: { data: Data | null }) {
         y: randInt(0, 400),
         width: s,
         height: s,
-        rotate: randInt(0, 359),
+        rotate: 0, // randInt(0, 359),
         fill: colors[randInt(0, colors.length - 1)],
       },
     });
