@@ -1,6 +1,6 @@
 import { Data } from "./data";
 import { Rect } from "./rect";
-import { DragEvent, useDrag } from "./drag";
+import { DraggableCore, DraggableEvent, DraggableData } from "react-draggable";
 
 // TODO: In the future I imagine this becoming ShapeController and
 // there also be a Shape that wraps Rect and also knows how to draw Circle, etc.
@@ -12,10 +12,10 @@ export function RectController({ data, id }: { data: Data; id: string }) {
   const onMouseLeave = () =>
     data.overShape({ clientID: data.clientID, shapeID: "" });
 
-  const onDragStart = () => {
+  const onDragStart = (e: DraggableEvent, d: DraggableData) => {
     data.selectShape({ clientID: data.clientID, shapeID: id });
   };
-  const onDrag = (e: DragEvent) => {
+  const onDrag = (e: DraggableEvent, d: DraggableData) => {
     // This is subtle, and worth drawing attention to:
     // In order to properly resolve conflicts, what we want to capture in
     // mutation arguments is the *intent* of the mutation, not the effect.
@@ -25,30 +25,28 @@ export function RectController({ data, id }: { data: Data; id: string }) {
     // then end up with a union of the two vectors, which is what we want!
     data.moveShape({
       id,
-      dx: e.movementX,
-      dy: e.movementY,
+      dx: d.deltaX,
+      dy: d.deltaY,
     });
   };
-
-  const drag = useDrag({
-    onDragStart,
-    onDrag,
-  });
 
   if (!shape) {
     return null;
   }
 
   return (
-    <Rect
-      {...{
-        data,
-        id,
-        highlight: false,
-        onMouseEnter,
-        onMouseLeave,
-        ...drag,
-      }}
-    />
+    <DraggableCore onStart={onDragStart} onDrag={onDrag}>
+      <div>
+        <Rect
+          {...{
+            data,
+            id,
+            highlight: false,
+            onMouseEnter,
+            onMouseLeave,
+          }}
+        />
+      </div>
+    </DraggableCore>
   );
 }
