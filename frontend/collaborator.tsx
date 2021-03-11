@@ -2,6 +2,7 @@ import { Data } from "./data";
 import styles from "./collaborator.module.css";
 import { useEffect, useState } from "react";
 import { Rect } from "./rect";
+import { useCursor } from "./smoothie";
 
 const hideCollaboratorDelay = 5000;
 
@@ -24,11 +25,12 @@ export function Collaborator({
   const [lastPos, setLastPos] = useState<Position | null>(null);
   const [gotFirstChange, setGotFirstChange] = useState(false);
   const [, setPoke] = useState({});
+  const cursor = useCursor(data.rep, clientID);
 
   let curPos = null;
   let userInfo = null;
   if (clientInfo) {
-    curPos = clientInfo.cursor;
+    curPos = cursor;
     userInfo = clientInfo.userInfo;
   }
 

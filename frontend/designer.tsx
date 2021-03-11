@@ -6,7 +6,7 @@ import { Collaborator } from "./collaborator";
 import { RectController } from "./rect-controller";
 import { touchToMouse } from "./events";
 import { Selection } from "./selection";
-import { useDrag } from "./drag";
+import { DraggableCore, DraggableEvent, DraggableData } from "react-draggable";
 
 export function Designer({ data }: { data: Data }) {
   const ids = data.useShapeIDs();
@@ -39,11 +39,6 @@ export function Designer({ data }: { data: Data }) {
     }
   };
 
-  const drag = useDrag({
-    onDragStart: () => setDragging(true),
-    onDragEnd: () => setDragging(false),
-  });
-
   return (
     <HotKeys
       {...{
@@ -52,77 +47,81 @@ export function Designer({ data }: { data: Data }) {
         handlers,
       }}
     >
-      <div
-        {...{
-          ref,
-          className: "container",
-          style: {
-            position: "relative",
-            display: "flex",
-            flex: 1,
-            overflow: "hidden",
-          },
-          onMouseMove,
-          onTouchMove: (e) => touchToMouse(e, onMouseMove),
-          ...drag,
-        }}
+      <DraggableCore
+        onStart={() => setDragging(true)}
+        onStop={() => setDragging(false)}
       >
-        {ids.map((id) => (
-          // draggable rects
-          <RectController
-            {...{
-              key: `shape-${id}`,
-              data,
-              id,
-            }}
-          />
-        ))}
-
-        {
-          // self-highlight
-          !dragging && overID && (
-            <Rect
+        <div
+          {...{
+            ref,
+            className: "container",
+            style: {
+              position: "relative",
+              display: "flex",
+              flex: 1,
+              overflow: "hidden",
+            },
+            onMouseMove,
+            onTouchMove: (e) => touchToMouse(e, onMouseMove),
+          }}
+        >
+          {ids.map((id) => (
+            // draggable rects
+            <RectController
               {...{
-                key: `highlight-${overID}`,
+                key: `shape-${id}`,
                 data,
-                id: overID,
-                highlight: true,
+                id,
               }}
             />
-          )
-        }
+          ))}
 
-        {
-          // self-selection
-          selectedID && (
-            <Selection
-              {...{
-                key: `selection-${selectedID}`,
-                data,
-                id: selectedID,
-                highlight: true,
-                containerOffsetTop: ref.current && ref.current.offsetTop,
-              }}
-            />
-          )
-        }
+          {
+            // self-highlight
+            !dragging && overID && (
+              <Rect
+                {...{
+                  key: `highlight-${overID}`,
+                  data,
+                  id: overID,
+                  highlight: true,
+                }}
+              />
+            )
+          }
 
-        {
-          // collaborators
-          // foreignObject seems super buggy in Safari, so instead we do the
-          // text labels in an HTML context, then do collaborator selection
-          // rectangles as their own independent svg content. Le. Sigh.
-          collaboratorIDs.map((id) => (
-            <Collaborator
-              {...{
-                key: `key-${id}`,
-                data,
-                clientID: id,
-              }}
-            />
-          ))
-        }
-      </div>
+          {
+            // self-selection
+            selectedID && (
+              <Selection
+                {...{
+                  key: `selection-${selectedID}`,
+                  data,
+                  id: selectedID,
+                  highlight: true,
+                  containerOffsetTop: ref.current && ref.current.offsetTop,
+                }}
+              />
+            )
+          }
+
+          {
+            // collaborators
+            // foreignObject seems super buggy in Safari, so instead we do the
+            // text labels in an HTML context, then do collaborator selection
+            // rectangles as their own independent svg content. Le. Sigh.
+            collaboratorIDs.map((id) => (
+              <Collaborator
+                {...{
+                  key: `key-${id}`,
+                  data,
+                  clientID: id,
+                }}
+              />
+            ))
+          }
+        </div>
+      </DraggableCore>
     </HotKeys>
   );
 }

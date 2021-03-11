@@ -45,6 +45,10 @@ export function createData(rep: Replicache) {
   return {
     clientID,
 
+    get rep(): Replicache {
+      return rep;
+    },
+
     // mutators
     createShape: rep.register(
       "createShape",
@@ -169,7 +173,7 @@ export function createData(rep: Replicache) {
   };
 }
 
-function readStorage(tx: ReadTransaction): ReadStorage {
+export function readStorage(tx: ReadTransaction): ReadStorage {
   return {
     getObject: (key: string) => tx.get(key),
   };
