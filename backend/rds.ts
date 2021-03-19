@@ -10,14 +10,14 @@ import {
   RollbackTransactionCommand,
 } from "@aws-sdk/client-rds-data";
 
-const region = "us-west-2";
-const dbName =
-  process.env.REPLIDRAW_DB_NAME || "replicache_sample_replidraw__dev";
-console.log({ dbName });
-const resourceArn =
-  "arn:aws:rds:us-west-2:712907626835:cluster:replicache-demo-notes";
-const secretArn =
-  "arn:aws:secretsmanager:us-west-2:712907626835:secret:rds-db-credentials/cluster-X5NALMLWZ34K55M5ZZVPN2IYOI/admin-65L3ia";
+const region = process.env.AMAZON_REGION || "us-west-2";
+const dbName = process.env.REPLIDRAW_DB_NAME || "replidraw";
+const resourceArn = process.env.REPLIDRAW_RESOURCE_ARN;
+const secretArn = process.env.REPLIDRAW_SECRET_ARN;
+
+if (!resourceArn || !secretArn) {
+  throw new Error("REPLIDRAW_RESOURCE_ARN and REPLIDRAW_SECRET_ARN environment variables are required");
+}
 
 const client = new RDSDataClient({
   region,
