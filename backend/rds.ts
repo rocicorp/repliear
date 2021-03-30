@@ -76,22 +76,9 @@ export async function transact(body: TransactionBodyFn) {
   );
 }
 
-/**
- * Creates our databse in RDS if necessary.
- */
-export async function ensureDatabase() {
-  const result = await executeStatementInDatabase(null, "SHOW DATABASES");
-  if (result.records) {
-    if (result.records.find((record) => record[0].stringValue === dbName)) {
-      // TODO: Maybe migrate version
-      return;
-    }
-  }
+export async function createDatabase() {
+  await executeStatementInDatabase(null, `DROP DATABASE IF EXISTS ${dbName}`);
 
-  await createDatabase();
-}
-
-async function createDatabase() {
   await executeStatementInDatabase(
     null,
     `CREATE DATABASE ${dbName}
