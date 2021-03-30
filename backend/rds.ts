@@ -16,7 +16,9 @@ const resourceArn = process.env.REPLIDRAW_RESOURCE_ARN;
 const secretArn = process.env.REPLIDRAW_SECRET_ARN;
 
 if (!resourceArn || !secretArn) {
-  throw new Error("REPLIDRAW_RESOURCE_ARN and REPLIDRAW_SECRET_ARN environment variables are required");
+  throw new Error(
+    "REPLIDRAW_RESOURCE_ARN and REPLIDRAW_SECRET_ARN environment variables are required"
+  );
 }
 
 const client = new RDSDataClient({

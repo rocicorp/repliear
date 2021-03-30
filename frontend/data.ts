@@ -1,4 +1,4 @@
-import Replicache, { ReadTransaction, WriteTransaction } from "replicache";
+import { Replicache, ReadTransaction, WriteTransaction } from "replicache";
 import type { JSONValue } from "replicache";
 import { useSubscribe } from "replicache-react-util";
 import {
@@ -20,20 +20,15 @@ import {
 } from "../shared/client-state";
 import type { ReadStorage, WriteStorage } from "../shared/storage";
 import type { UserInfo } from "../shared/client-state";
-import { newID } from "../shared/id";
 
 /**
  * Abstracts Replicache storage (key/value pairs) to entities (Shape).
  */
-export type Data = ReturnType<typeof createData>;
+export type Data = Await<ReturnType<typeof createData>>;
+type Await<T> = T extends PromiseLike<infer U> ? U : T;
 
-export function createData(rep: Replicache) {
-  // TODO: Use clientID from Replicache:
-  // https://github.com/rocicorp/replicache-sdk-js/issues/275
-  let clientID = localStorage.clientID;
-  if (!clientID) {
-    clientID = localStorage.clientID = newID();
-  }
+export async function createData(rep: Replicache) {
+  let clientID = await rep.clientID;
 
   function subscribe<T extends JSONValue>(
     def: T,

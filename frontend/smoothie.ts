@@ -1,7 +1,7 @@
 import hermite from "cubic-hermite";
 import deepEqual from "deep-equal";
 import { useEffect, useState } from "react";
-import Replicache, { ReadTransaction } from "replicache";
+import { Replicache, ReadTransaction } from "replicache";
 import { getClientState } from "../shared/client-state";
 import { getShape } from "../shared/shape";
 import { readStorage } from "./data";

@@ -29,7 +29,7 @@ export function Nav({ data }: { data: Data | null }) {
   };
 
   const soon = () => {
-    alert("Coming soon… 😔")
+    alert("Coming soon… 😔");
   };
 
   return (
