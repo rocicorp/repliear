@@ -28,16 +28,12 @@ export function Nav({ data }: { data: Data | null }) {
     });
   };
 
-  const soon = () => {
-    alert("Coming soon… 😔");
-  };
-
   return (
     <div className={styles.nav} style={{}}>
       <div
         onClick={() => onRectangle()}
         className={styles.button}
-        title="Rectangle"
+        title="Square"
       >
         <svg
           width="18"
@@ -52,30 +48,20 @@ export function Nav({ data }: { data: Data | null }) {
           ></path>
         </svg>
       </div>
-      <div onClick={() => soon()} className={styles.button} title="Ellipse">
+      <div
+        className={styles.button}
+        title="Clear All"
+        onClick={() => data?.deleteAllShapes()}
+      >
         <svg
           width="18"
           height="18"
-          viewBox="0 0 18 18"
+          viewBox="1 1 14 14"
           xmlns="http://www.w3.org/2000/svg"
+          transform="rotate(45 0 0)"
         >
           <path
-            d="M9 17c4.418 0 8-3.582 8-8 0-4.418-3.582-8-8-8-4.418 0-8 3.582-8 8 0 4.418 3.582 8 8 8zm0 1c4.97 0 9-4.03 9-9 0-4.97-4.03-9-9-9-4.97 0-9 4.03-9 9 0 4.97 4.03 9 9 9z"
-            fillRule="evenodd"
-            fillOpacity="1"
-            fill="white"
-          ></path>
-        </svg>
-      </div>
-      <div onClick={() => soon()} className={styles.button} title="Text">
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 18 18"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M2 5h1V2h5v14H5v1h7v-1H9V2h5v3h1V1H2v4z"
+            d="M15 8V7H9V1H8v6H2v1h6v6h1V8h6z"
             fillRule="nonzero"
             fillOpacity="1"
             fill="white"

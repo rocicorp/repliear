@@ -79,3 +79,9 @@ export async function delObject<T extends JSONValue>(
     deleted: { booleanValue: true },
   });
 }
+
+export async function delAllObjects<T extends JSONValue>(
+  executor: ExecuteStatementFn
+): Promise<void> {
+  await executor(`CALL DeleteAllObjects()`, {});
+}
