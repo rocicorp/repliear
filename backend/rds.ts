@@ -132,6 +132,13 @@ export async function createDatabase() {
       INSERT INTO Object (K, V, Deleted, Version) VALUES (pK, pV, pDeleted, @version) 
         ON DUPLICATE KEY UPDATE V = pV, Deleted = pDeleted, Version = @version;
     END`);
+
+  await executeStatement(`CREATE PROCEDURE DeleteAllObjects ()
+    BEGIN
+      SET @version = 0;
+      CALL NextVersion(@version);
+      UPDATE Object SET Deleted = True, Version = @version WHERE K LIKE 'shape-%';
+    END`);
 }
 
 async function executeStatement(

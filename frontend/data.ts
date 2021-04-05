@@ -123,6 +123,15 @@ export async function createData(rep: Replicache) {
       }
     ),
 
+    deleteAllShapes: rep.register(
+      "deleteAllShapes",
+      async (tx: WriteTransaction) => {
+        await Promise.all(
+          (await tx.scanAll({ prefix: `shape-` })).map(([k]) => tx.del(k))
+        );
+      }
+    ),
+
     // subscriptions
     useShapeIDs: () =>
       subscribe([], async (tx: ReadTransaction) => {

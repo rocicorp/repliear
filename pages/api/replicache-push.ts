@@ -19,6 +19,7 @@ import {
   getObject,
   putObject,
   delObject,
+  delAllObjects,
   getLastMutationID,
   setLastMutationID,
 } from "../../backend/data";
@@ -98,6 +99,10 @@ const mutation = t.union([
       clientID: t.string,
       shapeID: t.string,
     }),
+  }),
+  t.type({
+    id: t.number,
+    name: t.literal("deleteAllShapes"),
   }),
 ]);
 
@@ -196,6 +201,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         case "selectShape":
           await selectShape(s, mutation.args);
           break;
+        case "deleteAllShapes":
+          await delAllObjects(executor);
       }
 
       lastMutationID = expectedMutationID;
