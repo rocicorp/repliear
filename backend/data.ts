@@ -2,9 +2,15 @@ import type { ExecuteStatementFn } from "./rds";
 import { JSONValue } from "replicache";
 
 export async function getCookieVersion(
-  executor: ExecuteStatementFn
+  executor: ExecuteStatementFn,
+  docID: string
 ): Promise<number> {
-  const result = await executor("SELECT Version FROM Cookie LIMIT 1");
+  const result = await executor(
+    "SELECT Version FROM Cookie WHERE DocumentID = :docID LIMIT 1",
+    {
+      docID: { stringValue: docID },
+    }
+  );
   const version = result.records?.[0]?.[0]?.longValue;
   if (version === undefined) {
     throw new Error("Could not get version field");
@@ -59,10 +65,12 @@ export async function getObject<T extends JSONValue>(
 
 export async function putObject<T extends JSONValue>(
   executor: ExecuteStatementFn,
+  docID: string,
   key: string,
   value: JSONValue
 ): Promise<void> {
-  await executor(`CALL PutObject(:key, :value, :deleted)`, {
+  await executor(`CALL PutObject(:docID, :key, :value, :deleted)`, {
+    docID: { stringValue: docID },
     key: { stringValue: key },
     value: { stringValue: JSON.stringify(value) },
     deleted: { booleanValue: false },
@@ -71,9 +79,11 @@ export async function putObject<T extends JSONValue>(
 
 export async function delObject<T extends JSONValue>(
   executor: ExecuteStatementFn,
+  docID: string,
   key: string
 ): Promise<void> {
-  await executor(`CALL PutObject(:key, :value, :deleted)`, {
+  await executor(`CALL PutObject(:docID, :key, :value, :deleted)`, {
+    docID: { stringValue: docID },
     key: { stringValue: key },
     value: { stringValue: "" },
     deleted: { booleanValue: true },
@@ -81,7 +91,10 @@ export async function delObject<T extends JSONValue>(
 }
 
 export async function delAllObjects<T extends JSONValue>(
-  executor: ExecuteStatementFn
+  executor: ExecuteStatementFn,
+  docID: string
 ): Promise<void> {
-  await executor(`CALL DeleteAllObjects()`, {});
+  await executor(`CALL DeleteAllObjects(:docID)`, {
+    docID: { stringValue: docID },
+  });
 }

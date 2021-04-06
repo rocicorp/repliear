@@ -8,6 +8,7 @@ import { must } from "../../backend/decode";
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log(`Processing pull`, JSON.stringify(req.body, null, ""));
 
+  const docID = req.query["docID"].toString();
   const pull = must(pullRequest.decode(req.body));
   let cookie = pull.cookie ?? 0;
 
@@ -17,11 +18,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   await transact(async (executor) => {
     [entries, lastMutationID, cookie] = await Promise.all([
-      executor("SELECT K, V, Deleted FROM Object WHERE Version > :version", {
-        version: { longValue: cookie },
-      }),
+      executor(`SELECT K, V, Deleted FROM Object 
+        WHERE DocumentID = :docID AND Version > :version`,
+        {
+          docID: { stringValue: docID },
+          version: { longValue: cookie },
+        }
+      ),
       getLastMutationID(executor, pull.clientID),
-      getCookieVersion(executor),
+      getCookieVersion(executor, docID),
     ]);
   });
   console.log("lastMutationID: ", lastMutationID);
