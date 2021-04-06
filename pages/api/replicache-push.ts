@@ -115,6 +115,8 @@ type Mutation = t.TypeOf<typeof mutation>;
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log("Processing push", JSON.stringify(req.body, null, ""));
+
+  const docID = req.query["docID"].toString();
   const push = must(pushRequest.decode(req.body));
 
   // Because we are implementing multiplayer, our pushes will tend to have
@@ -150,7 +152,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const t0 = Date.now();
   await transact(async (executor) => {
-    const s = storage(executor);
+    const s = storage(executor, docID);
 
     let lastMutationID = await getLastMutationID(executor, push.clientID);
     console.log("lastMutationID:", lastMutationID);
@@ -202,7 +204,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           await selectShape(s, mutation.args);
           break;
         case "deleteAllShapes":
-          await delAllObjects(executor);
+          await delAllObjects(executor, docID);
       }
 
       lastMutationID = expectedMutationID;
@@ -232,7 +234,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   res.status(200).json({});
 };
 
-function storage(executor: ExecuteStatementFn) {
+function storage(executor: ExecuteStatementFn, docID: string) {
   // TODO: When we have the real mysql client, check whether it appears to do
   // this caching internally.
   const cache: {
@@ -260,9 +262,9 @@ function storage(executor: ExecuteStatementFn) {
           .filter(([, { dirty }]) => dirty)
           .map(([k, { value }]) => {
             if (value === undefined) {
-              return delObject(executor, k);
+              return delObject(executor, docID, k);
             } else {
-              return putObject(executor, k, value);
+              return putObject(executor, docID, k, value);
             }
           })
       );
