@@ -58,7 +58,7 @@ export function Nav({ data }: { data: Data | null }) {
           height="18"
           viewBox="1 1 14 14"
           xmlns="http://www.w3.org/2000/svg"
-          transform="rotate(45 0 0)"
+          style={{ transform: "rotate(45deg)" }}
         >
           <path
             d="M15 8V7H9V1H8v6H2v1h6v6h1V8h6z"
