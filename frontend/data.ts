@@ -27,7 +27,10 @@ import type { UserInfo } from "../shared/client-state";
 export type Data = Await<ReturnType<typeof createData>>;
 type Await<T> = T extends PromiseLike<infer U> ? U : T;
 
-export async function createData(rep: Replicache) {
+export async function createData(
+  rep: Replicache<typeof mutators>,
+  defaultUserInfo: UserInfo
+) {
   let clientID = await rep.clientID;
 
   function subscribe<T extends JSONValue>(
@@ -37,6 +40,11 @@ export async function createData(rep: Replicache) {
     return useSubscribe(rep, f, def);
   }
 
+  await rep.mutate.initClientState({
+    id: clientID,
+    defaultUserInfo,
+  });
+
   return {
     clientID,
 
@@ -44,99 +52,13 @@ export async function createData(rep: Replicache) {
       return rep;
     },
 
-    // mutators
-    createShape: rep.register(
-      "createShape",
-      async (tx: WriteTransaction, args: { id: string; shape: Shape }) => {
-        await putShape(writeStorage(tx), args);
-      }
-    ),
-
-    deleteShape: rep.register(
-      "deleteShape",
-      async (tx: WriteTransaction, id: string) => {
-        await deleteShape(writeStorage(tx), id);
-      }
-    ),
-
-    moveShape: rep.register(
-      "moveShape",
-      async (
-        tx: WriteTransaction,
-        args: { id: string; dx: number; dy: number }
-      ) => {
-        await moveShape(writeStorage(tx), args);
-      }
-    ),
-
-    resizeShape: rep.register(
-      "resizeShape",
-      async (tx: WriteTransaction, args: { id: string; ds: number }) => {
-        await resizeShape(writeStorage(tx), args);
-      }
-    ),
-
-    rotateShape: rep.register(
-      "rotateShape",
-      async (tx: WriteTransaction, args: { id: string; ddeg: number }) => {
-        await rotateShape(writeStorage(tx), args);
-      }
-    ),
-
-    initClientState: rep.register(
-      "initClientState",
-      async (
-        tx: WriteTransaction,
-        args: { id: string; defaultUserInfo: UserInfo }
-      ) => {
-        await initClientState(writeStorage(tx), args);
-      }
-    ),
-
-    setCursor: rep.register(
-      "setCursor",
-      async (
-        tx: WriteTransaction,
-        args: { id: string; x: number; y: number }
-      ) => {
-        await setCursor(writeStorage(tx), args);
-      }
-    ),
-
-    overShape: rep.register(
-      "overShape",
-      async (
-        tx: WriteTransaction,
-        args: { clientID: string; shapeID: string }
-      ) => {
-        await overShape(writeStorage(tx), args);
-      }
-    ),
-
-    selectShape: rep.register(
-      "selectShape",
-      async (
-        tx: WriteTransaction,
-        args: { clientID: string; shapeID: string }
-      ) => {
-        await selectShape(writeStorage(tx), args);
-      }
-    ),
-
-    deleteAllShapes: rep.register(
-      "deleteAllShapes",
-      async (tx: WriteTransaction) => {
-        await Promise.all(
-          (await tx.scanAll({ prefix: `shape-` })).map(([k]) => tx.del(k))
-        );
-      }
-    ),
+    ...rep.mutate,
 
     // subscriptions
     useShapeIDs: () =>
       subscribe([], async (tx: ReadTransaction) => {
-        const shapes = await tx.scanAll({ prefix: "shape-" });
-        return shapes.map(([k, _]) => k.split("-")[1]);
+        const shapes = await tx.scan({ prefix: "shape-" }).keys().toArray();
+        return shapes.map((k) => k.split("-", 2)[1]);
       }),
 
     useShapeByID: (id: string) =>
@@ -176,6 +98,67 @@ export async function createData(rep: Replicache) {
       }),
   };
 }
+
+export const mutators = {
+  async createShape(tx: WriteTransaction, args: { id: string; shape: Shape }) {
+    await putShape(writeStorage(tx), args);
+  },
+
+  async deleteShape(tx: WriteTransaction, id: string) {
+    await deleteShape(writeStorage(tx), id);
+  },
+
+  async moveShape(
+    tx: WriteTransaction,
+    args: { id: string; dx: number; dy: number }
+  ) {
+    await moveShape(writeStorage(tx), args);
+  },
+
+  async resizeShape(tx: WriteTransaction, args: { id: string; ds: number }) {
+    await resizeShape(writeStorage(tx), args);
+  },
+
+  async rotateShape(tx: WriteTransaction, args: { id: string; ddeg: number }) {
+    await rotateShape(writeStorage(tx), args);
+  },
+
+  async initClientState(
+    tx: WriteTransaction,
+    args: { id: string; defaultUserInfo: UserInfo }
+  ) {
+    await initClientState(writeStorage(tx), args);
+  },
+
+  async setCursor(
+    tx: WriteTransaction,
+    args: { id: string; x: number; y: number }
+  ) {
+    await setCursor(writeStorage(tx), args);
+  },
+
+  async overShape(
+    tx: WriteTransaction,
+    args: { clientID: string; shapeID: string }
+  ) {
+    await overShape(writeStorage(tx), args);
+  },
+
+  async selectShape(
+    tx: WriteTransaction,
+    args: { clientID: string; shapeID: string }
+  ) {
+    await selectShape(writeStorage(tx), args);
+  },
+
+  async deleteAllShapes(tx: WriteTransaction) {
+    await Promise.all(
+      (await tx.scan({ prefix: `shape-` }).keys().toArray()).map((k) =>
+        tx.del(k)
+      )
+    );
+  },
+};
 
 export function readStorage(tx: ReadTransaction): ReadStorage {
   return {

@@ -122,11 +122,11 @@ export async function selectShape(
   await putClientState(storage, { id: clientID, clientState: client });
 }
 
-export function randUserInfo() {
+export function randUserInfo(): UserInfo {
   const [avatar, name] = avatars[randInt(0, avatars.length - 1)];
   return {
     avatar,
-    name: name,
+    name,
     color: colors[randInt(0, colors.length - 1)],
   };
 }

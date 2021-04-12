@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Replicache } from "replicache";
-import { createData } from "../../frontend/data";
+import { createData, mutators } from "../../frontend/data";
 import { Designer } from "../../frontend/designer";
 import { Nav } from "../../frontend/nav";
 import Pusher from "pusher-js";
@@ -26,14 +26,11 @@ export default function Home() {
         wasmModule: isProd ? "/replicache.wasm" : "/replicache.dev.wasm",
         useMemstore: true,
         name: docID,
+        mutators,
       });
 
       const defaultUserInfo = randUserInfo();
-      const d = await createData(rep);
-      d.initClientState({
-        id: d.clientID,
-        defaultUserInfo,
-      });
+      const d = await createData(rep, defaultUserInfo);
 
       // Do one initial pull to get fresh data.
       // After this, our websocket will tell us when to pull.
