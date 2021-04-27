@@ -48,12 +48,14 @@ export async function setLastMutationID(
 
 export async function getObject<T extends JSONValue>(
   executor: ExecuteStatementFn,
+  documentID: string,
   key: string
 ): Promise<T | null> {
   const { records } = await executor(
-    "SELECT V FROM Object WHERE K = :key AND Deleted = False",
+    "SELECT V FROM Object WHERE DocumentID =:docID AND K = :key AND Deleted = False",
     {
       key: { stringValue: key },
+      docID: { stringValue: documentID },
     }
   );
   const value = records?.[0]?.[0]?.stringValue;

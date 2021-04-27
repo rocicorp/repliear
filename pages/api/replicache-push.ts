@@ -7,6 +7,7 @@ import {
   rotateShape,
   shape,
   deleteShape,
+  initShapes,
 } from "../../shared/shape";
 import {
   initClientState,
@@ -66,6 +67,16 @@ const mutation = t.union([
       id: t.string,
       ddeg: t.number,
     }),
+  }),
+  t.type({
+    id: t.number,
+    name: t.literal("initShapes"),
+    args: t.array(
+      t.type({
+        id: t.string,
+        shape,
+      })
+    ),
   }),
   t.type({
     id: t.number,
@@ -191,6 +202,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         case "rotateShape":
           await rotateShape(s, mutation.args);
           break;
+        case "initShapes":
+          await initShapes(s, mutation.args);
+          break;
         case "initClientState":
           await initClientState(s, mutation.args);
           break;
@@ -246,7 +260,7 @@ function storage(executor: ExecuteStatementFn, docID: string) {
       if (entry) {
         return entry.value;
       }
-      const value = await getObject(executor, key);
+      const value = await getObject(executor, docID, key);
       cache[key] = { value, dirty: false };
       return value;
     },

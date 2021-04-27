@@ -9,6 +9,8 @@ import {
   resizeShape,
   rotateShape,
   deleteShape,
+  randomShape,
+  initShapes,
 } from "../shared/shape";
 import {
   getClientState,
@@ -44,6 +46,14 @@ export async function createData(
     id: clientID,
     defaultUserInfo,
   });
+
+  // Prepopulate some data on very first sync for this document.
+  rep.onSync = (syncing: boolean) => {
+    if (!syncing) {
+      rep.mutate.initShapes(new Array(5).fill(null).map(() => randomShape()));
+      rep.onSync = null;
+    }
+  };
 
   return {
     clientID,
@@ -128,6 +138,10 @@ export const mutators = {
     args: { id: string; defaultUserInfo: UserInfo }
   ) {
     await initClientState(writeStorage(tx), args);
+  },
+
+  async initShapes(tx: WriteTransaction, args: { id: string; shape: Shape }[]) {
+    await initShapes(writeStorage(tx), args);
   },
 
   async setCursor(
