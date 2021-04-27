@@ -1,5 +1,8 @@
 import * as t from "io-ts";
 import { must } from "../backend/decode";
+import { Data } from "../frontend/data";
+import { newID } from "./id";
+import { randInt } from "./rand";
 import { ReadStorage, WriteStorage } from "./storage";
 
 export const shape = t.type({
@@ -77,6 +80,37 @@ export async function rotateShape(
   }
 }
 
+export async function initShapes(
+  storage: WriteStorage,
+  shapes: { id: string; shape: Shape }[]
+) {
+  if (await storage.getObject("initialized")) {
+    return;
+  }
+  await Promise.all([
+    storage.putObject("initialized", true),
+    ...shapes.map((s) => putShape(storage, s)),
+  ]);
+}
+
 function key(id: string): string {
   return `shape-${id}`;
+}
+
+const colors = ["red", "blue", "white", "green", "yellow"];
+
+export function randomShape() {
+  const s = randInt(100, 400);
+  return {
+    id: newID(),
+    shape: {
+      type: "rect",
+      x: randInt(0, 400),
+      y: randInt(0, 400),
+      width: s,
+      height: s,
+      rotate: randInt(0, 359),
+      fill: colors[randInt(0, colors.length - 1)],
+    } as Shape,
+  };
 }

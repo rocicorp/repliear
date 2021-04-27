@@ -1,31 +1,16 @@
 import styles from "./nav.module.css";
 import { Data } from "./data";
-import { newID } from "../shared/id";
-import { randInt } from "../shared/rand";
-
-const colors = ["red", "blue", "white", "green", "yellow"];
+import { randomShape } from "../shared/shape";
 
 export function Nav({ data }: { data: Data | null }) {
   const userInfo = data?.useUserInfo(data?.clientID);
   console.log({ userInfo });
 
-  const onRectangle = async () => {
+  const onRectangle = () => {
     if (!data) {
       return;
     }
-    const s = randInt(100, 400);
-    await data.createShape({
-      id: newID(),
-      shape: {
-        type: "rect",
-        x: randInt(0, 400),
-        y: randInt(0, 400),
-        width: s,
-        height: s,
-        rotate: 0, // randInt(0, 359),
-        fill: colors[randInt(0, colors.length - 1)],
-      },
-    });
+    data.createShape(randomShape());
   };
 
   return (

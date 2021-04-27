@@ -32,10 +32,6 @@ export default function Home() {
       const defaultUserInfo = randUserInfo();
       const d = await createData(rep, defaultUserInfo);
 
-      // Do one initial pull to get fresh data.
-      // After this, our websocket will tell us when to pull.
-      rep.pull();
-
       Pusher.logToConsole = true;
       var pusher = new Pusher("d9088b47d2371d532c4c", {
         cluster: "us3",
