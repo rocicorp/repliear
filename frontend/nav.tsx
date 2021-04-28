@@ -95,7 +95,7 @@ export function Nav({ data }: { data: Data }) {
         <Modal.Body>
           <p>
             This is a demonstration of{" "}
-            <a href="https://replicache.dev">
+            <a href="https://replicache.dev" target="_blank">
               <u>Replicache</u>
             </a>{" "}
             — a JavaScript library that enables realtime, collaborative web apps
