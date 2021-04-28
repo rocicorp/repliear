@@ -74,7 +74,7 @@ export function Nav({ data }: { data: Data }) {
           className={`${styles.button} ${styles.about}`}
           onClick={() => showAbout(true)}
         >
-          Learn More
+          About this Demo
         </div>
         <div className={styles.spacer}></div>
         {userInfo && (
@@ -90,7 +90,7 @@ export function Nav({ data }: { data: Data }) {
       </div>
       <Modal show={aboutVisible} onHide={() => showAbout(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>About</Modal.Title>
+          <Modal.Title>About Replidraw</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p>
@@ -100,6 +100,9 @@ export function Nav({ data }: { data: Data }) {
             </a>{" "}
             — a JavaScript library that enables realtime, collaborative web apps
             for any backend stack.
+          </p>
+          <p>
+            Try <a href={location.href} target="_blank"><u>opening this page</u></a> in two browser windows and moving the boxes around.
           </p>
         </Modal.Body>
         <Modal.Footer>
