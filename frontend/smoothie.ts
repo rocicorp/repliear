@@ -1,5 +1,4 @@
 import hermite from "cubic-hermite";
-import deepEqual from "deep-equal";
 import { useEffect, useState } from "react";
 import { Replicache, ReadTransaction } from "replicache";
 import { getClientState } from "../shared/client-state";
@@ -150,7 +149,7 @@ class Smoothie {
           return;
         }
 
-        if (!deepEqual(targets, this.latestTargets)) {
+        if (!shallowEqual(targets, this.latestTargets)) {
           if (targets.length != this.latestTargets.length) {
             console.info("Number of targets changed - ignoring");
             return;
@@ -295,4 +294,14 @@ function useListener(
     smoother.addListener(listener);
     return () => smoother.removeListener(listener);
   }, [dep]);
+}
+
+function shallowEqual(a1: any[], a2: any[]) {
+  if (a1.length != a2.length) {
+    return false;
+  }
+  if (a1.some((v1, idx) => v1 != a2[idx])) {
+    return false;
+  }
+  return true;
 }
