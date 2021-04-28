@@ -2,8 +2,9 @@ import * as t from "io-ts";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ExecuteStatementCommandOutput, Field } from "@aws-sdk/client-rds-data";
 import { transact } from "../../backend/rds";
-import { getCookieVersion, getLastMutationID } from "../../backend/data";
+import { getCookieVersion, getLastMutationID, storage } from "../../backend/data";
 import { must } from "../../backend/decode";
+import { initShapes, randomShape } from "../../shared/shape";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log(`Processing pull`, JSON.stringify(req.body, null, ""));
@@ -17,6 +18,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   let lastMutationID = 0;
 
   await transact(async (executor) => {
+    const s = storage(executor, docID);
+    await initShapes(s, new Array(5).fill(null).map(() => randomShape()));
+    await s.flush();
     [entries, lastMutationID, cookie] = await Promise.all([
       executor(
         `SELECT K, V, Deleted FROM Object

@@ -12,10 +12,7 @@ export async function getCookieVersion(
     }
   );
   const version = result.records?.[0]?.[0]?.longValue;
-  if (version === undefined) {
-    throw new Error("Could not get version field");
-  }
-  return version;
+  return version || 0;
 }
 
 export async function getLastMutationID(
@@ -99,4 +96,42 @@ export async function delAllObjects<T extends JSONValue>(
   await executor(`CALL DeleteAllObjects(:docID)`, {
     docID: { stringValue: docID },
   });
+}
+
+export function storage(executor: ExecuteStatementFn, docID: string) {
+  // TODO: When we have the real mysql client, check whether it appears to do
+  // this caching internally.
+  const cache: {
+    [key: string]: { value: JSONValue | undefined; dirty: boolean };
+  } = {};
+  return {
+    getObject: async (key: string) => {
+      const entry = cache[key];
+      if (entry) {
+        return entry.value;
+      }
+      const value = await getObject(executor, docID, key);
+      cache[key] = { value, dirty: false };
+      return value;
+    },
+    putObject: async (key: string, value: JSONValue) => {
+      cache[key] = { value, dirty: true };
+    },
+    delObject: async (key: string) => {
+      cache[key] = { value: undefined, dirty: true };
+    },
+    flush: async () => {
+      await Promise.all(
+        Object.entries(cache)
+          .filter(([, { dirty }]) => dirty)
+          .map(([k, { value }]) => {
+            if (value === undefined) {
+              return delObject(executor, docID, k);
+            } else {
+              return putObject(executor, docID, k, value);
+            }
+          })
+      );
+    },
+  };
 }
