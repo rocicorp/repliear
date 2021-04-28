@@ -54,7 +54,6 @@ export function Designer({ data }: { data: Data }) {
         <div
           {...{
             ref,
-            className: "container",
             style: {
               position: "relative",
               display: "flex",

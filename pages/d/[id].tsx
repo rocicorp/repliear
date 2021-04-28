@@ -45,6 +45,10 @@ export default function Home() {
     })();
   }, []);
 
+  if (!data) {
+    return null;
+  }
+
   return (
     <div
       style={{
@@ -59,7 +63,7 @@ export default function Home() {
       }}
     >
       <Nav data={data} />
-      {data && <Designer {...{ data }} />}
+      <Designer {...{ data }} />
     </div>
   );
 }
