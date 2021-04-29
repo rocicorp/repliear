@@ -303,7 +303,7 @@ class Smoothie {
       // coming after this one. This has the effect of smoothing out the
       // animation at the cost of extending the animation n frames longer than it
       // actually took on the source machine.
-      (now - this.latestTimestamp) * 4
+      (now - this.latestTimestamp) * 3
     );
   }
 }
