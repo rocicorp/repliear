@@ -102,7 +102,11 @@ export function Nav({ data }: { data: Data }) {
             for any backend stack.
           </p>
           <p>
-            Try <a href={location.href} target="_blank"><u>opening this page</u></a> in two browser windows and moving the boxes around.
+            Try{" "}
+            <a href={location.href} target="_blank">
+              <u>opening this page</u>
+            </a>{" "}
+            in two browser windows and moving the boxes around.
           </p>
         </Modal.Body>
         <Modal.Footer>
