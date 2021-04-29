@@ -98,9 +98,14 @@ function key(id: string): string {
 }
 
 const colors = ["red", "blue", "white", "green", "yellow"];
+let nextColor = 0;
 
 export function randomShape() {
   const s = randInt(100, 400);
+  const fill = colors[nextColor++];
+  if (nextColor == colors.length) {
+    nextColor = 0;
+  }
   return {
     id: newID(),
     shape: {
@@ -110,7 +115,7 @@ export function randomShape() {
       width: s,
       height: s,
       rotate: randInt(0, 359),
-      fill: colors[randInt(0, colors.length - 1)],
+      fill,
     } as Shape,
   };
 }
