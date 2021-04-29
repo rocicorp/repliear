@@ -77,7 +77,7 @@ type SubscriptionFunction = (
 ) => Promise<Array<number> | null>;
 
 const minAnimationDuration = 50;
-const maxAnimationDuration = 1000;
+const maxAnimationDuration = 5000;
 
 /**
  * Smoothie interpolates frames between Repicache subscription notifications.
@@ -169,10 +169,7 @@ class Smoothie {
               startVelocities: targets.map((_) => 0),
               targetVelocities: targets.map((_) => 0),
               startTime: now,
-              duration: Math.min(
-                maxAnimationDuration,
-                now - this.latestTimestamp
-              ),
+              duration: this.frameDuration(now),
               currentValues: this.latestTargets,
               timerID: this.scheduleAnimate(),
             };
@@ -199,7 +196,7 @@ class Smoothie {
               startVelocities,
               targetVelocities: targets.map((_) => 0),
               startTime: now,
-              duration: now - this.latestTimestamp,
+              duration: this.frameDuration(now),
               currentValues: this.currentAnimation.currentValues,
               timerID: this.scheduleAnimate(),
             };
@@ -282,6 +279,32 @@ class Smoothie {
         console.error(e);
       }
     });
+  }
+
+  frameDuration(now: number) {
+    return Math.min(
+      maxAnimationDuration,
+      // We can't simply use the delay since the last frame as the
+      // duration for the animation because we want the animation to smoothly
+      // slow down and stop once we stop receving events. But if we're receiving
+      // frames approximately every Fms, and we set the duration of each frame's
+      // animation to be Fms, then we will see a choppy movement when these
+      // animations are connected one to the next.
+      //
+      // Also we sometimes get frames in which no movement occurs.
+      // This is because push can take longer than pull, so we
+      // might have pushes happening at a rate of 150ms/frame, and pulls
+      // happening at a rate of 100ms/frame. So every third frame or so
+      // we'd get no new position information. In that case, if the frame duration
+      // is close to the rate pulls are happening, we'll see the
+      // animation slow down then speed up again.
+      //
+      // Instead, we arbitrarily assume that there are n additional frames
+      // coming after this one. This has the effect of smoothing out the
+      // animation at the cost of extending the animation n frames longer than it
+      // actually took on the source machine.
+      (now - this.latestTimestamp) * 4
+    );
   }
 }
 
