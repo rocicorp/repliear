@@ -1,18 +1,18 @@
 import type { ExecuteStatementFn } from "./rds";
 import { JSONValue } from "replicache";
 
-export async function getCookieVersion(
+export async function getCookie(
   executor: ExecuteStatementFn,
   docID: string
-): Promise<number> {
+): Promise<string> {
   const result = await executor(
-    "SELECT Version FROM Cookie WHERE DocumentID = :docID LIMIT 1",
+    "SELECT UNIX_TIMESTAMP(MAX(LastModified)) FROM Object WHERE DocumentID = :docID",
     {
       docID: { stringValue: docID },
     }
   );
-  const version = result.records?.[0]?.[0]?.longValue;
-  return version || 0;
+  const version = result.records?.[0]?.[0]?.stringValue;
+  return version || "";
 }
 
 export async function getLastMutationID(
@@ -62,38 +62,47 @@ export async function getObject<T extends JSONValue>(
   return JSON.parse(value);
 }
 
-export async function putObject<T extends JSONValue>(
+export async function putObject(
   executor: ExecuteStatementFn,
   docID: string,
   key: string,
   value: JSONValue
 ): Promise<void> {
-  await executor(`CALL PutObject(:docID, :key, :value, :deleted)`, {
-    docID: { stringValue: docID },
-    key: { stringValue: key },
-    value: { stringValue: JSON.stringify(value) },
-    deleted: { booleanValue: false },
-  });
+  await executor(`
+    INSERT INTO Object (DocumentID, K, V, Deleted)
+    VALUES (:docID, :key, :value, False)
+      ON DUPLICATE KEY UPDATE V = :value, Deleted = False
+    `, {
+      docID: { stringValue: docID },
+      key: { stringValue: key },
+      value: { stringValue: JSON.stringify(value) },
+    });
 }
 
-export async function delObject<T extends JSONValue>(
+export async function delObject(
   executor: ExecuteStatementFn,
   docID: string,
   key: string
 ): Promise<void> {
-  await executor(`CALL PutObject(:docID, :key, :value, :deleted)`, {
+  await executor(`
+    UPDATE Object SET Deleted = True
+    WHERE DocumentID = :docID AND K = :key
+  `, {
     docID: { stringValue: docID },
     key: { stringValue: key },
-    value: { stringValue: "" },
-    deleted: { booleanValue: true },
   });
 }
 
-export async function delAllObjects<T extends JSONValue>(
+export async function delAllShapes(
   executor: ExecuteStatementFn,
   docID: string
 ): Promise<void> {
-  await executor(`CALL DeleteAllObjects(:docID)`, {
+  await executor(`
+    UPDATE Object Set Deleted = True
+    WHERE
+      DocumentID = :docID AND
+      K like 'shape-%'
+  `, {
     docID: { stringValue: docID },
   });
 }

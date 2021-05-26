@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { ExecuteStatementCommandOutput, Field } from "@aws-sdk/client-rds-data";
 import { transact } from "../../backend/rds";
 import {
-  getCookieVersion,
+  getCookie,
   getLastMutationID,
   storage,
 } from "../../backend/data";
@@ -15,7 +15,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const docID = req.query["docID"].toString();
   const pull = must(pullRequest.decode(req.body));
-  let cookie = pull.cookie ?? 0;
+  let requestCookie = pull.cookie ?? "0";
+  let responseCookie = null;
 
   const t0 = Date.now();
   let entries;
@@ -28,17 +29,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       new Array(5).fill(null).map(() => randomShape())
     );
     await s.flush();
-    [entries, lastMutationID, cookie] = await Promise.all([
+    [entries, lastMutationID, responseCookie] = await Promise.all([
       executor(
         `SELECT K, V, Deleted FROM Object
-        WHERE DocumentID = :docID AND Version > :version`,
+        WHERE DocumentID = :docID AND LastModified > FROM_UNIXTIME(:lastmod)`,
         {
           docID: { stringValue: docID },
-          version: { longValue: cookie },
+          lastmod: { stringValue: requestCookie },
         }
       ),
       getLastMutationID(executor, pull.clientID),
-      getCookieVersion(executor, docID),
+      getCookie(executor, docID),
     ]);
   });
   console.log("lastMutationID: ", lastMutationID);
@@ -50,7 +51,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const resp: PullResponse = {
     lastMutationID,
-    cookie,
+    cookie: responseCookie,
     patch: [],
     // TODO: Remove this as soon as Replicache stops requiring it.
     httpRequestInfo: {
@@ -92,11 +93,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
 const pullRequest = t.type({
   clientID: t.string,
-  cookie: t.union([t.number, t.null]),
+  cookie: t.union([t.string, t.null]),
 });
 
 const pullResponse = t.type({
-  cookie: t.number,
+  cookie: t.union([t.string, t.null]),
   lastMutationID: t.number,
   patch: t.array(
     t.union([

@@ -85,13 +85,12 @@ export async function createDatabase() {
     CHARACTER SET utf8mb4`
   );
 
-  await executeStatement(`CREATE TABLE Cookie (
-    DocumentID VARCHAR(100) PRIMARY KEY NOT NULL,
-    Version BIGINT NOT NULL)`);
   await executeStatement(`CREATE TABLE Client (
     Id VARCHAR(100) PRIMARY KEY NOT NULL,
     LastMutationID BIGINT NOT NULL)`);
 
+  // On normalization:
+  //
   // For simplicity of demo purposes, and because we don't really need any
   // advanced backend features, we model backend storage as a kv store. This
   // allows us to share code more easily and reduces the amount of schema
@@ -100,48 +99,37 @@ export async function createDatabase() {
   // There's no particular reason that you couldn't use a fully-normalized
   // relational model on the backend if you want (or need to for legacy)
   // reasons. Just more work!
+  //
+  //
+  // On cookies:
+  //
+  // To maximize concurrency we don't want any write locks shared across
+  // clients. The canonical way to do this in a Replicache backends is to
+  // return a cookie which is a pointer into some server-side storage which
+  // contains information about what data was returned last time. This trades
+  // a small amount of highly contended write load at push time for a larger
+  // amount of uncontended read and write load at read-time.
+  //
+  // However, for this application it's even easier to just use a timestamp.
+  // There is some tiny chance of skew and losing data (e.g., if the server's
+  // time changes). However in that case we'll lose a moouse move update or
+  // something and just pick it up again next time it changes.
+  //
+  // There are many different strategies for calculating changed rows and the
+  // details are very dependent on what you are building. Contact us if you'd
+  // like help: https://replicache.dev/#contact.
   await executeStatement(`CREATE TABLE Object (
     K VARCHAR(100) NOT NULL,
     V TEXT NOT NULL,
     DocumentID VARCHAR(100) NOT NULL,
     Deleted BOOL NOT NULL DEFAULT False,
-    Version BIGINT NOT NULL,
-    UNIQUE INDEX (DocumentID, K),
-    INDEX (Version)
+    LastModified DATETIME(6) NOT NULL
+      DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    UNIQUE (DocumentID, K),
+    INDEX (DocumentID),
+    INDEX (Deleted),
+    INDEX (LastModified)
     )`);
-
-  // To calculate which rows have changed for return in the pull endpoint, we
-  // use a very simply global version number. This is easy to understand but
-  // does serialize writes.
-  //
-  // There are many different strategies for calculating changed rows and the
-  // details are very dependent on what you are building. Contact us if you'd
-  // like help: https://replicache.dev/#contact.
-  await executeStatement(`CREATE PROCEDURE NextVersion
-    (IN pDocumentID VARCHAR(100), OUT result BIGINT)
-    BEGIN
-      INSERT INTO Cookie (DocumentID, Version) VALUES (pDocumentID, 1)
-        ON DUPLICATE KEY UPDATE Version = Version + 1;
-      SELECT Version INTO result FROM Cookie WHERE DocumentID = pDocumentID;
-    END`);
-
-  await executeStatement(`CREATE PROCEDURE PutObject (
-      IN pDocumentID VARCHAR(100), IN pK VARCHAR(100), IN pV TEXT, IN pDeleted BOOL)
-    BEGIN
-      SET @version = 0;
-      CALL NextVersion(pDocumentID, @version);
-      INSERT INTO Object (DocumentID, K, V, Deleted, Version)
-      VALUES (pDocumentID, pK, pV, pDeleted, @version)
-        ON DUPLICATE KEY UPDATE V = pV, Deleted = pDeleted, Version = @version;
-    END`);
-
-  await executeStatement(`CREATE PROCEDURE DeleteAllObjects (IN pDocumentID VARCHAR(100))
-    BEGIN
-      SET @version = 0;
-      CALL NextVersion(pDocumentID, @version);
-      UPDATE Object SET Deleted = True, Version = @version 
-      WHERE K LIKE 'shape-%' AND DocumentID = pDocumentID AND Deleted = False;
-    END`);
 }
 
 async function executeStatement(

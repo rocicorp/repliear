@@ -17,10 +17,7 @@ import {
   userInfo,
 } from "../../shared/client-state";
 import {
-  getObject,
-  putObject,
-  delObject,
-  delAllObjects,
+  delAllShapes,
   getLastMutationID,
   setLastMutationID,
   storage,
@@ -28,7 +25,6 @@ import {
 import { must } from "../../backend/decode";
 import Pusher from "pusher";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { JSONValue } from "replicache";
 
 const mutation = t.union([
   t.type({
@@ -219,7 +215,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           await selectShape(s, mutation.args);
           break;
         case "deleteAllShapes":
-          await delAllObjects(executor, docID);
+          await delAllShapes(executor, docID);
       }
 
       lastMutationID = expectedMutationID;
