@@ -1,4 +1,4 @@
-import { newID } from "../shared/id";
+import { nanoid } from "nanoid";
 
 function Page() {
   return "";
@@ -7,7 +7,7 @@ function Page() {
 export function getServerSideProps() {
   return {
     redirect: {
-      destination: `/d/${newID()}`,
+      destination: `/d/${nanoid()}`,
       permanent: false,
     },
   };

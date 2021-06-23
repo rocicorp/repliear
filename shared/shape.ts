@@ -1,7 +1,6 @@
 import * as t from "io-ts";
 import { must } from "../backend/decode";
-import { Data } from "../frontend/data";
-import { newID } from "./id";
+import { nanoid } from "nanoid";
 import { randInt } from "./rand";
 import { ReadStorage, WriteStorage } from "./storage";
 
@@ -107,7 +106,7 @@ export function randomShape() {
     nextColor = 0;
   }
   return {
-    id: newID(),
+    id: nanoid(),
     shape: {
       type: "rect",
       x: randInt(0, 400),
