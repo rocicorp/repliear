@@ -1,10 +1,10 @@
-import { JSONValue } from "replicache";
+import { JSONValue, ReadonlyJSONValue } from "replicache";
 
 /**
  * Interface required of underlying storage.
  */
 export interface ReadStorage {
-  getObject(key: string): Promise<JSONValue | undefined>;
+  getObject(key: string): Promise<ReadonlyJSONValue | undefined>;
 }
 
 export interface WriteStorage extends ReadStorage {
