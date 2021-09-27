@@ -239,6 +239,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   });
 
   const t2 = Date.now();
+  // We need to await here otherwise, Next.js will frequently kill the request
+  // and the poke won't get sent.
   await pusher.trigger("default", "poke", {});
   console.log("Sent poke in", Date.now() - t2);
 
