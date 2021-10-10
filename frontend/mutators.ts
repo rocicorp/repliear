@@ -17,6 +17,8 @@ import {
   shapePrefix as shapePrefix,
 } from "./shape";
 
+export type M = typeof mutators;
+
 export const mutators = {
   async createShape(tx: WriteTransaction, args: { id: string; shape: Shape }) {
     await putShape(tx, args);

@@ -1,7 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Rect } from "./rect";
 import { HotKeys } from "react-hotkeys";
-import { Data } from "./data";
 import { Collaborator } from "./collaborator";
 import { RectController } from "./rect-controller";
 import { touchToMouse } from "./events";
@@ -13,32 +12,40 @@ import {
   useSelectedShapeID,
   useCollaboratorIDs,
 } from "./subscriptions";
+import { Replicache } from "replicache";
+import { M } from "./mutators";
 
-export function Designer({ data }: { data: Data }) {
-  const ids = useShapeIDs(data.rep);
-  const overID = useOverShapeID(data.rep);
-  const selectedID = useSelectedShapeID(data.rep);
-  const collaboratorIDs = useCollaboratorIDs(data.rep);
+export function Designer({ rep }: { rep: Replicache<M> }) {
+  const ids = useShapeIDs(rep);
+  const overID = useOverShapeID(rep);
+  const selectedID = useSelectedShapeID(rep);
+  const collaboratorIDs = useCollaboratorIDs(rep);
 
   const ref = useRef<HTMLDivElement | null>(null);
   const [dragging, setDragging] = useState(false);
 
   const handlers = {
-    moveLeft: () => data.moveShape({ id: selectedID, dx: -20, dy: 0 }),
-    moveRight: () => data.moveShape({ id: selectedID, dx: 20, dy: 0 }),
-    moveUp: () => data.moveShape({ id: selectedID, dx: 0, dy: -20 }),
-    moveDown: () => data.moveShape({ id: selectedID, dx: 0, dy: 20 }),
+    moveLeft: () => rep.mutate.moveShape({ id: selectedID, dx: -20, dy: 0 }),
+    moveRight: () => rep.mutate.moveShape({ id: selectedID, dx: 20, dy: 0 }),
+    moveUp: () => rep.mutate.moveShape({ id: selectedID, dx: 0, dy: -20 }),
+    moveDown: () => rep.mutate.moveShape({ id: selectedID, dx: 0, dy: 20 }),
     deleteShape: () => {
       // Prevent navigating backward on some browsers.
       event?.preventDefault();
-      data.deleteShape(selectedID);
+      rep.mutate.deleteShape(selectedID);
     },
   };
 
-  const onMouseMove = ({ pageX, pageY }: { pageX: number; pageY: number }) => {
+  const onMouseMove = async ({
+    pageX,
+    pageY,
+  }: {
+    pageX: number;
+    pageY: number;
+  }) => {
     if (ref && ref.current) {
-      data.setCursor({
-        id: data.clientID,
+      rep.mutate.setCursor({
+        id: await rep.clientID,
         x: pageX,
         y: pageY - ref.current.offsetTop,
       });
@@ -75,7 +82,7 @@ export function Designer({ data }: { data: Data }) {
             <RectController
               {...{
                 key: `shape-${id}`,
-                data,
+                rep,
                 id,
               }}
             />
@@ -87,7 +94,7 @@ export function Designer({ data }: { data: Data }) {
               <Rect
                 {...{
                   key: `highlight-${overID}`,
-                  data,
+                  rep,
                   id: overID,
                   highlight: true,
                 }}
@@ -101,7 +108,7 @@ export function Designer({ data }: { data: Data }) {
               <Selection
                 {...{
                   key: `selection-${selectedID}`,
-                  data,
+                  rep,
                   id: selectedID,
                   highlight: true,
                   containerOffsetTop: ref.current && ref.current.offsetTop,
@@ -119,7 +126,7 @@ export function Designer({ data }: { data: Data }) {
               <Collaborator
                 {...{
                   key: `key-${id}`,
-                  data,
+                  rep,
                   clientID: id,
                 }}
               />

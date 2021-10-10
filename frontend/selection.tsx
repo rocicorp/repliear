@@ -1,18 +1,19 @@
-import { Data } from "./data";
 import { Rect } from "./rect";
 import { useShape } from "./smoothie";
 import { DraggableCore, DraggableEvent, DraggableData } from "react-draggable";
+import { Replicache } from "replicache";
+import { M } from "./mutators";
 
 export function Selection({
-  data,
+  rep,
   id,
   containerOffsetTop,
 }: {
-  data: Data;
+  rep: Replicache<M>;
   id: string;
   containerOffsetTop: number | null;
 }) {
-  const coords = useShape(data.rep, id);
+  const coords = useShape(rep, id);
   const gripSize = 19;
 
   const center = (coords: NonNullable<ReturnType<typeof useShape>>) => {
@@ -43,7 +44,7 @@ export function Selection({
     );
     const s1 = size(shapeCenter.x, d.x, shapeCenter.y, d.y);
 
-    data.resizeShape({ id, ds: s1 - s0 });
+    rep.mutate.resizeShape({ id, ds: s1 - s0 });
   };
 
   const onRotate = (e: DraggableEvent, d: DraggableData) => {
@@ -60,7 +61,7 @@ export function Selection({
     );
     const after = Math.atan2(offsetY - shapeCenter.y, d.x - shapeCenter.x);
 
-    data.rotateShape({ id, ddeg: ((after - before) * 180) / Math.PI });
+    rep.mutate.rotateShape({ id, ddeg: ((after - before) * 180) / Math.PI });
   };
 
   if (!coords) {
@@ -73,7 +74,7 @@ export function Selection({
     <div>
       <Rect
         {...{
-          data,
+          rep,
           id,
           highlight: true,
         }}

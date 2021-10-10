@@ -1,20 +1,32 @@
-import { Data } from "./data";
 import { Rect } from "./rect";
 import { DraggableCore, DraggableEvent, DraggableData } from "react-draggable";
 import { useShapeByID } from "./subscriptions";
+import { Replicache } from "replicache";
+import { M } from "./mutators";
 
 // TODO: In the future I imagine this becoming ShapeController and
 // there also be a Shape that wraps Rect and also knows how to draw Circle, etc.
-export function RectController({ data, id }: { data: Data; id: string }) {
-  const shape = useShapeByID(data.rep, id);
+export function RectController({
+  rep,
+  id,
+}: {
+  rep: Replicache<M>;
+  id: string;
+}) {
+  const shape = useShapeByID(rep, id);
 
-  const onMouseEnter = () =>
-    data.overShape({ clientID: data.clientID, shapeID: id });
-  const onMouseLeave = () =>
-    data.overShape({ clientID: data.clientID, shapeID: "" });
+  const onMouseEnter = async () =>
+    rep.mutate.overShape({ clientID: await rep.clientID, shapeID: id });
+  const onMouseLeave = async () =>
+    rep.mutate.overShape({ clientID: await rep.clientID, shapeID: "" });
 
   const onDragStart = (e: DraggableEvent, d: DraggableData) => {
-    data.selectShape({ clientID: data.clientID, shapeID: id });
+    // Can't mark onDragStart async because it changes return type and onDragStart
+    // must return void.
+    const blech = async () => {
+      rep.mutate.selectShape({ clientID: await rep.clientID, shapeID: id });
+    };
+    blech();
   };
   const onDrag = (e: DraggableEvent, d: DraggableData) => {
     // This is subtle, and worth drawing attention to:
@@ -24,7 +36,7 @@ export function RectController({ data, id }: { data: Data; id: string }) {
     // We will apply this movement to whatever the state happens to be when we
     // replay. If somebody else was moving the object at the same moment, we'll
     // then end up with a union of the two vectors, which is what we want!
-    data.moveShape({
+    rep.mutate.moveShape({
       id,
       dx: d.deltaX,
       dy: d.deltaY,
@@ -40,7 +52,7 @@ export function RectController({ data, id }: { data: Data; id: string }) {
       <div>
         <Rect
           {...{
-            data,
+            rep,
             id,
             highlight: false,
             onMouseEnter,

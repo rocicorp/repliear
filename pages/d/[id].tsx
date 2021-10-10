@@ -1,25 +1,23 @@
 import { useEffect, useState } from "react";
 import { Replicache } from "replicache";
-import { createData } from "../../frontend/data";
 import { Designer } from "../../frontend/designer";
 import { Nav } from "../../frontend/nav";
 import Pusher from "pusher-js";
-import { mutators } from "../../frontend/mutators";
-import type { Data } from "../../frontend/data";
+import { M, mutators } from "../../frontend/mutators";
 import { randUserInfo } from "../../frontend/client-state";
 
 export default function Home() {
-  const [data, setData] = useState<Data | null>(null);
+  const [rep, setRep] = useState<Replicache<M> | null>(null);
 
   // TODO: Think through Replicache + SSR.
   useEffect(() => {
     (async () => {
-      if (data) {
+      if (rep) {
         return;
       }
 
       const [, , docID] = location.pathname.split("/");
-      const rep = new Replicache({
+      const r = new Replicache({
         pushURL: `/api/replicache-push?docID=${docID}`,
         pullURL: `/api/replicache-pull?docID=${docID}`,
         useMemstore: true,
@@ -28,7 +26,10 @@ export default function Home() {
       });
 
       const defaultUserInfo = randUserInfo();
-      const d = await createData(rep, defaultUserInfo);
+      await r.mutate.initClientState({
+        id: await r.clientID,
+        defaultUserInfo,
+      });
 
       Pusher.logToConsole = true;
       var pusher = new Pusher("d9088b47d2371d532c4c", {
@@ -36,14 +37,14 @@ export default function Home() {
       });
       var channel = pusher.subscribe("default");
       channel.bind("poke", function (data: unknown) {
-        rep.pull();
+        r.pull();
       });
 
-      setData(d);
+      setRep(r);
     })();
   }, []);
 
-  if (!data) {
+  if (!rep) {
     return null;
   }
 
@@ -60,8 +61,8 @@ export default function Home() {
         background: "rgb(229,229,229)",
       }}
     >
-      <Nav data={data} />
-      <Designer {...{ data }} />
+      <Nav rep={rep} />
+      <Designer {...{ rep }} />
     </div>
   );
 }

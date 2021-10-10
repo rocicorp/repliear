@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./nav.module.css";
-import { Data } from "./data";
 import { randomShape } from "../frontend/shape";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useUserInfo } from "./subscriptions";
+import { Replicache } from "replicache";
+import { M } from "./mutators";
 
-export function Nav({ data }: { data: Data }) {
+export function Nav({ rep }: { rep: Replicache<M> }) {
   const [aboutVisible, showAbout] = useState(false);
   const [shareVisible, showShare] = useState(false);
   const urlBox = useRef<HTMLInputElement>(null);
-  const userInfo = useUserInfo(data.rep);
+  const userInfo = useUserInfo(rep);
 
   useEffect(() => {
     if (shareVisible) {
@@ -20,10 +21,7 @@ export function Nav({ data }: { data: Data }) {
   });
 
   const onRectangle = () => {
-    if (!data) {
-      return;
-    }
-    data.createShape(randomShape());
+    rep.mutate.createShape(randomShape());
   };
 
   return (
@@ -50,7 +48,7 @@ export function Nav({ data }: { data: Data }) {
         <div
           className={styles.button}
           title="Clear All"
-          onClick={() => data?.deleteAllShapes()}
+          onClick={() => rep.mutate.deleteAllShapes()}
         >
           <svg
             width="18"

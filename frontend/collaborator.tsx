@@ -1,8 +1,9 @@
-import { Data } from "./data";
 import styles from "./collaborator.module.css";
 import { useEffect, useState } from "react";
 import { Rect } from "./rect";
 import { useCursor } from "./smoothie";
+import { Replicache } from "replicache";
+import { M } from "./mutators";
 import { useClientInfo } from "./subscriptions";
 
 const hideCollaboratorDelay = 5000;
@@ -16,17 +17,17 @@ interface Position {
 }
 
 export function Collaborator({
-  data,
+  rep,
   clientID,
 }: {
-  data: Data;
+  rep: Replicache<M>;
   clientID: string;
 }) {
-  const clientInfo = useClientInfo(data.rep, data.clientID);
+  const clientInfo = useClientInfo(rep, clientID);
   const [lastPos, setLastPos] = useState<Position | null>(null);
   const [gotFirstChange, setGotFirstChange] = useState(false);
   const [, setPoke] = useState({});
-  const cursor = useCursor(data.rep, clientID);
+  const cursor = useCursor(rep, clientID);
 
   let curPos = null;
   let userInfo = null;
@@ -77,7 +78,7 @@ export function Collaborator({
       {clientInfo.selectedID && (
         <Rect
           {...{
-            data,
+            rep,
             key: `selection-${clientInfo.selectedID}`,
             id: clientInfo.selectedID,
             highlight: true,
