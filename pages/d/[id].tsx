@@ -5,6 +5,7 @@ import { Nav } from "../../frontend/nav";
 import Pusher from "pusher-js";
 import { M, mutators } from "../../frontend/mutators";
 import { randUserInfo } from "../../frontend/client-state";
+import { randomShape } from "../../frontend/shape";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
@@ -30,6 +31,12 @@ export default function Home() {
         id: await r.clientID,
         defaultUserInfo,
       });
+      r.onSync = (syncing: boolean) => {
+        if (!syncing) {
+          r.onSync = null;
+          r.mutate.initShapes(new Array(5).fill(null).map(() => randomShape()));
+        }
+      };
 
       Pusher.logToConsole = true;
       var pusher = new Pusher("d9088b47d2371d532c4c", {
