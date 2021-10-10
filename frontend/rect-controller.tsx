@@ -1,11 +1,12 @@
 import { Data } from "./data";
 import { Rect } from "./rect";
 import { DraggableCore, DraggableEvent, DraggableData } from "react-draggable";
+import { useShapeByID } from "./subscriptions";
 
 // TODO: In the future I imagine this becoming ShapeController and
 // there also be a Shape that wraps Rect and also knows how to draw Circle, etc.
 export function RectController({ data, id }: { data: Data; id: string }) {
-  const shape = data.useShapeByID(id);
+  const shape = useShapeByID(data.rep, id);
 
   const onMouseEnter = () =>
     data.overShape({ clientID: data.clientID, shapeID: id });

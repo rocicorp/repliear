@@ -5,12 +5,13 @@ import { randomShape } from "../frontend/shape";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import { useUserInfo } from "./subscriptions";
 
 export function Nav({ data }: { data: Data }) {
   const [aboutVisible, showAbout] = useState(false);
   const [shareVisible, showShare] = useState(false);
   const urlBox = useRef<HTMLInputElement>(null);
-  const userInfo = data.useUserInfo(data.clientID);
+  const userInfo = useUserInfo(data.rep);
 
   useEffect(() => {
     if (shareVisible) {

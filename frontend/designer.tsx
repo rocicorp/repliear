@@ -6,13 +6,19 @@ import { Collaborator } from "./collaborator";
 import { RectController } from "./rect-controller";
 import { touchToMouse } from "./events";
 import { Selection } from "./selection";
-import { DraggableCore, DraggableEvent, DraggableData } from "react-draggable";
+import { DraggableCore } from "react-draggable";
+import {
+  useShapeIDs,
+  useOverShapeID,
+  useSelectedShapeID,
+  useCollaboratorIDs,
+} from "./subscriptions";
 
 export function Designer({ data }: { data: Data }) {
-  const ids = data.useShapeIDs();
-  const overID = data.useOverShapeID();
-  const selectedID = data.useSelectedShapeID();
-  const collaboratorIDs = data.useCollaboratorIDs(data.clientID);
+  const ids = useShapeIDs(data.rep);
+  const overID = useOverShapeID(data.rep);
+  const selectedID = useSelectedShapeID(data.rep);
+  const collaboratorIDs = useCollaboratorIDs(data.rep);
 
   const ref = useRef<HTMLDivElement | null>(null);
   const [dragging, setDragging] = useState(false);

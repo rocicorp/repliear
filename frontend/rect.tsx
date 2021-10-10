@@ -1,6 +1,7 @@
 import React, { MouseEventHandler, TouchEventHandler } from "react";
 import { Data } from "./data";
 import { useShape } from "./smoothie";
+import { useShapeByID } from "./subscriptions";
 
 export function Rect({
   data,
@@ -21,7 +22,7 @@ export function Rect({
   onMouseEnter?: MouseEventHandler;
   onMouseLeave?: MouseEventHandler;
 }) {
-  const shape = data.useShapeByID(id);
+  const shape = useShapeByID(data.rep, id);
   const coords = useShape(data.rep, id);
   if (!shape || !coords) {
     return null;
