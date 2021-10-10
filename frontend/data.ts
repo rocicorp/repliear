@@ -1,10 +1,10 @@
 import { Replicache, ReadTransaction } from "replicache";
 import type { JSONValue } from "replicache";
 import { useSubscribe } from "replicache-react";
-import { getShape } from "../shared/shape";
-import { getClientState, clientStatePrefix } from "../shared/client-state";
-import type { UserInfo } from "../shared/client-state";
-import { mutators } from "../shared/mutators";
+import { getShape } from "../frontend/shape";
+import { getClientState, clientStatePrefix } from "../frontend/client-state";
+import type { UserInfo } from "../frontend/client-state";
+import { mutators } from "../frontend/mutators";
 
 /**
  * Abstracts Replicache storage (key/value pairs) to entities (Shape).

@@ -4,10 +4,9 @@ import { createData } from "../../frontend/data";
 import { Designer } from "../../frontend/designer";
 import { Nav } from "../../frontend/nav";
 import Pusher from "pusher-js";
-import { mutators } from "../../shared/mutators";
-
+import { mutators } from "../../frontend/mutators";
 import type { Data } from "../../frontend/data";
-import { randUserInfo } from "../../shared/client-state";
+import { randUserInfo } from "../../frontend/client-state";
 
 export default function Home() {
   const [data, setData] = useState<Data | null>(null);
@@ -20,7 +19,6 @@ export default function Home() {
       }
 
       const [, , docID] = location.pathname.split("/");
-      const isProd = location.host.indexOf(".vercel.app") > -1;
       const rep = new Replicache({
         pushURL: `/api/replicache-push?docID=${docID}`,
         pullURL: `/api/replicache-pull?docID=${docID}`,

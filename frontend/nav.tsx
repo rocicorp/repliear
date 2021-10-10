@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./nav.module.css";
 import { Data } from "./data";
-import { randomShape } from "../shared/shape";
+import { randomShape } from "../frontend/shape";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";

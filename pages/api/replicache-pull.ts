@@ -2,9 +2,9 @@ import * as t from "io-ts";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ExecuteStatementCommandOutput, Field } from "@aws-sdk/client-rds-data";
 import { transact } from "../../backend/rds";
-import { getCookie, getLastMutationID, storage } from "../../backend/data";
-import { must } from "../../shared/decode";
-import { initShapes, randomShape } from "../../shared/shape";
+import { getCookie, getLastMutationID } from "../../backend/data";
+import { must } from "../../frontend/decode";
+import { initShapes, randomShape } from "../../frontend/shape";
 import { WriteTransactionImpl } from "../../backend/write-transaction-impl";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {

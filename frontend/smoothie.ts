@@ -1,8 +1,8 @@
 import hermite from "cubic-hermite";
 import { useEffect, useState } from "react";
 import { Replicache, ReadTransaction } from "replicache";
-import { getClientState } from "../shared/client-state";
-import { getShape } from "../shared/shape";
+import { getClientState } from "../frontend/client-state";
+import { getShape } from "../frontend/shape";
 
 /**
  * Gets the current position of the cursor for `clientID`, but smoothing out

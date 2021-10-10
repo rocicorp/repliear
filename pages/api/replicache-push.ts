@@ -4,8 +4,8 @@ import { getLastMutationID, setLastMutationID } from "../../backend/data";
 import Pusher from "pusher";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { WriteTransactionImpl } from "../../backend/write-transaction-impl";
-import { mutators } from "../../shared/mutators";
-import { must } from "../../shared/decode";
+import { mutators } from "../../frontend/mutators";
+import { must } from "../../frontend/decode";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
 // See notes in bug: https://github.com/rocicorp/replidraw/issues/47
