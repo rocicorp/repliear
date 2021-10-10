@@ -43,11 +43,11 @@ export async function setLastMutationID(
   );
 }
 
-export async function getObject<T extends JSONValue>(
+export async function getObject(
   executor: ExecuteStatementFn,
   documentID: string,
   key: string
-): Promise<T | null> {
+): Promise<JSONValue | undefined> {
   const { records } = await executor(
     "SELECT V FROM Object WHERE DocumentID =:docID AND K = :key AND Deleted = False",
     {
@@ -57,7 +57,7 @@ export async function getObject<T extends JSONValue>(
   );
   const value = records?.[0]?.[0]?.stringValue;
   if (!value) {
-    return null;
+    return undefined;
   }
   return JSON.parse(value);
 }
@@ -68,15 +68,18 @@ export async function putObject(
   key: string,
   value: JSONValue
 ): Promise<void> {
-  await executor(`
+  await executor(
+    `
     INSERT INTO Object (DocumentID, K, V, Deleted)
     VALUES (:docID, :key, :value, False)
       ON DUPLICATE KEY UPDATE V = :value, Deleted = False
-    `, {
+    `,
+    {
       docID: { stringValue: docID },
       key: { stringValue: key },
       value: { stringValue: JSON.stringify(value) },
-    });
+    }
+  );
 }
 
 export async function delObject(
@@ -84,63 +87,14 @@ export async function delObject(
   docID: string,
   key: string
 ): Promise<void> {
-  await executor(`
+  await executor(
+    `
     UPDATE Object SET Deleted = True
     WHERE DocumentID = :docID AND K = :key
-  `, {
-    docID: { stringValue: docID },
-    key: { stringValue: key },
-  });
-}
-
-export async function delAllShapes(
-  executor: ExecuteStatementFn,
-  docID: string
-): Promise<void> {
-  await executor(`
-    UPDATE Object Set Deleted = True
-    WHERE
-      DocumentID = :docID AND
-      K like 'shape-%'
-  `, {
-    docID: { stringValue: docID },
-  });
-}
-
-export function storage(executor: ExecuteStatementFn, docID: string) {
-  // TODO: When we have the real mysql client, check whether it appears to do
-  // this caching internally.
-  const cache: {
-    [key: string]: { value: JSONValue | undefined; dirty: boolean };
-  } = {};
-  return {
-    getObject: async (key: string) => {
-      const entry = cache[key];
-      if (entry) {
-        return entry.value;
-      }
-      const value = await getObject(executor, docID, key);
-      cache[key] = { value, dirty: false };
-      return value;
-    },
-    putObject: async (key: string, value: JSONValue) => {
-      cache[key] = { value, dirty: true };
-    },
-    delObject: async (key: string) => {
-      cache[key] = { value: undefined, dirty: true };
-    },
-    flush: async () => {
-      await Promise.all(
-        Object.entries(cache)
-          .filter(([, { dirty }]) => dirty)
-          .map(([k, { value }]) => {
-            if (value === undefined) {
-              return delObject(executor, docID, k);
-            } else {
-              return putObject(executor, docID, k, value);
-            }
-          })
-      );
-    },
-  };
+  `,
+    {
+      docID: { stringValue: docID },
+      key: { stringValue: key },
+    }
+  );
 }

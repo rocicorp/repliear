@@ -1,125 +1,24 @@
 import * as t from "io-ts";
-import { ExecuteStatementFn, transact } from "../../backend/rds";
-import {
-  putShape,
-  moveShape,
-  resizeShape,
-  rotateShape,
-  shape,
-  deleteShape,
-  initShapes,
-} from "../../shared/shape";
-import {
-  initClientState,
-  overShape,
-  selectShape,
-  setCursor,
-  userInfo,
-} from "../../shared/client-state";
-import {
-  delAllShapes,
-  getLastMutationID,
-  setLastMutationID,
-  storage,
-} from "../../backend/data";
-import { must } from "../../backend/decode";
+import { transact } from "../../backend/rds";
+import { getLastMutationID, setLastMutationID } from "../../backend/data";
 import Pusher from "pusher";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { WriteTransactionImpl } from "../../backend/write-transaction-impl";
+import { mutators } from "../../shared/mutators";
+import { must } from "../../shared/decode";
 
-const mutation = t.union([
-  t.type({
-    id: t.number,
-    name: t.literal("createShape"),
-    args: t.type({
-      id: t.string,
-      shape,
-    }),
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("deleteShape"),
-    args: t.string,
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("moveShape"),
-    args: t.type({
-      id: t.string,
-      dx: t.number,
-      dy: t.number,
-    }),
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("resizeShape"),
-    args: t.type({
-      id: t.string,
-      ds: t.number,
-    }),
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("rotateShape"),
-    args: t.type({
-      id: t.string,
-      ddeg: t.number,
-    }),
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("initShapes"),
-    args: t.array(
-      t.type({
-        id: t.string,
-        shape,
-      })
-    ),
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("initClientState"),
-    args: t.type({
-      id: t.string,
-      defaultUserInfo: userInfo,
-    }),
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("setCursor"),
-    args: t.type({
-      id: t.string,
-      x: t.number,
-      y: t.number,
-    }),
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("overShape"),
-    args: t.type({
-      clientID: t.string,
-      shapeID: t.string,
-    }),
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("selectShape"),
-    args: t.type({
-      clientID: t.string,
-      shapeID: t.string,
-    }),
-  }),
-  t.type({
-    id: t.number,
-    name: t.literal("deleteAllShapes"),
-  }),
-]);
+// TODO: Either generate schema from mutator types, or vice versa, to tighten this.
+// See notes in bug: https://github.com/rocicorp/replidraw/issues/47
+const mutation = t.type({
+  id: t.number,
+  name: t.string,
+  args: t.any,
+});
 
 const pushRequest = t.type({
   clientID: t.string,
   mutations: t.array(mutation),
 });
-
-type Mutation = t.TypeOf<typeof mutation>;
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log("Processing push", JSON.stringify(req.body, null, ""));
@@ -160,7 +59,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const t0 = Date.now();
   await transact(async (executor) => {
-    const s = storage(executor, docID);
+    const tx = new WriteTransactionImpl(executor, docID);
 
     let lastMutationID = await getLastMutationID(executor, push.clientID);
     console.log("lastMutationID:", lastMutationID);
@@ -183,39 +82,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       console.log("Processing mutation:", JSON.stringify(mutation, null, ""));
 
       const t1 = Date.now();
-      switch (mutation.name) {
-        case "createShape":
-          await putShape(s, mutation.args);
-          break;
-        case "deleteShape":
-          await deleteShape(s, mutation.args);
-          break;
-        case "moveShape":
-          await moveShape(s, mutation.args);
-          break;
-        case "resizeShape":
-          await resizeShape(s, mutation.args);
-          break;
-        case "rotateShape":
-          await rotateShape(s, mutation.args);
-          break;
-        case "initShapes":
-          await initShapes(s, mutation.args);
-          break;
-        case "initClientState":
-          await initClientState(s, mutation.args);
-          break;
-        case "setCursor":
-          await setCursor(s, mutation.args);
-          break;
-        case "overShape":
-          await overShape(s, mutation.args);
-          break;
-        case "selectShape":
-          await selectShape(s, mutation.args);
-          break;
-        case "deleteAllShapes":
-          await delAllShapes(executor, docID);
+      const mutator = (mutators as any)[mutation.name];
+      if (!mutator) {
+        console.error(`Unknown mutator: ${mutation.name} - skipping`);
+      }
+
+      try {
+        await mutator(tx, mutation.args);
+      } catch (e) {
+        console.error(
+          `Error executing mutator: ${JSON.stringify(mutator)}: ${e.message}`
+        );
       }
 
       lastMutationID = expectedMutationID;
@@ -223,8 +100,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     await Promise.all([
-      s.flush(),
       setLastMutationID(executor, push.clientID, lastMutationID),
+      tx.flush(),
     ]);
   });
 

@@ -1,6 +1,6 @@
+import { ReadTransaction, WriteTransaction } from "replicache";
 import * as t from "io-ts";
-import { must } from "../backend/decode";
-import { ReadStorage, WriteStorage } from "./storage";
+import { must } from "./decode";
 import { randInt } from "./rand";
 
 const colors = [
@@ -56,13 +56,13 @@ export type UserInfo = t.TypeOf<typeof userInfo>;
 export type ClientState = t.TypeOf<typeof clientState>;
 
 export async function initClientState(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   { id, defaultUserInfo }: { id: string; defaultUserInfo: UserInfo }
 ): Promise<void> {
-  if (await storage.getObject(key(id))) {
+  if (await tx.has(key(id))) {
     return;
   }
-  await putClientState(storage, {
+  await putClientState(tx, {
     id,
     clientState: {
       cursor: {
@@ -77,10 +77,10 @@ export async function initClientState(
 }
 
 export async function getClientState(
-  storage: ReadStorage,
+  tx: ReadTransaction,
   id: string
 ): Promise<ClientState> {
-  const jv = await storage.getObject(key(id));
+  const jv = await tx.get(key(id));
   if (!jv) {
     throw new Error("Expected clientState to be initialized already: " + id);
   }
@@ -88,38 +88,38 @@ export async function getClientState(
 }
 
 export function putClientState(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   { id, clientState }: { id: string; clientState: ClientState }
 ): Promise<void> {
-  return storage.putObject(key(id), clientState);
+  return tx.put(key(id), clientState);
 }
 
 export async function setCursor(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   { id, x, y }: { id: string; x: number; y: number }
 ): Promise<void> {
-  const clientState = await getClientState(storage, id);
+  const clientState = await getClientState(tx, id);
   clientState.cursor.x = x;
   clientState.cursor.y = y;
-  await putClientState(storage, { id, clientState });
+  await putClientState(tx, { id, clientState });
 }
 
 export async function overShape(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   { clientID, shapeID }: { clientID: string; shapeID: string }
 ): Promise<void> {
-  const client = await getClientState(storage, clientID);
+  const client = await getClientState(tx, clientID);
   client.overID = shapeID;
-  await putClientState(storage, { id: clientID, clientState: client });
+  await putClientState(tx, { id: clientID, clientState: client });
 }
 
 export async function selectShape(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   { clientID, shapeID }: { clientID: string; shapeID: string }
 ): Promise<void> {
-  const client = await getClientState(storage, clientID);
+  const client = await getClientState(tx, clientID);
   client.selectedID = shapeID;
-  await putClientState(storage, { id: clientID, clientState: client });
+  await putClientState(tx, { id: clientID, clientState: client });
 }
 
 export function randUserInfo(): UserInfo {
@@ -132,7 +132,7 @@ export function randUserInfo(): UserInfo {
 }
 
 function key(id: string): string {
-  return `${keyPrefix}${id}`;
+  return `${clientStatePrefix}${id}`;
 }
 
-export const keyPrefix = `client-state-`;
+export const clientStatePrefix = `client-state-`;

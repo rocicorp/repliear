@@ -1,8 +1,8 @@
+import { ReadTransaction, WriteTransaction } from "replicache";
 import * as t from "io-ts";
-import { must } from "../backend/decode";
+import { must } from "./decode";
 import { nanoid } from "nanoid";
 import { randInt } from "./rand";
-import { ReadStorage, WriteStorage } from "./storage";
 
 export const shape = t.type({
   type: t.literal("rect"),
@@ -17,10 +17,10 @@ export const shape = t.type({
 export type Shape = t.TypeOf<typeof shape>;
 
 export async function getShape(
-  storage: ReadStorage,
+  tx: ReadTransaction,
   id: string
 ): Promise<Shape | null> {
-  const jv = await storage.getObject(key(id));
+  const jv = await tx.get(key(id));
   if (!jv) {
     console.log(`Specified shape ${id} not found.`);
     return null;
@@ -29,33 +29,36 @@ export async function getShape(
 }
 
 export function putShape(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   { id, shape }: { id: string; shape: Shape }
 ): Promise<void> {
-  return storage.putObject(key(id), shape);
+  return tx.put(key(id), shape);
 }
 
-export function deleteShape(storage: WriteStorage, id: string): Promise<void> {
-  return storage.delObject(key(id));
+export async function deleteShape(
+  tx: WriteTransaction,
+  id: string
+): Promise<void> {
+  await tx.del(key(id));
 }
 
 export async function moveShape(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   { id, dx, dy }: { id: string; dx: number; dy: number }
 ): Promise<void> {
-  const shape = await getShape(storage, id);
+  const shape = await getShape(tx, id);
   if (shape) {
     shape.x += dx;
     shape.y += dy;
-    await putShape(storage, { id, shape });
+    await putShape(tx, { id, shape });
   }
 }
 
 export async function resizeShape(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   { id, ds }: { id: string; ds: number }
 ): Promise<void> {
-  const shape = await getShape(storage, id);
+  const shape = await getShape(tx, id);
   if (shape) {
     const minSize = 10;
     const dw = Math.max(minSize - shape.width, ds);
@@ -64,37 +67,39 @@ export async function resizeShape(
     shape.height += dh;
     shape.x -= dw / 2;
     shape.y -= dh / 2;
-    await putShape(storage, { id, shape });
+    await putShape(tx, { id, shape });
   }
 }
 
 export async function rotateShape(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   { id, ddeg }: { id: string; ddeg: number }
 ): Promise<void> {
-  const shape = await getShape(storage, id);
+  const shape = await getShape(tx, id);
   if (shape) {
     shape.rotate += ddeg;
-    await putShape(storage, { id, shape });
+    await putShape(tx, { id, shape });
   }
 }
 
 export async function initShapes(
-  storage: WriteStorage,
+  tx: WriteTransaction,
   shapes: { id: string; shape: Shape }[]
 ) {
-  if (await storage.getObject("initialized")) {
+  if (await tx.has("initialized")) {
     return;
   }
   await Promise.all([
-    storage.putObject("initialized", true),
-    ...shapes.map((s) => putShape(storage, s)),
+    tx.put("initialized", true),
+    ...shapes.map((s) => putShape(tx, s)),
   ]);
 }
 
 function key(id: string): string {
-  return `shape-${id}`;
+  return `${shapePrefix}${id}`;
 }
+
+export const shapePrefix = "shape-";
 
 const colors = ["red", "blue", "white", "green", "yellow"];
 let nextColor = 0;
