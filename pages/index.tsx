@@ -7,7 +7,7 @@ function Page() {
 export function getServerSideProps() {
   return {
     redirect: {
-      destination: `/d/${nanoid()}`,
+      destination: `/d/${nanoid(6)}`,
       permanent: false,
     },
   };
