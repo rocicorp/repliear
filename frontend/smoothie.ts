@@ -1,9 +1,8 @@
 import hermite from "cubic-hermite";
 import { useEffect, useState } from "react";
 import { Replicache, ReadTransaction } from "replicache";
-import { getClientState } from "../shared/client-state";
-import { getShape } from "../shared/shape";
-import { readStorage } from "./data";
+import { getClientState } from "../frontend/client-state";
+import { getShape } from "../frontend/shape";
 
 /**
  * Gets the current position of the cursor for `clientID`, but smoothing out
@@ -18,8 +17,7 @@ export function useCursor(
     rep,
     `cursor/${clientID}`,
     async (tx: ReadTransaction) => {
-      const storage = readStorage(tx);
-      const clientState = await getClientState(storage, clientID);
+      const clientState = await getClientState(tx, clientID);
       return [clientState.cursor.x, clientState.cursor.y];
     }
   );
@@ -41,8 +39,7 @@ export function useShape(rep: Replicache, shapeID: string) {
     rep,
     `shape/${shapeID}`,
     async (tx: ReadTransaction) => {
-      const storage = readStorage(tx);
-      const shape = await getShape(storage, shapeID);
+      const shape = await getShape(tx, shapeID);
       return (
         shape && [shape.x, shape.y, shape.width, shape.height, shape.rotate]
       );

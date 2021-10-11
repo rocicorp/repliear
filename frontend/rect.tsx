@@ -1,9 +1,11 @@
 import React, { MouseEventHandler, TouchEventHandler } from "react";
-import { Data } from "./data";
+import { Replicache } from "replicache";
+import { M } from "./mutators";
 import { useShape } from "./smoothie";
+import { useShapeByID } from "./subscriptions";
 
 export function Rect({
-  data,
+  rep,
   id,
   highlight = false,
   highlightColor = "rgb(74,158,255)",
@@ -12,7 +14,7 @@ export function Rect({
   onMouseEnter,
   onMouseLeave,
 }: {
-  data: Data;
+  rep: Replicache<M>;
   id: string;
   highlight?: boolean;
   highlightColor?: string;
@@ -21,8 +23,8 @@ export function Rect({
   onMouseEnter?: MouseEventHandler;
   onMouseLeave?: MouseEventHandler;
 }) {
-  const shape = data.useShapeByID(id);
-  const coords = useShape(data.rep, id);
+  const shape = useShapeByID(rep, id);
+  const coords = useShape(rep, id);
   if (!shape || !coords) {
     return null;
   }

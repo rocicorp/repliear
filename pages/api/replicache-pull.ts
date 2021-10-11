@@ -2,13 +2,10 @@ import * as t from "io-ts";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ExecuteStatementCommandOutput, Field } from "@aws-sdk/client-rds-data";
 import { transact } from "../../backend/rds";
-import {
-  getCookie,
-  getLastMutationID,
-  storage,
-} from "../../backend/data";
-import { must } from "../../backend/decode";
-import { initShapes, randomShape } from "../../shared/shape";
+import { getCookie, getLastMutationID } from "../../backend/data";
+import { must } from "../../frontend/decode";
+import { initShapes, randomShape } from "../../frontend/shape";
+import { WriteTransactionImpl } from "../../backend/write-transaction-impl";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log(`Processing pull`, JSON.stringify(req.body, null, ""));
@@ -23,12 +20,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   let lastMutationID = 0;
 
   await transact(async (executor) => {
-    const s = storage(executor, docID);
+    const tx = new WriteTransactionImpl(executor, docID);
     await initShapes(
-      s,
+      tx,
       new Array(5).fill(null).map(() => randomShape())
     );
-    await s.flush();
+    await tx.flush();
     [entries, lastMutationID, responseCookie] = await Promise.all([
       executor(
         `SELECT K, V, Deleted FROM Object
@@ -47,7 +44,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   // Grump. Typescript seems to not understand that the argument to transact()
   // is guaranteed to have been called before transact() exits.
-  entries = (entries as any) as ExecuteStatementCommandOutput;
+  entries = entries as any as ExecuteStatementCommandOutput;
 
   const resp: PullResponse = {
     lastMutationID,
