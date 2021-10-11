@@ -45,6 +45,7 @@ export function Nav({ rep }: { rep: Replicache<M> }) {
             ></path>
           </svg>
         </div>
+        {/*
         <div
           className={styles.button}
           title="Clear All"
@@ -65,7 +66,7 @@ export function Nav({ rep }: { rep: Replicache<M> }) {
               stroke="none"
             ></path>
           </svg>
-        </div>
+        </div>*/}
         <div className={`${styles.button}`} onClick={() => showShare(true)}>
           Share
         </div>

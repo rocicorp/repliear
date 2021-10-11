@@ -34,7 +34,7 @@ export default function Home() {
       r.onSync = (syncing: boolean) => {
         if (!syncing) {
           r.onSync = null;
-          r.mutate.initShapes(new Array(5).fill(null).map(() => randomShape()));
+          r.mutate.initShapes(Array.from({ length: 5 }, () => randomShape()));
         }
       };
 

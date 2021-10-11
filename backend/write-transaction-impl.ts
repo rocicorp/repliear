@@ -3,16 +3,16 @@ import { delObject, getObject, putObject } from "./data";
 import { ExecuteStatementFn, transact } from "./rds";
 
 /**
- * Implements ReplicaCache's WriteTransaction interface in terms of a MySQL
+ * Implements Replicache's WriteTransaction interface in terms of a MySQL
  * transaction.
  */
 export class WriteTransactionImpl implements WriteTransaction {
   private _docID: string;
   private _executor: ExecuteStatementFn;
-  private _cache: Record<
+  private _cache: Map<
     string,
     { value: JSONValue | undefined; dirty: boolean }
-  > = {};
+  > = new Map();
 
   constructor(executor: ExecuteStatementFn, docID: string) {
     this._docID = docID;
@@ -20,20 +20,20 @@ export class WriteTransactionImpl implements WriteTransaction {
   }
 
   async put(key: string, value: JSONValue): Promise<void> {
-    this._cache[key] = { value, dirty: true };
+    this._cache.set(key, { value, dirty: true });
   }
   async del(key: string): Promise<boolean> {
     const had = await this.has(key);
-    this._cache[key] = { value: undefined, dirty: true };
+    this._cache.set(key, { value: undefined, dirty: true });
     return had;
   }
   async get(key: string): Promise<JSONValue | undefined> {
-    const entry = this._cache[key];
+    const entry = this._cache.get(key);
     if (entry) {
       return entry.value;
     }
     const value = await getObject(this._executor, this._docID, key);
-    this._cache[key] = { value, dirty: false };
+    this._cache.set(key, { value, dirty: false });
     return value;
   }
   async has(key: string): Promise<boolean> {
@@ -54,7 +54,7 @@ export class WriteTransactionImpl implements WriteTransaction {
 
   async flush(): Promise<void> {
     await Promise.all(
-      Object.entries(this._cache)
+      [...this._cache.entries()]
         .filter(([, { dirty }]) => dirty)
         .map(([k, { value }]) => {
           if (value === undefined) {
