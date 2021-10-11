@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Rect } from "./rect";
 import { useCursor } from "./smoothie";
 import { Replicache } from "replicache";
-import { M } from "./mutators";
+import type { M } from "./mutators";
 import { useClientInfo } from "./subscriptions";
 
 const hideCollaboratorDelay = 5000;
