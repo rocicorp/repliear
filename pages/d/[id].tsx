@@ -21,7 +21,6 @@ export default function Home() {
       const r = new Replicache({
         pushURL: `/api/replicache-push?docID=${docID}`,
         pullURL: `/api/replicache-pull?docID=${docID}`,
-        useMemstore: true,
         name: docID,
         mutators,
       });
