@@ -83,29 +83,19 @@ test("getEntry", async () => {
   });
 });
 
-/*
 test("getEntry RoundTrip types", async () => {
   await withExecutor(async (executor) => {
-    await putEntry(executor, "s1", "boolean", true);
-    await putEntry(executor, "s1", "number", 42);
-    await putEntry(executor, "s1", "string", "foo");
-    await putEntry(executor, "s1", "array", [1, 2, 3]);
-    await putEntry(executor, "s1", "object", { a: 1, b: 2 });
+    await putEntry(executor, "s1", "boolean", true, 1);
+    await putEntry(executor, "s1", "number", 42, 1);
+    await putEntry(executor, "s1", "string", "foo", 1);
+    await putEntry(executor, "s1", "array", [1, 2, 3], 1);
+    await putEntry(executor, "s1", "object", { a: 1, b: 2 }, 1);
 
-    expect(await getEntry(executor, "s1", "boolean", z.boolean())).eq(true);
-    expect(await getEntry(executor, "s1", "number", z.number())).eq(42);
-    expect(await getEntry(executor, "s1", "string", z.string())).eq("foo");
-    expect(
-      await getEntry(executor, "s1", "array", z.array(z.number()))
-    ).deep.equal([1, 2, 3]);
-    expect(
-      await getEntry(
-        executor,
-        "s1",
-        "object",
-        z.object({ a: z.number(), b: z.number() })
-      )
-    ).deep.equal({ a: 1, b: 2 });
+    expect(await getEntry(executor, "s1", "boolean")).eq(true);
+    expect(await getEntry(executor, "s1", "number")).eq(42);
+    expect(await getEntry(executor, "s1", "string")).eq("foo");
+    expect(await getEntry(executor, "s1", "array")).deep.equal([1, 2, 3]);
+    expect(await getEntry(executor, "s1", "object")).deep.equal({ a: 1, b: 2 });
   });
 });
 
@@ -113,16 +103,24 @@ test("putEntry", async () => {
   type Case = {
     name: string;
     duplicate: boolean;
+    deleted: boolean;
   };
 
   const cases: Case[] = [
     {
       name: "not duplicate",
       duplicate: false,
+      deleted: false,
     },
     {
       name: "duplicate",
       duplicate: true,
+      deleted: false,
+    },
+    {
+      name: "deleted",
+      duplicate: true,
+      deleted: true,
     },
   ];
 
@@ -132,24 +130,28 @@ test("putEntry", async () => {
 
       let res: Promise<void>;
       if (c.duplicate) {
-        await putEntry(executor, "s1", "foo", 41);
-        res = putEntry(executor, "s1", "foo", 42);
-      } else {
-        res = putEntry(executor, "s1", "foo", 42);
+        await putEntry(executor, "s1", "foo", 41, 1);
+        if (c.deleted) {
+          await delEntry(executor, "s1", "foo", 1);
+        }
       }
+      res = putEntry(executor, "s1", "foo", 42, 2);
 
       await res.catch(() => ({}));
 
       const qr = await executor(
-        `select spaceid, key, value from entry where spaceid = 's1' and key = 'foo'`
+        `select spaceid, key, value, deleted, version
+        from entry where spaceid = 's1' and key = 'foo'`
       );
       const [row] = qr.rows;
 
       expect(row, c.name).not.undefined;
-      const { spaceid, key, value } = row;
+      const { spaceid, key, value, deleted, version } = row;
       expect(spaceid, c.name).eq("s1");
       expect(key, c.name).eq("foo");
-      expect(value, c.name).eq(42);
+      expect(value, c.name).eq("42");
+      expect(deleted, c.name).false;
+      expect(version, c.name).eq(2);
     }
   });
 });
@@ -174,22 +176,33 @@ test("delEntry", async () => {
       await executor(`delete from entry where spaceid = 's1' and key = 'foo'`);
       if (c.exists) {
         await executor(
-          `insert into entry (spaceid, key, value, lastmodified) values ('s1', 'foo', '42', now())`
+          `insert into entry (spaceid, key, value, deleted, version, lastmodified) values ('s1', 'foo', '42', false, 1, now())`
         );
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let error: any | undefined;
-      await delEntry(executor, "s1", "foo").catch((e) => (error = String(e)));
+      await delEntry(executor, "s1", "foo", 2).catch(
+        (e) => (error = String(e))
+      );
 
       const qr = await executor(
-        `select spaceid, key, value from entry where spaceid = 's1' and key = 'foo'`
+        `select spaceid, key, value, deleted, version from entry where spaceid = 's1' and key = 'foo'`
       );
       const [row] = qr.rows;
 
-      expect(row, c.name).undefined;
-      expect(error, c.name).undefined;
+      if (c.exists) {
+        expect(row, c.name).not.undefined;
+        const { spaceid, key, value, deleted, version } = row;
+        expect(spaceid, c.name).eq("s1");
+        expect(key, c.name).eq("foo");
+        expect(value, c.name).eq("42");
+        expect(deleted, c.name).true;
+        expect(version, c.name).eq(2);
+      } else {
+        expect(row, c.name).undefined;
+        expect(error, c.name).undefined;
+      }
     });
   }
 });
-*/
