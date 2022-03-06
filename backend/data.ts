@@ -85,6 +85,21 @@ export async function delEntry(
   );
 }
 
+export async function getChangedEntries(
+  executor: Executor,
+  spaceID: string,
+  key: string,
+  prevVersion: number
+): Promise<[key: string, value: JSONValue, deleted: boolean][]> {
+  const {
+    rows,
+  } = await executor(
+    `select key, value from entry where spaceid = $1 and key = $2 and version > $3`,
+    [spaceID, key, prevVersion]
+  );
+  return rows.map((row) => [row.key, JSON.parse(row.value), row.deleted]);
+}
+
 export async function getCookie(
   executor: Executor,
   spaceID: string

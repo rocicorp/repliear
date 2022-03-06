@@ -1,69 +1,51 @@
-/*
-import * as t from "io-ts";
-import { transact } from "../../backend/rds";
-import { getLastMutationID, setLastMutationID } from "../../backend/data";
+import { transact } from "../../backend/pg";
+import {
+  getCookie,
+  getLastMutationID,
+  setLastMutationID,
+} from "../../backend/data";
 import Pusher from "pusher";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { WriteTransactionImpl } from "../../backend/write-transaction-impl";
+import { ReplicacheTransaction } from "../../backend/replicache-transaction";
 import { mutators } from "../../frontend/mutators";
-import { must } from "../../frontend/decode";
+import { z } from "zod";
+import { jsonSchema } from "../../util/json";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
 // See notes in bug: https://github.com/rocicorp/replidraw/issues/47
-const mutation = t.type({
-  id: t.number,
-  name: t.string,
-  args: t.any,
+const mutationSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  args: jsonSchema,
 });
 
-const pushRequest = t.type({
-  clientID: t.string,
-  mutations: t.array(mutation),
+const pushRequestSchema = z.object({
+  clientID: z.string(),
+  mutations: z.array(mutationSchema),
 });
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   console.log("Processing push", JSON.stringify(req.body, null, ""));
 
-  const docID = req.query["docID"].toString();
-  const push = must(pushRequest.decode(req.body));
-
-  // Because we are implementing multiplayer, our pushes will tend to have
-  // *lots* of very fine-grained events. Think, for example, of mouse moves.
-  //
-  // I hear you saying, dear reader: "It's silly to send and process all these
-  // little teeny movemove events. Why not collapse consecutive runs of the
-  // same mutation type either on client before sending, or server before
-  // processing.
-  //
-  // We could do that, but there are cases that are more complicated. Consider
-  // drags for example: when a user drags an object, the mutations we get are
-  // like: moveCursor,moveShape,moveCursor,moveShape,etc.
-  //
-  // It's less clear how to collapse sequences like this. In the specific case
-  // of moveCursor/moveShape, you could come up with something that make sense,
-  // but generally Replicache mutations are arbitrary functions of the data
-  // at a moment in time. We can't re-order or collapse them and get a correct
-  // result without re-running them.
-  //
-  // Instead, we take a different tack:
-  // * We send all the mutations, faithfully, from the client (and rely on gzip
-  //   to compress it).
-  // * We open a single, exclusive transaction against MySQL to process all
-  //   mutations in a push.
-  // * We heavily cache (in memory) within that transaction so that we don't
-  //   have to go all the way back to MySQL for each tiny mutation.
-  // * We flush all the mutations to MySQL in parallel at the end.
-  //
-  // As a nice bonus this means that (a) we don't have to have any special-case
-  // collapse logic anywhere, and (b) we get a nice perf boost by parallelizing
-  // the flush at the end.
+  const spaceID = req.query["spaceID"].toString();
+  const push = pushRequestSchema.parse(req.body);
 
   const t0 = Date.now();
   await transact(async (executor) => {
-    const tx = new WriteTransactionImpl(executor, docID);
+    const prevVersion = (await getCookie(executor, spaceID)) ?? 0;
+    const nextVersion = prevVersion + 1;
+    let lastMutationID =
+      (await getLastMutationID(executor, push.clientID)) ?? 0;
 
-    let lastMutationID = await getLastMutationID(executor, push.clientID);
+    console.log("prevVersion: ", prevVersion);
     console.log("lastMutationID:", lastMutationID);
+
+    const tx = new ReplicacheTransaction(
+      executor,
+      spaceID,
+      push.clientID,
+      nextVersion
+    );
 
     for (let i = 0; i < push.mutations.length; i++) {
       const mutation = push.mutations[i];
@@ -92,7 +74,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         await mutator(tx, mutation.args);
       } catch (e) {
         console.error(
-          `Error executing mutator: ${JSON.stringify(mutator)}: ${e.message}`
+          `Error executing mutator: ${JSON.stringify(mutator)}: ${e}`
         );
       }
 
@@ -124,4 +106,3 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   res.status(200).json({});
 };
-*/
