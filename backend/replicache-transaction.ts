@@ -6,7 +6,7 @@ import { Executor } from "./pg";
  * Implements Replicache's WriteTransaction interface in terms of a Postgres
  * transaction.
  */
-export class WriteTransactionImpl implements WriteTransaction {
+export class ReplicacheTransaction implements WriteTransaction {
   private _spaceID: string;
   private _clientID: string;
   private _version: number;

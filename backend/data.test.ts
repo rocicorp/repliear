@@ -7,11 +7,9 @@ import { createDatabase, delEntry, getEntry, putEntry } from "./data";
 import { withExecutor } from "./pg";
 
 setup(async () => {
-  await withExecutor(async () => {
-    // TODO: This is a very expensive way to unit test :).
-    // Is there an in-memory postgres or something?
-    await createDatabase();
-  });
+  // TODO: This is a very expensive way to unit test :).
+  // Is there an in-memory postgres or something?
+  await createDatabase();
 });
 
 test("getEntry", async () => {
