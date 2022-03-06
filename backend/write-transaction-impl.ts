@@ -1,22 +1,35 @@
 import type { JSONValue, ScanResult, WriteTransaction } from "replicache";
-import { delObject, getObject, putObject } from "./data";
-import { ExecuteStatementFn, transact } from "./rds";
+import { delEntry, getEntry, putEntry } from "./data";
+import { Executor } from "./pg";
 
 /**
- * Implements Replicache's WriteTransaction interface in terms of a MySQL
+ * Implements Replicache's WriteTransaction interface in terms of a Postgres
  * transaction.
  */
 export class WriteTransactionImpl implements WriteTransaction {
-  private _docID: string;
-  private _executor: ExecuteStatementFn;
+  private _spaceID: string;
+  private _clientID: string;
+  private _version: number;
+  private _executor: Executor;
   private _cache: Map<
     string,
     { value: JSONValue | undefined; dirty: boolean }
   > = new Map();
 
-  constructor(executor: ExecuteStatementFn, docID: string) {
-    this._docID = docID;
+  constructor(
+    executor: Executor,
+    spaceID: string,
+    clientID: string,
+    version: number
+  ) {
+    this._spaceID = spaceID;
+    this._clientID = clientID;
+    this._version = version;
     this._executor = executor;
+  }
+
+  get clientID(): string {
+    return this._clientID;
   }
 
   async put(key: string, value: JSONValue): Promise<void> {
@@ -32,7 +45,7 @@ export class WriteTransactionImpl implements WriteTransaction {
     if (entry) {
       return entry.value;
     }
-    const value = await getObject(this._executor, this._docID, key);
+    const value = await getEntry(this._executor, this._spaceID, key);
     this._cache.set(key, { value, dirty: false });
     return value;
   }
@@ -58,9 +71,15 @@ export class WriteTransactionImpl implements WriteTransaction {
         .filter(([, { dirty }]) => dirty)
         .map(([k, { value }]) => {
           if (value === undefined) {
-            return delObject(this._executor, this._docID, k);
+            return delEntry(this._executor, this._spaceID, k, this._version);
           } else {
-            return putObject(this._executor, this._docID, k, value);
+            return putEntry(
+              this._executor,
+              this._spaceID,
+              k,
+              value,
+              this._version
+            );
           }
         })
     );

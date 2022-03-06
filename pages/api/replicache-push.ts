@@ -1,3 +1,4 @@
+/*
 import * as t from "io-ts";
 import { transact } from "../../backend/rds";
 import { getLastMutationID, setLastMutationID } from "../../backend/data";
@@ -123,3 +124,4 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   res.status(200).json({});
 };
+*/

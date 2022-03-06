@@ -1,3 +1,4 @@
+/*
 import * as t from "io-ts";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ExecuteStatementCommandOutput, Field } from "@aws-sdk/client-rds-data";
@@ -116,3 +117,4 @@ const pullResponse = t.type({
   }),
 });
 type PullResponse = t.TypeOf<typeof pullResponse>;
+*/

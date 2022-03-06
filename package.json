@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "format": "prettier --write './**/*.{js,jsx,json,ts,tsx,html,css,md}'"
+    "format": "prettier --write './**/*.{js,jsx,json,ts,tsx,html,css,md}'",
+    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'backend/**/*.test.ts'"
   },
   "dependencies": {
     "@aws-sdk/client-rds-data": "^3.6.1",
@@ -16,6 +17,7 @@
     "io-ts": "^2.2.15",
     "nanoid": "^3.1.23",
     "next": "^11.0.1",
+    "pg": "^8.7.3",
     "pusher": "^4.0.2",
     "pusher-js": "^7.0.3",
     "react": "17.0.2",
@@ -27,11 +29,18 @@
     "replicache-react": "^2.0.0"
   },
   "devDependencies": {
+    "@types/chai": "^4.3.0",
     "@types/deep-equal": "^1.0.1",
+    "@types/mocha": "^9.1.0",
     "@types/node": "^14.14.37",
+    "@types/pg": "^8.6.4",
     "@types/react": "^17.0.11",
+    "chai": "^4.3.6",
+    "mocha": "^9.2.1",
     "prettier": "^2.2.1",
-    "typescript": "^4.1.5"
+    "ts-node": "^10.7.0",
+    "typescript": "^4.1.5",
+    "zod": "^3.13.4"
   },
   "resolutions": {
     "webpack": "^5.0.0-beta.30"
