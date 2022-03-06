@@ -17,11 +17,11 @@ export default function Home() {
         return;
       }
 
-      const [, , docID] = location.pathname.split("/");
+      const [, , spaceID] = location.pathname.split("/");
       const r = new Replicache({
-        pushURL: `/api/replicache-push?docID=${docID}`,
-        pullURL: `/api/replicache-pull?docID=${docID}`,
-        name: docID,
+        pushURL: `/api/replicache-push?spaceID=${spaceID}`,
+        pullURL: `/api/replicache-pull?spaceID=${spaceID}`,
+        name: spaceID,
         mutators,
       });
 

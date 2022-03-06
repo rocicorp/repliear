@@ -20,12 +20,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const pull = pullRequest.parse(req.body);
   let requestCookie = pull.cookie;
 
+  console.log("spaceID", spaceID);
+  console.log("clientID", pull.clientID);
+
   const t0 = Date.now();
 
   const [entries, lastMutationID, responseCookie] = await transact(
     async (executor) => {
       return Promise.all([
-        getChangedEntries(executor, spaceID, pull.clientID, requestCookie ?? 0),
+        getChangedEntries(executor, spaceID, requestCookie ?? 0),
         getLastMutationID(executor, pull.clientID),
         getCookie(executor, spaceID),
       ]);
@@ -33,7 +36,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   );
 
   console.log("lastMutationID: ", lastMutationID);
-  console.log("responseCookie: ", lastMutationID);
+  console.log("responseCookie: ", responseCookie);
   console.log("Read all objects in", Date.now() - t0);
 
   const resp: PullResponse = {

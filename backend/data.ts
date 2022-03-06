@@ -5,21 +5,21 @@ import { Executor, transact } from "./pg";
 export async function createDatabase() {
   await transact(async (executor) => {
     // TODO: Proper versioning for schema.
-    await executor("drop table if exists entry cascade");
-    await executor("drop table if exists client cascade");
     await executor("drop table if exists space cascade");
-
-    await executor(`create table client (
-      id text primary key not null,
-      lastmutationid bigint not null,
-      lastmodified timestamp(6) not null
-      )`);
+    await executor("drop table if exists client cascade");
+    await executor("drop table if exists entry cascade");
 
     await executor(`create table space (
-      id bigserial primary key not null,
-      version bigint not null,
+      id text primary key not null,
+      version integer not null,
       lastmodified timestamp(6) not null
       )`);
+
+    await executor(`create table client (
+        id text primary key not null,
+        lastmutationid integer not null,
+        lastmodified timestamp(6) not null
+        )`);
 
     await executor(`create table entry (
       spaceid text not null,
@@ -88,14 +88,13 @@ export async function delEntry(
 export async function getChangedEntries(
   executor: Executor,
   spaceID: string,
-  key: string,
   prevVersion: number
 ): Promise<[key: string, value: JSONValue, deleted: boolean][]> {
   const {
     rows,
   } = await executor(
-    `select key, value from entry where spaceid = $1 and key = $2 and version > $3`,
-    [spaceID, key, prevVersion]
+    `select key, value, deleted from entry where spaceid = $1 and version > $2`,
+    [spaceID, prevVersion]
   );
   return rows.map((row) => [row.key, JSON.parse(row.value), row.deleted]);
 }
@@ -107,7 +106,7 @@ export async function getCookie(
   const { rows } = await executor(`select version from space where id = $1`, [
     spaceID,
   ]);
-  const value = rows[0]?.value;
+  const value = rows[0]?.version;
   if (value === undefined) {
     return undefined;
   }
@@ -116,15 +115,15 @@ export async function getCookie(
 
 export async function setCookie(
   executor: Executor,
-  spaceID: bigint,
-  cookie: number
+  spaceID: string,
+  version: number
 ): Promise<void> {
   await executor(
     `
-    insert into space (cookie, lastmodified) values ($1, now())
-      on conflict (id) do update set cookie = $1, lastmodified = now()
+    insert into space (id, version, lastmodified) values ($1, $2, now())
+      on conflict (id) do update set version = $2, lastmodified = now()
     `,
-    [cookie]
+    [spaceID, version]
   );
 }
 
@@ -137,7 +136,7 @@ export async function getLastMutationID(
   } = await executor(`select lastmutationid from client where id = $1`, [
     clientID,
   ]);
-  const value = rows[0]?.value;
+  const value = rows[0]?.lastmutationid;
   if (value === undefined) {
     return undefined;
   }

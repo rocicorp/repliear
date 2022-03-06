@@ -2,6 +2,7 @@ import { transact } from "../../backend/pg";
 import {
   getCookie,
   getLastMutationID,
+  setCookie,
   setLastMutationID,
 } from "../../backend/data";
 import Pusher from "pusher";
@@ -84,6 +85,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     await Promise.all([
       setLastMutationID(executor, push.clientID, lastMutationID),
+      setCookie(executor, spaceID, nextVersion),
       tx.flush(),
     ]);
   });
