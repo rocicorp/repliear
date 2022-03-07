@@ -1,4 +1,4 @@
-import "../styles/globals.css";
+import "todomvc-app-css/index.css";
 
 function MyApp({ Component, pageProps }) {
   return <Component {...pageProps} />;
