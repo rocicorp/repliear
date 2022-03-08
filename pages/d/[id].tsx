@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Replicache } from "replicache";
 import Pusher from "pusher-js";
 import { M, mutators } from "../../frontend/mutators";
+import App from "../../frontend/app";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
@@ -38,5 +39,9 @@ export default function Home() {
     return null;
   }
 
-  return "hi";
+  return (
+    <div className="todoapp">
+      <App />
+    </div>
+  );
 }
