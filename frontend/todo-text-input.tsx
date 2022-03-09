@@ -12,14 +12,16 @@ import classnames from "classnames";
 import { M } from "./mutators";
 import { Replicache } from "replicache";
 import { nanoid } from "nanoid";
+import { getAllTodos, getNumTodos } from "./todo";
 
 export default function TodoTextInput({ rep }: { rep: Replicache<M> }) {
   const [textInput, setTextInput] = useState("");
   const ref = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleSubmit = async (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && ref.current) {
-      rep.mutate.addTodo({ id: nanoid(), text: textInput });
+      const sort = await rep.query(getNumTodos);
+      rep.mutate.addTodo({ id: nanoid(), text: textInput, sort });
       setTextInput("");
     }
   };

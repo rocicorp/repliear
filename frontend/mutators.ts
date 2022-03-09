@@ -7,11 +7,15 @@ export type M = typeof mutators;
 export const mutators = {
   addTodo: async (
     tx: WriteTransaction,
-    { id, text }: { id: string; text: string }
+    { id, text, sort }: { id: string; text: string; sort: number }
   ): Promise<void> => {
+    // TODO: It would be nice to be able to use scan() here to get the highest
+    // todo, but we can't because scan() not supported in mutators due to:
+    // https://github.com/rocicorp/replicache/issues/607.
     const todo: Todo = {
       text,
       completed: false,
+      sort,
     };
     await tx.put(todoKey(id), todo);
   },
