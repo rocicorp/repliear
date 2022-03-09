@@ -1,13 +1,14 @@
 import React from "react";
+import { Replicache } from "replicache";
 import Header from "./header";
+import MainSection from "./main-section";
+import { M } from "./mutators";
 //import MainSection from "../components/MainSection";
 
-const App = () => (
+const App = ({ rep }: { rep: Replicache<M> }) => (
   <div>
-    <Header />
-    {/*
-    <MainSection />
-*/}
+    <Header rep={rep} />
+    <MainSection rep={rep} />
   </div>
 );
 

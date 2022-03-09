@@ -1,22 +1,12 @@
 import React from "react";
-//import TodoTextInput from "./TodoTextInput";
+import { Replicache } from "replicache";
+import { M } from "./mutators";
+import TodoTextInput from "./todo-text-input";
 
-//import { addTodo } from "../stores/todo";
-
-const Header = () => (
+const Header = ({ rep }: { rep: Replicache<M> }) => (
   <header className="header">
     <h1>todos</h1>
-    {/*
-    <TodoTextInput
-    newTodo
-    onSave={(text) => {
-      if (text.length !== 0) {
-        addTodo(text);
-      }
-    }}
-    placeholder="What needs to be done?"
-  />
-*/}
+    <TodoTextInput rep={rep} />
   </header>
 );
 

@@ -5,12 +5,15 @@ import { getAllTodos, getTodo, Todo, todoKey, todoSchema } from "./todo";
 export type M = typeof mutators;
 
 export const mutators = {
-  addTodo: async (tx: WriteTransaction, text: string): Promise<void> => {
+  addTodo: async (
+    tx: WriteTransaction,
+    { id, text }: { id: string; text: string }
+  ): Promise<void> => {
     const todo: Todo = {
       text,
       completed: false,
     };
-    await tx.put(todoKey(nanoid()), todo);
+    await tx.put(todoKey(id), todo);
   },
 
   editTodo: async (

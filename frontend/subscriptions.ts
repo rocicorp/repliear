@@ -1,7 +1,20 @@
 import { useSubscribe } from "replicache-react";
 import { M } from "./mutators";
 import { Replicache } from "replicache";
-import { getAllTodos, todoPrefix } from "./todo";
+import { getAllTodos, Todo, todoID, todoKey, todoPrefix } from "./todo";
+
+export function useTodo(rep: Replicache<M>, id: string | undefined) {
+  return useSubscribe(
+    rep,
+    async (tx) => {
+      if (id === undefined) {
+        return null;
+      }
+      return (await tx.get(todoKey(id))) as Todo | null;
+    },
+    null
+  );
+}
 
 export function useTodosCount(rep: Replicache<M>) {
   return useSubscribe(
@@ -24,21 +37,24 @@ export function useCompletedCount(rep: Replicache<M>) {
   );
 }
 
-export function useFilteredTodos(rep: Replicache<M>, filter: string) {
+export function useFilteredTodoIDs(rep: Replicache<M>, filter: string) {
   return useSubscribe(
     rep,
     async (tx) => {
       const todos = await getAllTodos(tx);
-      switch (filter) {
-        case "All":
-          return todos;
-        case "Completed":
-          return todos.filter(([_, t]) => t.completed);
-        case "Active":
-          return todos.filter(([_, t]) => !t.completed);
-        default:
-          throw new Error("Unknown filter: " + filter);
-      }
+      const filtered = todos.filter(([_, t]) => {
+        switch (filter) {
+          case "all":
+            return true;
+          case "active":
+            return !t.completed;
+          case "completed":
+            return t.completed;
+          default:
+            throw new Error("Unknown filter: " + filter);
+        }
+      });
+      return filtered.map(([id]) => id);
     },
     []
   );
