@@ -1,4 +1,4 @@
-# Replido
+# replicache-todo
 
 TodoMVC/React ported to Replicache/Next.js/Postgres.
 
@@ -17,3 +17,5 @@ What's left is to basically port https://codesandbox.io/s/react-todomvc-using-ho
 
 - Switch to Superstruct
 - Add instructions about provisioning Supabase and working locally
+- Publish `resolver` or whatever is necessary to not have it in `util`
+- Factor out the server into some separate open source repo
