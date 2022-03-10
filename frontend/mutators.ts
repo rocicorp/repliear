@@ -1,68 +1,64 @@
-import { nanoid } from "nanoid";
 import { WriteTransaction } from "replicache";
-import { getAllTodos, getTodo, Todo, todoKey, todoSchema } from "./todo";
+import { getTodo, putTodo, Todo, todoKey } from "./todo";
 
 export type M = typeof mutators;
 
 export const mutators = {
-  addTodo: async (
-    tx: WriteTransaction,
-    { id, text, sort }: { id: string; text: string; sort: number }
-  ): Promise<void> => {
-    // TODO: It would be nice to be able to use scan() here to get the highest
-    // todo, but we can't because scan() not supported in mutators due to:
-    // https://github.com/rocicorp/replicache/issues/607.
-    const todo: Todo = {
-      text,
-      completed: false,
-      sort,
-    };
-    await tx.put(todoKey(id), todo);
-  },
+  putTodo,
 
-  editTodo: async (
+  updateTodo: async (
     tx: WriteTransaction,
-    { id, text }: { id: string; text: string }
+    {
+      id,
+      changes,
+    }: {
+      id: string;
+      changes: Omit<Partial<Todo>, "id">;
+    }
   ): Promise<void> => {
     const todo = await getTodo(tx, id);
-    if (todo !== undefined) {
-      todo.text = text;
-      await tx.put(todoKey(id), todo);
+    if (todo === undefined) {
+      console.info(`Todo ${id} not found`);
+      return;
+    }
+    const changed = { ...todo, ...changes };
+    await putTodo(tx, changed);
+  },
+
+  deleteTodos: async (tx: WriteTransaction, ids: string[]): Promise<void> => {
+    for (const id of ids) {
+      await tx.del(todoKey(id));
     }
   },
 
-  completeTodo: async (
-    tx: WriteTransaction,
-    { id, completed }: { id: string; completed: boolean }
-  ): Promise<void> => {
-    const todo = await getTodo(tx, id);
-    if (todo !== undefined) {
-      todo.completed = completed;
-      await tx.put(todoKey(id), todo);
-    }
-  },
-
-  deleteTodo: async (tx: WriteTransaction, id: string): Promise<void> => {
-    await tx.del(todoKey(id));
-  },
-
+  // TODO: Use getAllTodos() when server supports scan.
   completeAllTodos: async (
     tx: WriteTransaction,
-    completed: boolean
+    { completed, ids }: { completed: boolean; ids: string[] }
   ): Promise<void> => {
-    const todos = await getAllTodos(tx);
-    for (const [id, todo] of todos) {
+    for (const id of ids) {
+      const todo = await getTodo(tx, id);
+      if (!todo) {
+        console.warn("Todo not found:", id);
+        continue;
+      }
       todo.completed = completed;
       await tx.put(todoKey(id), todo);
     }
   },
 
-  clearCompletedTodos: async (tx: WriteTransaction): Promise<void> => {
-    const todos = await getAllTodos(tx);
-    for (const [id, todo] of todos) {
-      if (todo.completed) {
-        await tx.del(todoKey(id));
+  // TODO: Use getAllTodos() when server supports scan.
+  deleteAllTodos: async (
+    tx: WriteTransaction,
+    ids: string[]
+  ): Promise<void> => {
+    for (const id of ids) {
+      const todo = await getTodo(tx, id);
+      if (!todo) {
+        console.warn("Todo not found:", id);
+        continue;
       }
+      await tx.del(todoKey(id));
     }
   },
 };

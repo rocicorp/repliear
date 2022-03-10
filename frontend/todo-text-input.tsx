@@ -1,27 +1,29 @@
 import React, {
   ChangeEvent,
-  Component,
   FocusEvent,
-  FocusEventHandler,
   KeyboardEvent,
   useRef,
   useState,
 } from "react";
-import PropTypes from "prop-types";
 import classnames from "classnames";
-import { M } from "./mutators";
-import { Replicache } from "replicache";
-import { nanoid } from "nanoid";
-import { getAllTodos, getNumTodos } from "./todo";
 
-export default function TodoTextInput({ rep }: { rep: Replicache<M> }) {
+export default function TodoTextInput({
+  initial,
+  placeholder,
+  onBlur,
+  onSubmit,
+}: {
+  initial: string;
+  placeholder?: string;
+  onBlur?: (text: string) => void;
+  onSubmit: (text: string) => void;
+}) {
   const [textInput, setTextInput] = useState("");
   const ref = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && ref.current) {
-      const sort = await rep.query(getNumTodos);
-      rep.mutate.addTodo({ id: nanoid(), text: textInput, sort });
+    if (e.key === "Enter") {
+      onSubmit(textInput);
       setTextInput("");
     }
   };
@@ -31,19 +33,20 @@ export default function TodoTextInput({ rep }: { rep: Replicache<M> }) {
   };
 
   const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
-    //if editing
-    //onSave(ref.current.value);
+    if (onBlur) {
+      onBlur(textInput);
+    }
   };
 
   return (
     <input
       ref={ref}
       className={classnames({
-        edit: false,
-        "new-todo": true,
+        edit: initial !== "",
+        "new-todo": initial == "",
       })}
       type="text"
-      placeholder="What needs to be done?"
+      placeholder={placeholder}
       autoFocus={true}
       value={textInput}
       onBlur={handleBlur}

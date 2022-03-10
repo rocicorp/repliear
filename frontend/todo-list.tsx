@@ -1,21 +1,28 @@
 import React from "react";
-import { Replicache } from "replicache";
-import { M } from "./mutators";
-import { useFilteredTodoIDs } from "./subscriptions";
+import { Todo } from "./todo";
 import { TodoItem } from "./todo-item";
-//import TodoItem from "./TodoItem";
 
 const TodoList = ({
-  rep,
-  visibilityFilter,
+  todos,
+  onUpdateTodo,
+  onCompleteTodo,
+  onDeleteTodo,
 }: {
-  rep: Replicache<M>;
-  visibilityFilter: string;
+  todos: Todo[];
+  onUpdateTodo: (id: string, text: string) => void;
+  onCompleteTodo: (id: string, completed: boolean) => void;
+  onDeleteTodo: (id: string) => void;
 }) => {
   return (
     <ul className="todo-list">
-      {useFilteredTodoIDs(rep, visibilityFilter).map((id) => (
-        <TodoItem rep={rep} id={id} key={id} />
+      {todos.map((todo) => (
+        <TodoItem
+          todo={todo}
+          key={todo.id}
+          onUpdate={(text) => onUpdateTodo(todo.id, text)}
+          onComplete={(complete) => onCompleteTodo(todo.id, complete)}
+          onDelete={() => onDeleteTodo(todo.id)}
+        />
       ))}
     </ul>
   );

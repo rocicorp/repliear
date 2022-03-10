@@ -1,12 +1,38 @@
-import React from "react";
-import { Replicache } from "replicache";
-import { M } from "./mutators";
-//import Footer from "./Footer";
+import React, { useState } from "react";
+import { Todo } from "./todo";
+import Footer from "./footer";
 import TodoList from "./todo-list";
 
-const MainSection = ({ rep }: { rep: Replicache<M> }) => {
-  //const todosCount = todos.length;
-  //const completedCount = getCompletedCount(todos);
+const MainSection = ({
+  todos,
+  onUpdateTodo,
+  onCompleteTodo,
+  onDeleteTodos,
+}: {
+  todos: Todo[];
+  onUpdateTodo: (id: string, text: string) => void;
+  onCompleteTodo: (id: string, completed: boolean) => void;
+  onDeleteTodos: (ids: string[]) => void;
+}) => {
+  const todosCount = todos.length;
+  const completed = todos.filter((todo) => todo.completed);
+  const completedCount = completed.length;
+
+  const [filter, setFilter] = useState("All");
+
+  const filteredTodos = todos.filter((todo) => {
+    if (filter === "All") {
+      return true;
+    }
+    if (filter === "Active") {
+      return !todo.completed;
+    }
+    if (filter === "Completed") {
+      return todo.completed;
+    }
+    throw new Error("Unknown filter: " + filter);
+  });
+
   return (
     <section className="main">
       {/*!!todosCount && (
@@ -19,14 +45,23 @@ const MainSection = ({ rep }: { rep: Replicache<M> }) => {
           <label onClick={completeAllTodos} />
         </span>
       )*/}
-      <TodoList rep={rep} visibilityFilter={"all"} />
-      {/*!!todosCount && (
+      <TodoList
+        todos={filteredTodos}
+        onUpdateTodo={onUpdateTodo}
+        onCompleteTodo={onCompleteTodo}
+        onDeleteTodo={(id) => onDeleteTodos([id])}
+      />
+      {todos.length > 0 && (
         <Footer
-          completedCount={completedCount}
-          activeCount={todosCount - completedCount}
-          onClearCompleted={clearCompletedTodos}
+          completed={completedCount}
+          active={todosCount - completedCount}
+          onDeleteCompleted={() =>
+            onDeleteTodos(completed.map((todo) => todo.id))
+          }
+          currentFilter={filter}
+          onFilter={setFilter}
         />
-      )*/}
+      )}
     </section>
   );
 };

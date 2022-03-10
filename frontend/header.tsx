@@ -1,12 +1,14 @@
 import React from "react";
-import { Replicache } from "replicache";
-import { M } from "./mutators";
 import TodoTextInput from "./todo-text-input";
 
-const Header = ({ rep }: { rep: Replicache<M> }) => (
+const Header = ({ onNewItem }: { onNewItem: (text: string) => void }) => (
   <header className="header">
     <h1>todos</h1>
-    <TodoTextInput rep={rep} />
+    <TodoTextInput
+      initial=""
+      placeholder="What needs to be done?"
+      onSubmit={onNewItem}
+    />
   </header>
 );
 
