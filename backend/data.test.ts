@@ -1,8 +1,6 @@
 import { expect } from "chai";
-import { boolean } from "fp-ts";
 import { setup, test } from "mocha";
 import { JSONValue } from "replicache";
-import { z } from "zod";
 import { createDatabase, delEntry, getEntry, putEntry } from "./data";
 import { withExecutor } from "./pg";
 

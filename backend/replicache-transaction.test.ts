@@ -3,7 +3,6 @@ import { expect } from "chai";
 import { test, setup } from "mocha";
 import { withExecutor } from "./pg";
 import { createDatabase, getEntry } from "./data";
-import { resolver } from "../util/resolver";
 
 setup(async () => {
   await createDatabase();
