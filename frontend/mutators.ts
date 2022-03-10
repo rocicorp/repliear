@@ -46,19 +46,4 @@ export const mutators = {
       await tx.put(todoKey(id), todo);
     }
   },
-
-  // TODO: Use getAllTodos() when server supports scan.
-  deleteAllTodos: async (
-    tx: WriteTransaction,
-    ids: string[]
-  ): Promise<void> => {
-    for (const id of ids) {
-      const todo = await getTodo(tx, id);
-      if (!todo) {
-        console.warn("Todo not found:", id);
-        continue;
-      }
-      await tx.del(todoKey(id));
-    }
-  },
 };

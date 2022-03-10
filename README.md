@@ -15,6 +15,8 @@ What's left is to basically port https://codesandbox.io/s/react-todomvc-using-ho
 
 ## Other TODOs
 
+- Fix completeAllTodos() to use scan when https://github.com/rocicorp/replicache/issues/607 is fixed.
+- Implement implicit db creation, or put a script in the package
 - Switch to Superstruct
 - Add instructions about provisioning Supabase and working locally
 - Publish `resolver` or whatever is necessary to not have it in `util`
