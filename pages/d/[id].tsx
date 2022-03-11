@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Replicache } from "replicache";
-import Pusher from "pusher-js";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
+import { createClient } from "@supabase/supabase-js";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
@@ -22,14 +22,16 @@ export default function Home() {
         mutators,
       });
 
-      Pusher.logToConsole = true;
-      var pusher = new Pusher("d9088b47d2371d532c4c", {
-        cluster: "us3",
-      });
-      var channel = pusher.subscribe("default");
-      channel.bind("poke", () => {
-        r.pull();
-      });
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_KEY!
+      );
+      supabase
+        .from(`space:id=eq.${spaceID}`)
+        .on("*", () => {
+          r.pull();
+        })
+        .subscribe();
 
       setRep(r);
     })();

@@ -5,7 +5,6 @@ import {
   setCookie,
   setLastMutationID,
 } from "../../backend/data";
-import Pusher from "pusher";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ReplicacheTransaction } from "../../backend/replicache-transaction";
 import { mutators } from "../../frontend/mutators";
@@ -91,20 +90,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   });
 
   console.log("Processed all mutations in", Date.now() - t0);
-
-  const pusher = new Pusher({
-    appId: "1157097",
-    key: "d9088b47d2371d532c4c",
-    secret: "64204dab73c42e17afc3",
-    cluster: "us3",
-    useTLS: true,
-  });
-
-  const t2 = Date.now();
-  // We need to await here otherwise, Next.js will frequently kill the request
-  // and the poke won't get sent.
-  await pusher.trigger("default", "poke", {});
-  console.log("Sent poke in", Date.now() - t2);
 
   res.status(200).json({});
 };
