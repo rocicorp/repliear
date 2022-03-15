@@ -15,6 +15,3 @@ This basically works, but little bits are still left.
 - Implement implicit db creation, or put a script in the package, then remove api/init.ts
 - Switch to Superstruct
 - Add instructions about provisioning Supabase and working locally
-- Publish `resolver` or whatever is necessary to not have it in `util`
-- Factor out the server into some separate open source repo
-- If possible, switch to using Supabase's built-in realtime support for the poke
