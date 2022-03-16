@@ -1,31 +1,52 @@
 import { JSONValue } from "replicache";
 import { z } from "zod";
-import { Executor, transact } from "./pg";
+import { Executor } from "./pg";
 
-export async function createDatabase() {
-  await transact(async (executor) => {
-    // TODO: Proper versioning for schema.
-    await executor("drop table if exists space cascade");
-    await executor("drop table if exists client cascade");
-    await executor("drop table if exists entry cascade");
+export async function createDatabase(executor: Executor) {
+  const schemaVersion = await getSchemaVersion(executor);
+  if (schemaVersion < 0 || schemaVersion > 1) {
+    throw new Error("Unexpected schema version: " + schemaVersion);
+  }
+  if (schemaVersion === 0) {
+    await createSchemaVersion1(executor);
+  }
+  console.log("schemaVersion is 1 - nothing to do");
+}
 
-    await executor(`create table space (
+async function getSchemaVersion(executor: Executor) {
+  const metaExists = await executor(`select exists(
+    select from pg_tables where schemaname = 'public' and tablename = 'meta')`);
+  if (!metaExists.rows[0].exists) {
+    return 0;
+  }
+
+  const qr = await executor(
+    `select value from meta where key = 'schemaVersion'`
+  );
+  return qr.rows[0].value;
+}
+
+export async function createSchemaVersion1(executor: Executor) {
+  await executor("create table meta (key text primary key, value json)");
+  await executor("insert into meta (key, value) values ('schemaVersion', '1')");
+
+  await executor(`create table space (
       id text primary key not null,
       version integer not null,
       lastmodified timestamp(6) not null
       )`);
 
-    await executor(`alter publication supabase_realtime add table space`);
-    await executor(`alter publication supabase_realtime set 
+  await executor(`alter publication supabase_realtime add table space`);
+  await executor(`alter publication supabase_realtime set 
       (publish = 'insert, update, delete');`);
 
-    await executor(`create table client (
+  await executor(`create table client (
         id text primary key not null,
         lastmutationid integer not null,
         lastmodified timestamp(6) not null
         )`);
 
-    await executor(`create table entry (
+  await executor(`create table entry (
       spaceid text not null,
       key text not null,
       value text not null,
@@ -34,11 +55,10 @@ export async function createDatabase() {
       lastmodified timestamp(6) not null
       )`);
 
-    await executor(`create unique index on entry (spaceid, key)`);
-    await executor(`create index on entry (spaceid)`);
-    await executor(`create index on entry (deleted)`);
-    await executor(`create index on entry (version)`);
-  });
+  await executor(`create unique index on entry (spaceid, key)`);
+  await executor(`create index on entry (spaceid)`);
+  await executor(`create index on entry (deleted)`);
+  await executor(`create index on entry (version)`);
 }
 
 export async function getEntry(

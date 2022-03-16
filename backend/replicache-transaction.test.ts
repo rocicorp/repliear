@@ -1,11 +1,11 @@
 import { ReplicacheTransaction } from "./replicache-transaction";
 import { expect } from "chai";
 import { test, setup } from "mocha";
-import { withExecutor } from "./pg";
+import { transact, withExecutor } from "./pg";
 import { createDatabase, getEntry } from "./data";
 
 setup(async () => {
-  await createDatabase();
+  await transact((executor) => createDatabase(executor));
 });
 
 test("ReplicacheTransaction", async () => {

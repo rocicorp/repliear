@@ -9,9 +9,9 @@ Intended for customers to clone and start editing.
 
 Install the following before starting:
 
-* Git
-* Docker (and ensure the daemon is running)
-* [Supabase CLI](https://github.com/supabase/cli)
+- Git
+- Docker (and ensure the daemon is running)
+- [Supabase CLI](https://github.com/supabase/cli)
 
 ## Setup
 
@@ -31,14 +31,13 @@ DATABASE_URL="<DB URL>" NEXT_PUBLIC_SUPABASE_URL="<API URL>" NEXT_PUBLIC_SUPABAS
 
 ## Publishing
 
-* Push this repo to a new github project
-* Create a free account on supabase.com, and an empty project
-* Create a free account on vercel.com
-* Create a new project on vercel, configuring the environment variables using the values from your hosted Supabase project
+- Push this repo to a new github project
+- Create a free account on supabase.com, and an empty project
+- Create a free account on vercel.com
+- Create a new project on vercel, configuring the environment variables using the values from your hosted Supabase project
 
 ## TODO
 
 - Fix completeAllTodos() to use scan when https://github.com/rocicorp/replicache/issues/607 is fixed
-- Implement implicit db creation, or put a script in the package, then remove api/init.ts
 - Switch to Superstruct
 - Add instructions about provisioning Supabase and working locally

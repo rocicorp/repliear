@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { transact } from "../../backend/pg";
 import {
+  createDatabase,
   getChangedEntries,
   getCookie,
   getLastMutationID,
@@ -27,6 +28,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const [entries, lastMutationID, responseCookie] = await transact(
     async (executor) => {
+      await createDatabase(executor);
+
       return Promise.all([
         getChangedEntries(executor, spaceID, requestCookie ?? 0),
         getLastMutationID(executor, pull.clientID),

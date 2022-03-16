@@ -2,12 +2,12 @@ import { expect } from "chai";
 import { setup, test } from "mocha";
 import { JSONValue } from "replicache";
 import { createDatabase, delEntry, getEntry, putEntry } from "./data";
-import { withExecutor } from "./pg";
+import { transact, withExecutor } from "./pg";
 
 setup(async () => {
   // TODO: This is a very expensive way to unit test :).
   // Is there an in-memory postgres or something?
-  await createDatabase();
+  await transact((executor) => createDatabase(executor));
 });
 
 test("getEntry", async () => {

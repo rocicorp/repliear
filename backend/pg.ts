@@ -75,6 +75,7 @@ async function transactWithExecutor<R>(
         await executor("commit");
         return r;
       } catch (e) {
+        console.log("caught error", e, "rolling back");
         await executor("rollback");
         throw e;
       }

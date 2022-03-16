@@ -1,5 +1,6 @@
 import { transact } from "../../backend/pg";
 import {
+  createDatabase,
   getCookie,
   getLastMutationID,
   setCookie,
@@ -32,6 +33,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const t0 = Date.now();
   await transact(async (executor) => {
+    await createDatabase(executor);
+
     const prevVersion = (await getCookie(executor, spaceID)) ?? 0;
     const nextVersion = prevVersion + 1;
     let lastMutationID =
