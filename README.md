@@ -1,6 +1,6 @@
 # replicache-todo
 
-TodoMVC/React ported to Replicache/Next.js/Postgres.
+TodoMVC/React ported to Replicache/Next.js/Supabase/Postgres.
 
 The simplest possible starter sample for Replicache.
 Intended for customers to clone and start editing.
