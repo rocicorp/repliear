@@ -1,9 +1,6 @@
-# replicache-todo
+# Repliear
 
-A super fast todo list built with Replicache, React, Next.js, Vercel, Supabase, and Postgres.
-
-The simplest possible starter sample for Replicache.
-Intended for customers to clone and start editing.
+See: https://github.com/rocicorp/replicache/issues/857
 
 ## Prerequisites
 
@@ -16,14 +13,14 @@ Install the following before starting:
 ## Setup
 
 ```bash
-git clone https://github.com/rocicorp/replicache-todo
-cd replicache-todo
+git clone https://github.com/rocicorp/repliear
+cd repliear
 npm install
 supabase init
 supabase start
 ```
 
-To run `replicache-todo` app, run the following command but substitute each angle-bracket-wrapped parameter with the corresponding value which was output from `supabase start`.
+To run `repliear` app, run the following command but substitute each angle-bracket-wrapped parameter with the corresponding value which was output from `supabase start`.
 
 ```bash
 DATABASE_URL="<DB URL>" NEXT_PUBLIC_SUPABASE_URL="<API URL>" NEXT_PUBLIC_SUPABASE_KEY="<anon key>" npm run dev
@@ -35,9 +32,3 @@ DATABASE_URL="<DB URL>" NEXT_PUBLIC_SUPABASE_URL="<API URL>" NEXT_PUBLIC_SUPABAS
 - Create a free account on supabase.com, and an empty project
 - Create a free account on vercel.com
 - Create a new project on vercel, configuring the environment variables using the values from your hosted Supabase project
-
-## TODO
-
-- Fix completeAllTodos() to use scan when https://github.com/rocicorp/replicache/issues/607 is fixed
-- Switch to Superstruct
-- Add instructions about provisioning Supabase and working locally
