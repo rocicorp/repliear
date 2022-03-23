@@ -10,7 +10,11 @@ import ViewIcon from "./assets/icons/view.svg";
 import ExpandMore from "@mui/icons-material/KeyboardArrowDown";
 import Avatar from "./avatar";
 import Link from "next/link";
-
+import ItemGroup from "./item-group";
+import CircleOutlinedIcon from "@mui/icons-material/CircleOutlined";
+import { useClickOutside } from "./hooks/useClickOutside";
+import classnames from "classnames";
+import SearchBox from "./searchbox";
 interface Props {
   // Show menu (for small screen only)
   showMenu: boolean;
@@ -22,13 +26,22 @@ interface Props {
 
 const LeftMenu = ({ showMenu, onCloseMenu }: Props) => {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
+  let classes = classnames(
+    "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 bg-white flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-700 border-r border-gray-100 lg:shadow-none justify-items-start",
+    {
+      "-translate-x-full ease-out shadow-none": !showMenu,
+      "translate-x-0 ease-in shadow-xl": showMenu,
+    }
+  );
+
+  let ready = false;
+  useClickOutside(ref, () => {
+    if (ready && showMenu && onCloseMenu) onCloseMenu();
+  });
 
   return (
     <>
-      <div
-        className="absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 bg-white flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-700 border-r border-gray-100 lg:shadow-none justify-items-start"
-        ref={ref}
-      >
+      <div className={classes} ref={ref}>
         <button
           className="flex-shrink-0 px-5 ml-2 lg:hidden h-14 focus:outline-none"
           onClick={onCloseMenu}
@@ -73,7 +86,7 @@ const LeftMenu = ({ showMenu, onCloseMenu }: Props) => {
 
         {/* Search box */}
         <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-4">
-          {/* <SearchBox className='mt-5' /> */}
+          <SearchBox className="mt-5" />
           {/* actions */}
           <div className="group relative w-full mt-0.5 py-2 px-2 h-7 flex items-center rounded hover:bg-gray-100 cursor-pointer">
             <InboxIcon className="w-3.5 h-3.5 mr-4 text-sm text-gray-500 group-hover:text-gray-600" />
@@ -96,33 +109,44 @@ const LeftMenu = ({ showMenu, onCloseMenu }: Props) => {
 
           {/* Teams */}
           <h3 className="px-2 mt-5 text-xs text-gray-500">Your teams</h3>
-
-          {/* <ItemGroup title='Github'>
-                         <Link to='/' className='flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100'>
-                             <FiCircle className='w-3.5 h-3.5 mr-2 text-gray-500 group-hover:text-gray-600' />
-                             <span>Issues</span>
-                         </Link>
-                         <Link to='/' className='flex items-center pl-8 rounded cursor-pointer h-7 hover:bg-gray-100'>
-                             <span className='w-3 h-3 mr-2' ></span>
-                             <span>Backlog</span>
-                         </Link>
-                         <Link to='/' className='flex items-center pl-8 rounded cursor-pointer h-7 hover:bg-gray-100'>
-                             <span className='w-3 h-3 mr-2' ></span>
-                             <span>All</span>
-                         </Link>
-                         <Link to='/board' className='flex items-center pl-8 rounded cursor-pointer h-7 hover:bg-gray-100'>
-                             <span className='w-3 h-3 mr-2' ></span>
-                             <span>Board</span>
-                         </Link>
-                         <Link to='/' className='flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100'>
-                             <ProjectIcon className='w-3 h-3 mr-2 text-gray-500 group-hover:text-gray-700' />
-                             <span>Projects</span>
-                         </Link>
-                         <Link to='/' className='flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100'>
-                             <ArchiveIcon className='w-3 h-3 mr-2 text-gray-500 group-hover:text-gray-700' />
-                             <span>Archives</span>
-                         </Link>
-                     </ItemGroup> */}
+          <ItemGroup title="Github">
+            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
+              <CircleOutlinedIcon className="w-3.5 h-3.5 mr-2 text-gray-500 group-hover:text-gray-600" />
+              <Link href="/">
+                <span>Issues</span>
+              </Link>
+            </div>
+            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
+              <span className="w-3 h-3 mr-2"></span>
+              <Link href="/">
+                <span>Backlog</span>
+              </Link>
+            </div>
+            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
+              <span className="w-3 h-3 mr-2"></span>
+              <Link href="/">
+                <span>All</span>
+              </Link>
+            </div>
+            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
+              <span className="w-3 h-3 mr-2"></span>
+              <Link href="/board">
+                <span>Board</span>
+              </Link>
+            </div>
+            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
+              <ProjectIcon className="w-3 h-3 mr-2 text-gray-500 group-hover:text-gray-700" />
+              <Link href="/">
+                <span>Projects</span>
+              </Link>
+            </div>
+            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
+              <ArchiveIcon className="w-3 h-3 mr-2 text-gray-500 group-hover:text-gray-700" />
+              <Link href="/">
+                <span>Archives</span>
+              </Link>
+            </div>
+          </ItemGroup>
 
           {/* extra space */}
           <div className="flex flex-col flex-grow flex-shrink" />
