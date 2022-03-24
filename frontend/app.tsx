@@ -6,6 +6,7 @@ import LeftMenu from "./left-menu";
 import { M } from "./mutators";
 import { getAllTodos } from "./todo";
 import { useState } from "react";
+import TopFilter from "./top-filter";
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const todos = useSubscribe(rep, getAllTodos, []);
@@ -30,14 +31,12 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     <div>
       <div className="flex w-full h-screen overflow-y-hidden">
         <LeftMenu showMenu={showMenu} onCloseMenu={() => setShowMenu(false)} />
-        Left Menu
         <div className="flex flex-col flex-grow">
-          TopFilter
-          {/* <TopFilter
+          <TopFilter
             onOpenMenu={() => setShowMenu(!showMenu)}
             title="All issues"
           />
-          <IssueList /> */}
+          {/* <IssueList /> */}
         </div>
       </div>
     </div>
