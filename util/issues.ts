@@ -21,7 +21,7 @@ export type User = {
 };
 export type Issue = {
   priority: string;
-  id: string | undefined;
+  id: string;
   title: string;
   description: string;
   status: string;

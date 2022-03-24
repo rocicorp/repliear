@@ -6,6 +6,7 @@ import type { M } from "./mutators";
 //import { getAllTodos } from "./todo";
 import { useState } from "react";
 import TopFilter from "./top-filter";
+import IssueList from "./issue-list";
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -37,7 +38,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             onOpenMenu={() => setShowMenu(!showMenu)}
             title="All issues"
           />
-          {/* <IssueList /> */}
+          <IssueList />
         </div>
       </div>
     </div>
