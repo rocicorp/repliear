@@ -1,31 +1,32 @@
-import { nanoid } from "nanoid";
 import React from "react";
-import { Replicache } from "replicache";
-import { useSubscribe } from "replicache-react";
+import type { Replicache } from "replicache";
+// import { useSubscribe } from "replicache-react";
 import LeftMenu from "./left-menu";
-import { M } from "./mutators";
-import { getAllTodos } from "./todo";
+import type { M } from "./mutators";
+//import { getAllTodos } from "./todo";
 import { useState } from "react";
 import TopFilter from "./top-filter";
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
-  const todos = useSubscribe(rep, getAllTodos, []);
   const [showMenu, setShowMenu] = useState(false);
-  const handleNewItem = (text: string) =>
-    rep.mutate.putTodo({
-      id: nanoid(),
-      text,
-      sort: todos.length > 0 ? todos[todos.length - 1].sort + 1 : 0,
-      completed: false,
-    });
+  rep = rep;
+  // todo: will add this in when replicache sync is in place
+  // const todos = useSubscribe(rep, getAllTodos, []);
+  // const handleNewItem = (text: string) =>
+  //   rep.mutate.putTodo({
+  //     id: nanoid(),
+  //     text,
+  //     sort: todos.length > 0 ? todos[todos.length - 1].sort + 1 : 0,
+  //     completed: false,
+  //   });
 
-  const handleUpdateTodo = (id: string, text: string) =>
-    rep.mutate.updateTodo({ id, changes: { text } });
+  // const handleUpdateTodo = (id: string, text: string) =>
+  //   rep.mutate.updateTodo({ id, changes: { text } });
 
-  const handleCompleteTodo = (id: string, completed: boolean) =>
-    rep.mutate.updateTodo({ id, changes: { completed } });
+  // const handleCompleteTodo = (id: string, completed: boolean) =>
+  //   rep.mutate.updateTodo({ id, changes: { completed } });
 
-  const handleDeleteTodos = rep.mutate.deleteTodos;
+  // const handleDeleteTodos = rep.mutate.deleteTodos;
 
   return (
     <div>

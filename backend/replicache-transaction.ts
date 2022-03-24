@@ -1,6 +1,6 @@
 import type { JSONValue, ScanResult, WriteTransaction } from "replicache";
 import { delEntry, getEntry, putEntry } from "./data";
-import { Executor } from "./pg";
+import type { Executor } from "./pg";
 
 /**
  * Implements Replicache's WriteTransaction interface in terms of a Postgres

@@ -1,6 +1,6 @@
-import { JSONValue } from "replicache";
+import type { JSONValue } from "replicache";
 import { z } from "zod";
-import { Executor } from "./pg";
+import type { Executor } from "./pg";
 
 export async function createDatabase(executor: Executor) {
   const schemaVersion = await getSchemaVersion(executor);

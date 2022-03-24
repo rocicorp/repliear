@@ -1,4 +1,4 @@
-import { WriteTransaction } from "replicache";
+import type { WriteTransaction } from "replicache";
 import { getTodo, putTodo, Todo, todoKey } from "./todo";
 
 export type M = typeof mutators;

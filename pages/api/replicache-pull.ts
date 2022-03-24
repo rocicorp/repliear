@@ -7,7 +7,7 @@ import {
   getLastMutationID,
 } from "../../backend/data";
 import { z } from "zod";
-import { PullResponse } from "replicache";
+import type { PullResponse } from "replicache";
 
 const pullRequest = z.object({
   clientID: z.string(),

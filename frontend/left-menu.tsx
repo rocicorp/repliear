@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect, useRef, useState } from "react";
+import React, { RefObject, useRef } from "react";
 import AddIcon from "./assets/icons/add.svg";
 import ArchiveIcon from "./assets/icons/archive.svg";
 import HelpIcon from "./assets/icons/help.svg";

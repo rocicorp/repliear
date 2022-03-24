@@ -1,5 +1,5 @@
 import MenuIcon from "./assets/icons/menu.svg";
-import React, { useState } from "react";
+import React from "react";
 import SortOutlinedIcon from "@mui/icons-material/SortOutlined";
 // import IssueFilterModal from './IssueFilterModal';
 // import ViewOptionMenu from './ViewOptionMenu';
@@ -11,8 +11,8 @@ interface Props {
 }
 
 const TopFilter = ({ title, onOpenMenu }: Props) => {
-  const [showFilter, setShowFilter] = useState(false);
-  const [showViewOption, setShowViewOption] = useState(false);
+  // const [showFilter, setShowFilter] = useState(false);
+  // const [showViewOption, setShowViewOption] = useState(false);
 
   //todo: temporary issues
   const totalIssues =
@@ -40,7 +40,7 @@ const TopFilter = ({ title, onOpenMenu }: Props) => {
           <span>{totalIssues}</span>
           <button
             className="px-1 py-0.5 ml-3 border border-gray-300 border-dashed rounded text-gray-500 hover:border-gray-400 focus:outline-none hover:text-gray-800"
-            onClick={() => setShowFilter(!showFilter)}
+            // onClick={() => setShowFilter(!showFilter)}
           >
             + Filter
           </button>
@@ -50,7 +50,7 @@ const TopFilter = ({ title, onOpenMenu }: Props) => {
         <div className="flex items-center">
           <div
             className="p-2 rounded hover:bg-gray-100"
-            onClick={() => setShowViewOption(true)}
+            // onClick={() => setShowViewOption(true)}
           >
             <SortOutlinedIcon />
           </div>
