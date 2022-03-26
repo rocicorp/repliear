@@ -1,42 +1,33 @@
 import React, { RefObject, useRef } from "react";
 import AddIcon from "./assets/icons/add.svg";
-import ArchiveIcon from "./assets/icons/archive.svg";
 import HelpIcon from "./assets/icons/help.svg";
-import InboxIcon from "./assets/icons/inbox.svg";
-import IssueIcon from "./assets/icons/issue.svg";
 import MenuIcon from "./assets/icons/menu.svg";
-import ProjectIcon from "./assets/icons/project.svg";
-import ViewIcon from "./assets/icons/view.svg";
 import ExpandMore from "@mui/icons-material/KeyboardArrowDown";
 import Avatar from "./avatar";
 import Link from "next/link";
 import ItemGroup from "./item-group";
-import CircleOutlinedIcon from "@mui/icons-material/CircleOutlined";
 import { useClickOutside } from "./hooks/useClickOutside";
 import classnames from "classnames";
 import SearchBox from "./searchbox";
 interface Props {
   // Show menu (for small screen only)
-  showMenu: boolean;
+  menuVisible: boolean;
   onCloseMenu?: () => void;
-  onCreateIssue?: Function;
-  onOpenHelp?: Function;
-  onOpenInviteBox?: Function;
 }
 
-const LeftMenu = ({ showMenu, onCloseMenu }: Props) => {
+const LeftMenu = ({ menuVisible, onCloseMenu }: Props) => {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
-  let classes = classnames(
+  const classes = classnames(
     "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 bg-white flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-700 border-r border-gray-100 lg:shadow-none justify-items-start",
     {
-      "-translate-x-full ease-out shadow-none": !showMenu,
-      "translate-x-0 ease-in shadow-xl": showMenu,
+      "-translate-x-full ease-out shadow-none": !menuVisible,
+      "translate-x-0 ease-in shadow-xl": menuVisible,
     }
   );
 
   let ready = false;
   useClickOutside(ref, () => {
-    if (ready && showMenu && onCloseMenu) onCloseMenu();
+    if (ready && menuVisible && onCloseMenu) onCloseMenu();
   });
 
   return (
@@ -86,34 +77,14 @@ const LeftMenu = ({ showMenu, onCloseMenu }: Props) => {
 
         {/* Search box */}
         <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-4">
-          <SearchBox className="mt-5" />
+          <SearchBox placeholder="Search" className="mt-5" />
           {/* actions */}
-          <div className="group relative w-full mt-0.5 py-2 px-2 h-7 flex items-center rounded hover:bg-gray-100 cursor-pointer">
-            <InboxIcon className="w-3.5 h-3.5 mr-4 text-sm text-gray-500 group-hover:text-gray-600" />
-            <Link href="/">
-              <span>Inbox</span>
-            </Link>
-          </div>
-          <div className="group relative w-full mt-0.5 py-2 px-2 h-7 flex items-center rounded hover:bg-gray-100 cursor-pointer">
-            <IssueIcon className="w-3.5 h-3.5 mr-4 text-gray-500 group-hover:text-gray-600" />
-            <Link href="/">
-              <span>Issues</span>
-            </Link>
-          </div>
-          <div className="group relative w-full mt-0.5 py-2 px-2 h-7 flex items-center rounded hover:bg-gray-100 cursor-pointer">
-            <ViewIcon className="w-3.5 h-3.5 mr-4 text-gray-500 group-hover:text-gray-600" />
-            <Link href="/">
-              <span>Views</span>
-            </Link>
-          </div>
 
-          {/* Teams */}
-          <h3 className="px-2 mt-5 text-xs text-gray-500">Your teams</h3>
-          <ItemGroup title="Github">
+          <ItemGroup title="Issues">
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
-              <CircleOutlinedIcon className="w-3.5 h-3.5 mr-2 text-gray-500 group-hover:text-gray-600" />
+              <span className="w-3 h-3 mr-2"></span>
               <Link href="/">
-                <span>Issues</span>
+                <span>Active</span>
               </Link>
             </div>
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
@@ -124,26 +95,8 @@ const LeftMenu = ({ showMenu, onCloseMenu }: Props) => {
             </div>
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
               <span className="w-3 h-3 mr-2"></span>
-              <Link href="/">
-                <span>All</span>
-              </Link>
-            </div>
-            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
-              <span className="w-3 h-3 mr-2"></span>
               <Link href="/board">
                 <span>Board</span>
-              </Link>
-            </div>
-            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
-              <ProjectIcon className="w-3 h-3 mr-2 text-gray-500 group-hover:text-gray-700" />
-              <Link href="/">
-                <span>Projects</span>
-              </Link>
-            </div>
-            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
-              <ArchiveIcon className="w-3 h-3 mr-2 text-gray-500 group-hover:text-gray-700" />
-              <Link href="/">
-                <span>Archives</span>
               </Link>
             </div>
           </ItemGroup>
@@ -154,16 +107,10 @@ const LeftMenu = ({ showMenu, onCloseMenu }: Props) => {
           {/* bottom group */}
           <div className="px-2 pb-2 text-gray-500 mt-7">
             <button
-              className="inline-flex focus:outline-none"
-              // onClick={() => setShowInviteModal(true)}
-            >
-              <AddIcon className="w-3 mr-2" /> Invite people
-            </button>
-            <button
               className="inline-flex mt-1 focus:outline-none"
               // onClick={() => setShowHelpModal(true)}
             >
-              <HelpIcon className="w-3 mr-2" /> Help & Feedback
+              <HelpIcon className="w-3 mr-2" /> About
             </button>
           </div>
         </div>

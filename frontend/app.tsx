@@ -9,7 +9,7 @@ import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
-  const [showMenu, setShowMenu] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   rep = rep;
   // todo: will add this in when replicache sync is in place
   // const todos = useSubscribe(rep, getAllTodos, []);
@@ -32,10 +32,13 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   return (
     <div>
       <div className="flex w-full h-screen overflow-y-hidden">
-        <LeftMenu showMenu={showMenu} onCloseMenu={() => setShowMenu(false)} />
+        <LeftMenu
+          menuVisible={menuVisible}
+          onCloseMenu={() => setMenuVisible(false)}
+        />
         <div className="flex flex-col flex-grow">
           <TopFilter
-            onOpenMenu={() => setShowMenu(!showMenu)}
+            onOpenMenu={() => setMenuVisible(!menuVisible)}
             title="All issues"
           />
           <IssueList />

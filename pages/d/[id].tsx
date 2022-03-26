@@ -40,9 +40,8 @@ export default function Home() {
   if (!rep) {
     return null;
   }
-
   return (
-    <div className="todoapp">
+    <div className="repliear">
       <App rep={rep} />
     </div>
   );

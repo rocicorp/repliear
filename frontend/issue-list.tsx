@@ -20,7 +20,9 @@ function IssueList() {
     return aId - bId;
   });
 
-  var issueRows = issues.map((issue, idx) => <IssueRow issue={issue} />);
+  var issueRows = issues.map((issue, idx) => (
+    <IssueRow issue={issue} key={idx} />
+  ));
   return <div className="flex flex-col overflow-auto">{issueRows}</div>;
 }
 

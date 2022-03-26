@@ -4,17 +4,17 @@ import SortOutlinedIcon from "@mui/icons-material/SortOutlined";
 // import IssueFilterModal from './IssueFilterModal';
 // import ViewOptionMenu from './ViewOptionMenu';
 import { IssuesByStatus as issues } from "../util/issues";
+
 interface Props {
-  /* Top title */
   title: string;
-  onOpenMenu?: () => void;
+  onToggleMenu?: () => void;
 }
 
-const TopFilter = ({ title, onOpenMenu }: Props) => {
-  // const [showFilter, setShowFilter] = useState(false);
-  // const [showViewOption, setShowViewOption] = useState(false);
+const TopFilter = ({ title, onToggleMenu }: Props) => {
+  // const [filterVisible, setFilterVisible] = useState(false);
+  // const [viewOptionVisible, setViewOptionVisible] = useState(false);
 
-  //todo: temporary issues
+  // todo: temporary issues
   const totalIssues =
     issues.backlog.length +
     issues.todo.length +
@@ -29,7 +29,7 @@ const TopFilter = ({ title, onOpenMenu }: Props) => {
         <div className="flex items-center">
           <button
             className="flex-shrink-0 h-full px-5 focus:outline-none lg:hidden"
-            onClick={onOpenMenu}
+            onClick={onToggleMenu}
           >
             <MenuIcon className="w-3.5 text-gray-500 hover:text-gray-800" />
           </button>
@@ -40,7 +40,7 @@ const TopFilter = ({ title, onOpenMenu }: Props) => {
           <span>{totalIssues}</span>
           <button
             className="px-1 py-0.5 ml-3 border border-gray-300 border-dashed rounded text-gray-500 hover:border-gray-400 focus:outline-none hover:text-gray-800"
-            // onClick={() => setShowFilter(!showFilter)}
+            // onClick={() => setFilterVisible(!filterVisible)}
           >
             + Filter
           </button>
@@ -50,14 +50,14 @@ const TopFilter = ({ title, onOpenMenu }: Props) => {
         <div className="flex items-center">
           <div
             className="p-2 rounded hover:bg-gray-100"
-            // onClick={() => setShowViewOption(true)}
+            // onClick={() => setViewOptionVisible(true)}
           >
             <SortOutlinedIcon />
           </div>
         </div>
       </div>
-      {/* <ViewOptionMenu isOpen={showViewOption} onDismiss={() => setShowViewOption(false)} />
-            <IssueFilterModal isOpen={showFilter} onDismiss={() => setShowFilter(false)} /> */}
+      {/* <ViewOptionMenu isOpen={viewOptionVisible} onDismiss={() => setViewOptionVisible(false)} />
+            <IssueFilterModal isOpen={filterVisible} onDismiss={() => setFilterVisible(false)} /> */}
     </>
   );
 };

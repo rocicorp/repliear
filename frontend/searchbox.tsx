@@ -9,9 +9,7 @@ interface Props {
   className?: string;
 }
 
-function SearchBox(props: Props) {
-  const { placeholder, onChange, className } = props;
-
+function SearchBox({ placeholder = "Search", onChange, className }: Props) {
   const [focus, setFocus] = useState(false);
   return (
     <div className={classnames("relative", className)}>
@@ -34,9 +32,5 @@ function SearchBox(props: Props) {
     </div>
   );
 }
-
-SearchBox.defaultProps = {
-  placeholder: "Search",
-};
 
 export default SearchBox;

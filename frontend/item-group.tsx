@@ -8,19 +8,19 @@ interface Props {
   children: React.ReactNode;
 }
 function ItemGroup({ title, children }: Props) {
-  const [showItems, setshowItems] = useState(true);
+  const [itemsVisible, setItemsVisible] = useState(true);
 
-  let Icon = showItems ? ArrowDropDown : ArrowRight;
+  const Icon = itemsVisible ? ArrowDropDown : ArrowRight;
   return (
     <div className="flex flex-col w-full text-sm">
       <div
         className="px-2 relative w-full mt-0.5 h-7 flex items-center rounded hover:bg-gray-100 cursor-pointer"
-        onClick={() => setshowItems(!showItems)}
+        onClick={() => setItemsVisible(!itemsVisible)}
       >
         <Icon className="w-3 h-3 mr-2 -ml-1" />
         {title}
       </div>
-      {showItems && children}
+      {itemsVisible && children}
     </div>
   );
 }

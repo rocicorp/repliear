@@ -8,14 +8,15 @@ interface Props {
   onClick?: MouseEventHandler | undefined;
 }
 
-function getAcronym(name?: string) {
-  return ((name || "").match(/\b(\w)/g) || []).join("").substr(0, 2);
+function getAcronym(name: string) {
+  return (name.match(/\b(\w)/g) || []).join("").substr(0, 2);
 }
+
 function Avatar({ online, name, onClick, avatarUrl }: Props) {
   let avatar, status;
 
   // create avatar image icon
-  if (avatarUrl)
+  if (avatarUrl && name !== undefined)
     avatar = (
       <img src={avatarUrl} alt={name} className="w-4.5 h-4.5 rounded-full" />
     );
@@ -34,11 +35,11 @@ function Avatar({ online, name, onClick, avatarUrl }: Props) {
   }
 
   //status icon
-  if (online)
+  if (online) {
     status = (
       <span className="absolute -right-0.5 -bottom-0.5 w-2 h-2 rounded-full bg-green-500 border border-white"></span>
     );
-  else status = null;
+  } else status = null;
 
   return (
     <div className="relative" onClick={onClick}>
