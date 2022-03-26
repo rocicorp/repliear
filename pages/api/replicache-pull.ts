@@ -19,7 +19,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const spaceID = req.query["spaceID"].toString();
   const pull = pullRequest.parse(req.body);
-  let requestCookie = pull.cookie;
+  const requestCookie = pull.cookie;
 
   console.log("spaceID", spaceID);
   console.log("clientID", pull.clientID);
@@ -48,7 +48,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     patch: [],
   };
 
-  for (let [key, value, deleted] of entries) {
+  for (const [key, value, deleted] of entries) {
     if (deleted) {
       resp.patch.push({
         op: "del",

@@ -38,7 +38,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
         />
         <div className="flex flex-col flex-grow">
           <TopFilter
-            onOpenMenu={() => setMenuVisible(!menuVisible)}
+            onToggleMenu={() => setMenuVisible(!menuVisible)}
             title="All issues"
           />
           <IssueList />
