@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { setup, test } from "mocha";
-import { JSONValue } from "replicache";
+import type { JSONValue } from "replicache";
 import { createDatabase, delEntry, getEntry, putEntry } from "./data";
 import { transact, withExecutor } from "./pg";
 
