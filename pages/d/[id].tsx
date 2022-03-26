@@ -9,6 +9,8 @@ export default function Home() {
 
   // TODO: Think through Replicache + SSR.
   useEffect(() => {
+    // disabled eslint await requirement
+    // eslint-disable-next-line
     (async () => {
       if (rep) {
         return;
