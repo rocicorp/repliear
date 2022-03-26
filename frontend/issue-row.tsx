@@ -17,7 +17,6 @@ export default function IssueRow({
 }: //   onChangePriority,
 //   onChangeStatus,
 Props) {
-
   let avatar =
     issue.owner && issue.owner.avatar ? (
       <img
