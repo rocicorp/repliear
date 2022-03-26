@@ -2,7 +2,6 @@ import DefaultAvatarIcon from "./assets/icons/avatar.svg";
 // import PriorityMenu from 'components/contextmenu/PriorityMenu';
 // import StatusMenu from 'components/contextmenu/StatusMenu';
 import PriorityIcon from "./priority-icon";
-import StatusIcon from "./status-icon";
 import React from "react";
 import type { Issue } from "../util/issues";
 import { formatDate } from "../util/date";
@@ -18,7 +17,6 @@ export default function IssueRow({
 }: //   onChangePriority,
 //   onChangeStatus,
 Props) {
-  const statusIcon = <StatusIcon status={issue.status} />;
 
   let avatar =
     issue.owner && issue.owner.avatar ? (
