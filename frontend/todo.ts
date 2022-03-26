@@ -1,4 +1,4 @@
-import { ReadTransaction, WriteTransaction } from "replicache";
+import type { ReadTransaction, WriteTransaction } from "replicache";
 import { z } from "zod";
 
 export const todoPrefix = `todo/`;
