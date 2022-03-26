@@ -1,5 +1,4 @@
-import React, { useEffect } from "react";
-import type { Issue } from "../util/issues";
+import React from "react";
 import { IssuesByStatus as allIssues } from "../util/issues";
 // import IssueContextMenu from './IssueContextMenu';
 import IssueRow from "./issue-row";
