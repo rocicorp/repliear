@@ -5,10 +5,10 @@ import DoneIcon from "./assets/icons/done.svg";
 import InProgressIcon from "./assets/icons/half-circle.svg";
 import classNames from "classnames";
 import React from "react";
-import { Status } from "../util/issues";
+import { StatusEnum, Status } from "./issue";
 
 interface Props {
-  status: string;
+  status: StatusEnum;
   className?: string;
 }
 

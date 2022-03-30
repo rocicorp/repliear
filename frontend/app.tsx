@@ -1,9 +1,9 @@
 import React from "react";
 import type { Replicache } from "replicache";
-// import { useSubscribe } from "replicache-react";
+import { useSubscribe } from "replicache-react";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
-//import { getAllTodos } from "./todo";
+import { getAllIssues, SampleIssues } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
@@ -11,24 +11,14 @@ import IssueList from "./issue-list";
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   rep = rep;
-  // todo: will add this in when replicache sync is in place
-  // const todos = useSubscribe(rep, getAllTodos, []);
-  // const handleNewItem = (text: string) =>
-  //   rep.mutate.putTodo({
-  //     id: nanoid(),
-  //     text,
-  //     sort: todos.length > 0 ? todos[todos.length - 1].sort + 1 : 0,
-  //     completed: false,
-  //   });
 
-  // const handleUpdateTodo = (id: string, text: string) =>
-  //   rep.mutate.updateTodo({ id, changes: { text } });
+  const issues = useSubscribe(rep, getAllIssues, []);
 
-  // const handleCompleteTodo = (id: string, completed: boolean) =>
-  //   rep.mutate.updateTodo({ id, changes: { completed } });
-
-  // const handleDeleteTodos = rep.mutate.deleteTodos;
-
+  if (!issues.length) {
+    for (let i of SampleIssues) {
+      rep.mutate.putIssue(i);
+    }
+  }
   return (
     <div>
       <div className="flex w-full h-screen overflow-y-hidden">
@@ -40,8 +30,9 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           <TopFilter
             onToggleMenu={() => setMenuVisible(!menuVisible)}
             title="All issues"
+            issues={issues}
           />
-          <IssueList />
+          <IssueList issues={issues} />
         </div>
       </div>
     </div>

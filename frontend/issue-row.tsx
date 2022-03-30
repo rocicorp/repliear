@@ -3,7 +3,7 @@ import DefaultAvatarIcon from "./assets/icons/avatar.svg";
 // import StatusMenu from 'components/contextmenu/StatusMenu';
 import PriorityIcon from "./priority-icon";
 import React from "react";
-import type { Issue } from "../util/issues";
+import type { Issue } from "./issue";
 import { formatDate } from "../util/date";
 
 interface Props {
@@ -76,7 +76,7 @@ Props) {
       </div>
       <div className="flex flex-grow ml-2"></div>
       <div className="flex-shrink-0 hidden w-10 ml-2 mr-3 font-normal sm:block">
-        {formatDate(issue.createdAt)}
+        {formatDate(new Date(issue.modified))}
       </div>
       <div className="flex-shrink-0 ml-auto">{avatar}</div>
     </div>
