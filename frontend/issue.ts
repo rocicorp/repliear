@@ -3,9 +3,9 @@ import { z } from "zod";
 
 export const issuePrefix = `issue/`;
 
-export const IssueKey = (id: string) => `${issuePrefix}${id}`;
+export const issueKey = (id: string) => `${issuePrefix}${id}`;
 
-export const IssueID = (key: string) => {
+export const issueID = (key: string) => {
   if (!key.startsWith(issuePrefix)) {
     throw new Error(`Invalid key: ${key}`);
   }
@@ -60,7 +60,7 @@ export async function getIssue(
   tx: ReadTransaction,
   id: string
 ): Promise<Issue | undefined> {
-  const val = await tx.get(IssueKey(id));
+  const val = await tx.get(issueKey(id));
   if (val === undefined) {
     // Delete/write conflict -- no-op.
     return undefined;
@@ -73,9 +73,9 @@ export async function getIssue(
 
 export async function putIssue(
   tx: WriteTransaction,
-  Issue: Issue
+  issue: Issue
 ): Promise<void> {
-  await tx.put(IssueKey(Issue.id), Issue);
+  await tx.put(issueKey(issue.id), issue);
 }
 
 const i1: Issue = {
@@ -112,11 +112,11 @@ export const SampleIssues: Issue[] = [i1, i2, i3];
 
 export async function getAllIssues(tx: ReadTransaction): Promise<Issue[]> {
   const entries = await tx.scan({ prefix: issuePrefix }).entries().toArray();
-  const Issues = entries.map(([key, val]) => ({
-    id: IssueID(key),
+  const issues = entries.map(([key, val]) => ({
+    id: issueID(key),
     ...IssueValueSchema.parse(val),
   }));
-  return Issues;
+  return issues;
 }
 
 export type IssuesByStatusType = {

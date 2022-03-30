@@ -5,19 +5,19 @@ import DoneIcon from "./assets/icons/done.svg";
 import InProgressIcon from "./assets/icons/half-circle.svg";
 import classNames from "classnames";
 import React from "react";
-import { Status } from "../util/issues";
+import { StatusEnum } from "./issue";
 
 interface Props {
-  status: string;
+  status: StatusEnum;
   className?: string;
 }
 
 const statusIcons = {
-  [Status.BACKLOG]: BacklogIcon,
-  [Status.TODO]: TodoIcon,
-  [Status.IN_PROGRESS]: InProgressIcon,
-  [Status.DONE]: DoneIcon,
-  [Status.CANCELED]: CancelIcon,
+  [StatusEnum.enum.BACKLOG]: BacklogIcon,
+  [StatusEnum.enum.TODO]: TodoIcon,
+  [StatusEnum.enum.IN_PROGRESS]: InProgressIcon,
+  [StatusEnum.enum.DONE]: DoneIcon,
+  [StatusEnum.enum.CANCELED]: CancelIcon,
 };
 
 export default function StatusIcon({ status, className }: Props) {
