@@ -1,11 +1,12 @@
 import type { WriteTransaction } from "replicache";
 import { getTodo, putTodo, Todo, todoKey } from "./todo";
+import { putIssue } from "./issue";
 
 export type M = typeof mutators;
 
 export const mutators = {
   putTodo,
-
+  putIssue,
   updateTodo: async (
     tx: WriteTransaction,
     {
