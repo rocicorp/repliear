@@ -1,6 +1,6 @@
 import type { ReadTransaction, WriteTransaction } from "replicache";
 import { z } from "zod";
-
+import groupBy from "lodash/groupBy";
 export const issuePrefix = `issue/`;
 
 export const issueKey = (id: string) => `${issuePrefix}${id}`;
@@ -12,7 +12,7 @@ export const issueID = (key: string) => {
   return key.substring(issuePrefix.length);
 };
 
-enum Priority {
+export enum Priority {
   NONE,
   LOW,
   MEDIUM,
@@ -20,10 +20,10 @@ enum Priority {
   URGENT,
 }
 
-export const PriorityEnum = z.nativeEnum(Priority);
+const PriorityEnum = z.nativeEnum(Priority);
 export type PriorityEnum = z.infer<typeof PriorityEnum>;
 
-enum Status {
+export enum Status {
   BACKLOG = 1,
   TODO = 2,
   IN_PROGRESS = 3,
@@ -31,12 +31,12 @@ enum Status {
   CANCELED = 5,
 }
 
-export const StatusEnum = z.nativeEnum(Status);
+const StatusEnum = z.nativeEnum(Status);
 export type StatusEnum = z.infer<typeof StatusEnum>;
 
 const userSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().optional(),
+  id: z.string(),
+  name: z.string(),
   avatar: z.string().optional(),
 });
 
@@ -48,7 +48,7 @@ export const issueSchema = z.object({
   priority: PriorityEnum,
   status: StatusEnum,
   modified: z.number(),
-  owner: User,
+  owner: User.optional(),
   description: z.string(),
 });
 
@@ -85,7 +85,7 @@ const i1: Issue = {
   description: "",
   status: Status.IN_PROGRESS,
   modified: 0,
-  owner: {},
+  owner: { id: "1", name: "Aaron B" },
 };
 
 const i2: Issue = {
@@ -95,7 +95,7 @@ const i2: Issue = {
   description: "",
   status: Status.IN_PROGRESS,
   modified: 0,
-  owner: {},
+  owner: { id: "2", name: "Cesar A" },
 };
 
 const i3: Issue = {
@@ -105,7 +105,6 @@ const i3: Issue = {
   description: "",
   status: Status.TODO,
   modified: 0,
-  owner: {},
 };
 
 export const SampleIssues: Issue[] = [i1, i2, i3];
@@ -120,32 +119,22 @@ export async function getAllIssues(tx: ReadTransaction): Promise<Issue[]> {
 }
 
 export type IssuesByStatusType = {
-  backlog: Issue[];
-  todo: Issue[];
-  inProgress: Issue[];
-  done: Issue[];
-  canceled: Issue[];
+  [Status.BACKLOG]: Issue[];
+  [Status.TODO]: Issue[];
+  [Status.IN_PROGRESS]: Issue[];
+  [Status.DONE]: Issue[];
+  [Status.CANCELED]: Issue[];
 };
 
-export type Label = {
-  id: string;
-  name: string;
-  color: string;
-};
-
-export const DEFAULT_LABELS: Label[] = [
-  { id: "1", name: "Bug", color: "#eb5757" },
-  { id: "2", name: "Feature", color: "#bb87fc" },
-  { id: "3", name: "Improvement", color: "#4ea7fc" },
-];
-
-// todo: can do this with a fancy groupBy
-export const getIssuebyType = (allIssues: Issue[]): IssuesByStatusType => {
-  return {
-    backlog: allIssues.filter((r) => r.status == Status.BACKLOG),
-    todo: allIssues.filter((r) => r.status == Status.TODO),
-    inProgress: allIssues.filter((r) => r.status == Status.IN_PROGRESS),
-    done: allIssues.filter((r) => r.status == Status.DONE),
-    canceled: allIssues.filter((r) => r.status == Status.CANCELED),
+export const getIssueByType = (allIssues: Issue[]): IssuesByStatusType => {
+  const issuesBySType = groupBy(allIssues, "status");
+  const defaultIssueByType = {
+    [Status.BACKLOG]: [],
+    [Status.TODO]: [],
+    [Status.IN_PROGRESS]: [],
+    [Status.DONE]: [],
+    [Status.CANCELED]: [],
   };
+  const result = { ...issuesBySType, ...defaultIssueByType };
+  return result;
 };

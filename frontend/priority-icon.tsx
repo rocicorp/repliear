@@ -6,7 +6,7 @@ import SignalWeakIcon from "./assets/icons/signal-weak.svg";
 import classNames from "classnames";
 import React from "react";
 import type { PriorityEnum as PriorityType } from "./issue";
-import { PriorityEnum } from "./issue";
+import { Priority } from "./issue";
 
 interface Props {
   priority: PriorityType;
@@ -14,11 +14,11 @@ interface Props {
 }
 
 const ICONS = {
-  [PriorityEnum.enum.HIGH]: SignalStrongIcon,
-  [PriorityEnum.enum.MEDIUM]: SignalMediumIcon,
-  [PriorityEnum.enum.LOW]: SignalWeakIcon,
-  [PriorityEnum.enum.URGENT]: SignalUrgentIcon,
-  [PriorityEnum.enum.NONE]: SignalNoPriorityIcon,
+  [Priority.HIGH]: SignalStrongIcon,
+  [Priority.MEDIUM]: SignalMediumIcon,
+  [Priority.LOW]: SignalWeakIcon,
+  [Priority.URGENT]: SignalUrgentIcon,
+  [Priority.NONE]: SignalNoPriorityIcon,
 };
 
 export default function PriorityIcon({ priority, className }: Props) {
