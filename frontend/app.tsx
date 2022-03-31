@@ -10,15 +10,15 @@ import IssueList from "./issue-list";
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [menuVisible, setMenuVisible] = useState(false);
-  rep = rep;
 
   const issues = useSubscribe(rep, getAllIssues, []);
 
   if (!issues.length) {
-    for (let i of SampleIssues) {
-      rep.mutate.putIssue(i);
+    for (const i of SampleIssues) {
+      void rep.mutate.putIssue(i);
     }
   }
+
   return (
     <div>
       <div className="flex w-full h-screen overflow-y-hidden">

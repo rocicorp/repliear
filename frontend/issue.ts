@@ -1,10 +1,9 @@
 import type { ReadTransaction, WriteTransaction } from "replicache";
 import { z } from "zod";
 import groupBy from "lodash/groupBy";
+
 export const issuePrefix = `issue/`;
-
 export const issueKey = (id: string) => `${issuePrefix}${id}`;
-
 export const issueID = (key: string) => {
   if (!key.startsWith(issuePrefix)) {
     throw new Error(`Invalid key: ${key}`);
@@ -20,8 +19,8 @@ export enum Priority {
   URGENT,
 }
 
-const PriorityEnum = z.nativeEnum(Priority);
-export type PriorityEnum = z.infer<typeof PriorityEnum>;
+const priorityEnumSchema = z.nativeEnum(Priority);
+export type PriorityEnum = z.infer<typeof priorityEnumSchema>;
 
 export enum Status {
   BACKLOG = 1,
@@ -31,8 +30,8 @@ export enum Status {
   CANCELED = 5,
 }
 
-const StatusEnum = z.nativeEnum(Status);
-export type StatusEnum = z.infer<typeof StatusEnum>;
+const statusEnumSchema = z.nativeEnum(Status);
+export type StatusEnum = z.infer<typeof statusEnumSchema>;
 
 const userSchema = z.object({
   id: z.string(),
@@ -45,16 +44,16 @@ export const User = userSchema;
 export const issueSchema = z.object({
   id: z.string(),
   title: z.string(),
-  priority: PriorityEnum,
-  status: StatusEnum,
+  priority: priorityEnumSchema,
+  status: statusEnumSchema,
   modified: z.number(),
   owner: User.optional(),
   description: z.string(),
 });
 
 export type Issue = z.TypeOf<typeof issueSchema>;
-
-const IssueValueSchema = issueSchema.omit({ id: true });
+export type IssueValue = z.TypeOf<typeof issueValueSchema>;
+export const issueValueSchema = issueSchema.omit({ id: true });
 
 export async function getIssue(
   tx: ReadTransaction,
@@ -62,12 +61,11 @@ export async function getIssue(
 ): Promise<Issue | undefined> {
   const val = await tx.get(issueKey(id));
   if (val === undefined) {
-    // Delete/write conflict -- no-op.
     return undefined;
   }
   return {
     id,
-    ...IssueValueSchema.parse(val),
+    ...issueValueSchema.parse(val),
   };
 }
 
@@ -113,7 +111,7 @@ export async function getAllIssues(tx: ReadTransaction): Promise<Issue[]> {
   const entries = await tx.scan({ prefix: issuePrefix }).entries().toArray();
   const issues = entries.map(([key, val]) => ({
     id: issueID(key),
-    ...IssueValueSchema.parse(val),
+    ...issueValueSchema.parse(val),
   }));
   return issues;
 }

@@ -17,8 +17,8 @@ export default function IssueRow({
 }: //   onChangePriority,
 //   onChangeStatus,
 Props) {
-  let avatar =
-    issue.owner && issue.owner.avatar ? (
+  const avatar =
+    issue.owner !== undefined && issue.owner.avatar !== undefined ? (
       <img
         src={issue.owner.avatar}
         className="w-4.5 h-4.5 rounded-full overflow-hidden"

@@ -68,9 +68,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       console.log("Processing mutation:", JSON.stringify(mutation, null, ""));
 
       const t1 = Date.now();
-      const mutator = (mutators as any)[mutation.name];
+      const mutator = mutators[mutation.name];
       if (!mutator) {
         console.error(`Unknown mutator: ${mutation.name} - skipping`);
+        continue;
       }
 
       try {

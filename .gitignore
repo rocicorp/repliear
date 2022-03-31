@@ -36,6 +36,8 @@ yarn-error.log*
 # react-designer
 lib
 
+#tsc
+*.tsbuildinfo
 
 # Supabase
 **/supabase/.branches

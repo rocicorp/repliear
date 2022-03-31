@@ -22,9 +22,9 @@ const ICONS = {
 };
 
 export default function PriorityIcon({ priority, className }: Props) {
-  let classes = classNames("w-3.5 h-3.5 rounded", className);
+  const classes = classNames("w-3.5 h-3.5 rounded", className);
 
-  let Icon = ICONS[priority];
+  const Icon = ICONS[priority];
 
   return <Icon className={classes} />;
 }

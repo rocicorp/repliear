@@ -124,15 +124,13 @@ test("putEntry", async () => {
     for (const c of cases) {
       await executor(`delete from entry where spaceid = 's1' and key = 'foo'`);
 
-      let res: Promise<void>;
       if (c.duplicate) {
         await putEntry(executor, "s1", "foo", 41, 1);
         if (c.deleted) {
           await delEntry(executor, "s1", "foo", 1);
         }
       }
-      res = putEntry(executor, "s1", "foo", 42, 2);
-
+      const res: Promise<void> = putEntry(executor, "s1", "foo", 42, 2);
       await res.catch(() => ({}));
 
       const qr = await executor(
