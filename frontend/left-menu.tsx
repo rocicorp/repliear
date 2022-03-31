@@ -1,4 +1,4 @@
-import React, { RefObject, useRef } from "react";
+import React, { RefObject, useRef, useState } from "react";
 import AddIcon from "./assets/icons/add.svg";
 import HelpIcon from "./assets/icons/help.svg";
 import MenuIcon from "./assets/icons/menu.svg";
@@ -7,6 +7,7 @@ import ItemGroup from "./item-group";
 import { useClickOutside } from "./hooks/useClickOutside";
 import classnames from "classnames";
 import SearchBox from "./searchbox";
+import IssueModal from "./issue-modal";
 interface Props {
   // Show menu (for small screen only)
   menuVisible: boolean;
@@ -15,6 +16,8 @@ interface Props {
 
 const LeftMenu = ({ menuVisible, onCloseMenu }: Props) => {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
+  const [issueModalVisible, setIssueModalVisible] = useState(false);
+
   const classes = classnames(
     "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 bg-white flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-700 border-r border-gray-100 lg:shadow-none justify-items-start",
     {
@@ -55,9 +58,9 @@ const LeftMenu = ({ menuVisible, onCloseMenu }: Props) => {
           {/* Create issue btn */}
           <button
             className="inline-flex items-center px-2 py-2 mt-3 bg-white border border-gray-300 rounded hover:bg-gray-100 focus:outline-none h-7"
-            // onClick={() => {
-            //     setShowIssueModal(true);
-            // }}
+            onClick={() => {
+              setIssueModalVisible(true);
+            }}
           >
             <AddIcon className="mr-2.5 w-3.5 h-3.5" /> New Issue
           </button>
@@ -105,8 +108,14 @@ const LeftMenu = ({ menuVisible, onCloseMenu }: Props) => {
       </div>
       {/* Modals */}
       {/* {<HelpModal isOpen={showHelpModal} onDismiss={() => setShowHelpModal(false)} />}
-            {<InviteBox isOpen={showInviteModal} onDismiss={() => setShowInviteModal(false)} />}
-            {<IssueModal isOpen={showIssueModal} onDismiss={() => setShowIssueModal(false)} />} */}
+            {<InviteBox isOpen={showInviteModal} onDismiss={() => setShowInviteModal(false)} />} 
+          */}
+      {
+        <IssueModal
+          isOpen={issueModalVisible}
+          onDismiss={() => setIssueModalVisible(false)}
+        />
+      }
     </>
   );
 };
