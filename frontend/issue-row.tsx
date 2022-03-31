@@ -1,4 +1,3 @@
-import DefaultAvatarIcon from "./assets/icons/avatar.svg";
 // import PriorityMenu from 'components/contextmenu/PriorityMenu';
 // import StatusMenu from 'components/contextmenu/StatusMenu';
 import PriorityIcon from "./priority-icon";
@@ -17,19 +16,6 @@ export default function IssueRow({
 }: //   onChangePriority,
 //   onChangeStatus,
 Props) {
-  const avatar =
-    issue.owner !== undefined && issue.owner.avatar !== undefined ? (
-      <img
-        src={issue.owner.avatar}
-        className="w-4.5 h-4.5 rounded-full overflow-hidden"
-      />
-    ) : (
-      <img
-        src={DefaultAvatarIcon}
-        className="w-4.5 h-4.5 rounded-full overflow-hidden"
-      />
-    );
-
   //   const handleChangePriority = (p: string) => {
   //     if (onChangePriority) onChangePriority(issue, p);
   //   };
@@ -78,7 +64,6 @@ Props) {
       <div className="flex-shrink-0 hidden w-10 ml-2 mr-3 font-normal sm:block">
         {formatDate(new Date(issue.modified))}
       </div>
-      <div className="flex-shrink-0 ml-auto">{avatar}</div>
     </div>
   );
 }

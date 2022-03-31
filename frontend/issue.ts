@@ -33,21 +33,12 @@ export enum Status {
 const statusEnumSchema = z.nativeEnum(Status);
 export type StatusEnum = z.infer<typeof statusEnumSchema>;
 
-const userSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  avatar: z.string().optional(),
-});
-
-export type User = z.TypeOf<typeof userSchema>;
-export const User = userSchema;
 export const issueSchema = z.object({
   id: z.string(),
   title: z.string(),
   priority: priorityEnumSchema,
   status: statusEnumSchema,
   modified: z.number(),
-  owner: User.optional(),
   description: z.string(),
 });
 
@@ -83,7 +74,6 @@ const i1: Issue = {
   description: "",
   status: Status.IN_PROGRESS,
   modified: 0,
-  owner: { id: "1", name: "Aaron B" },
 };
 
 const i2: Issue = {
@@ -93,7 +83,6 @@ const i2: Issue = {
   description: "",
   status: Status.IN_PROGRESS,
   modified: 0,
-  owner: { id: "2", name: "Cesar A" },
 };
 
 const i3: Issue = {

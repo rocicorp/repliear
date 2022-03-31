@@ -12,12 +12,12 @@ interface Props {
   className?: string;
 }
 
-const statusIcons  : Record<StatusEnum, any> = {
+const statusIcons: Record<StatusEnum, any> = {
   [Status.BACKLOG]: BacklogIcon,
   [Status.TODO]: TodoIcon,
   [Status.IN_PROGRESS]: InProgressIcon,
   [Status.DONE]: DoneIcon,
-  [Status.CANCELED]: CancelIcon
+  [Status.CANCELED]: CancelIcon,
 };
 
 export default function StatusIcon({ status, className }: Props) {
