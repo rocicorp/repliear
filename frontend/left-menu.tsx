@@ -2,8 +2,6 @@ import React, { RefObject, useRef } from "react";
 import AddIcon from "./assets/icons/add.svg";
 import HelpIcon from "./assets/icons/help.svg";
 import MenuIcon from "./assets/icons/menu.svg";
-import ExpandMore from "@mui/icons-material/KeyboardArrowDown";
-import Avatar from "./avatar";
 import Link from "next/link";
 import ItemGroup from "./item-group";
 import { useClickOutside } from "./hooks/useClickOutside";
@@ -20,12 +18,14 @@ const LeftMenu = ({ menuVisible, onCloseMenu }: Props) => {
   const classes = classnames(
     "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 bg-white flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-700 border-r border-gray-100 lg:shadow-none justify-items-start",
     {
+      /* eslint-disable @typescript-eslint/naming-convention */
       "-translate-x-full ease-out shadow-none": !menuVisible,
       "translate-x-0 ease-in shadow-xl": menuVisible,
+      /* eslint-enable @typescript-eslint/naming-convention */
     }
   );
 
-  let ready = false;
+  const ready = false;
   useClickOutside(ref, () => {
     if (ready && menuVisible && onCloseMenu) onCloseMenu();
   });
@@ -49,18 +49,6 @@ const LeftMenu = ({ menuVisible, onCloseMenu }: Props) => {
                 G
               </div>
               <div className="text-sm font-medium">github</div>
-            </div>
-
-            {/* User avatar  */}
-            <div className="relative">
-              <div
-                className="flex items-center justify-center p-2 rounded cursor-pointer hover:bg-gray-100"
-                // onClick={() => setShowProfileMenu(!showProfileMenu)}
-              >
-                <Avatar name="Replicache" online={true} />
-                <ExpandMore className="ml-2" fontSize="small" />
-              </div>
-              {/* <ProfileMenu isOpen={showProfileMenu} onDismiss={() => setShowProfileMenu(false)} className='absolute top-10' /> */}
             </div>
           </div>
 

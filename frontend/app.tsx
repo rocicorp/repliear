@@ -3,22 +3,15 @@ import type { Replicache } from "replicache";
 import { useSubscribe } from "replicache-react";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
-import { getAllIssues, SampleIssues } from "./issue";
+import { getAllIssues } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [menuVisible, setMenuVisible] = useState(false);
-  rep = rep;
-
   const issues = useSubscribe(rep, getAllIssues, []);
 
-  if (!issues.length) {
-    for (let i of SampleIssues) {
-      rep.mutate.putIssue(i);
-    }
-  }
   return (
     <div>
       <div className="flex w-full h-screen overflow-y-hidden">

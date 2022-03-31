@@ -1,9 +1,9 @@
-import type { WriteTransaction } from "replicache";
-import { putIssue, getIssue, Issue, issueKey } from "./issue";
+import type { MutatorDefs, WriteTransaction } from "replicache";
+import { putIssue, getIssue, issueKey } from "./issue";
+import type { IssueValue } from "./issue";
 
 export type M = typeof mutators;
-
-export const mutators = {
+export const mutators: MutatorDefs = {
   putIssue,
   updateIssue: async (
     tx: WriteTransaction,
@@ -12,7 +12,7 @@ export const mutators = {
       changes,
     }: {
       id: string;
-      changes: Omit<Partial<Issue>, "id">;
+      changes: IssueValue;
     }
   ): Promise<void> => {
     const issue = await getIssue(tx, id);

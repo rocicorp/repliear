@@ -3,6 +3,7 @@ import { Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
 import { createClient } from "@supabase/supabase-js";
+import { getAllIssues, SampleIssues } from "frontend/issue";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
@@ -24,6 +25,26 @@ export default function Home() {
         mutators,
       });
 
+      const unsub = r.subscribe(
+        async (tx) => {
+          return {
+            initialized: (await tx.get("initialized")) || false,
+            issues: await getAllIssues(tx),
+          };
+        },
+        {
+          onData: (data) => {
+            if (data.initialized) {
+              unsub();
+              if (data.issues.length === 0) {
+                for (const i of SampleIssues) {
+                  void r.mutate.putIssue(i);
+                }
+              }
+            }
+          },
+        }
+      );
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_KEY!
