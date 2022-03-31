@@ -44,7 +44,7 @@ export default function IssueModal({ isOpen, onDismiss }: Props) {
   //   const [status, setStatus] = useState(Status.BACKLOG);
 
   const handleSubmit = () => {
-    if (title == "") {
+    if (title === "") {
       //   showWarning("Please enter a title before submiting", "Title required");
       return;
     }
@@ -62,7 +62,7 @@ export default function IssueModal({ isOpen, onDismiss }: Props) {
     if (onDismiss) onDismiss();
   };
 
-  let body = (
+  const body = (
     <div className="flex flex-col w-full py-4 overflow-hidden">
       {/* header */}
       <div className="flex items-center justify-between flex-shrink-0 px-4">

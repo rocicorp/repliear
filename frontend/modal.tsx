@@ -35,12 +35,14 @@ function Modal({
   const wrapperClasses = classnames(
     "fixed flex flex-col items-center inset-0 z-50",
     {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       "justify-center": center,
     }
   );
   const modalClasses = classnames(
     "flex flex-col items-center overflow-hidden transform bg-white modal shadow-large-modal rounded-xl",
     {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       "mt-20 mb-2 ": !center,
     },
     sizeClasses[size],
@@ -55,7 +57,7 @@ function Modal({
 
   useLockBodyScroll();
 
-  let modal = (
+  const modal = (
     <div ref={outerRef} onClick={handleClick}>
       <div className={wrapperClasses} style={{ display: isOpen ? "" : "none" }}>
         <div ref={ref} className={modalClasses}>
