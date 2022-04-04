@@ -8,13 +8,15 @@ import { useClickOutside } from "./hooks/useClickOutside";
 import classnames from "classnames";
 import SearchBox from "./searchbox";
 import IssueModal from "./issue-modal";
+import type { Issue } from "./issue";
 interface Props {
   // Show menu (for small screen only)
   menuVisible: boolean;
   onCloseMenu?: () => void;
+  onCreateIssue: (i: Issue) => void;
 }
 
-const LeftMenu = ({ menuVisible, onCloseMenu }: Props) => {
+const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
 
@@ -114,6 +116,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu }: Props) => {
         <IssueModal
           isOpen={issueModalVisible}
           onDismiss={() => setIssueModalVisible(false)}
+          onCreateIssue={onCreateIssue}
         />
       }
     </>

@@ -10,9 +10,9 @@ interface Props {
 const IssueList = ({ issues }: Props) => {
   // sort issues by id
   issues = issues.sort((a, b) => {
-    const aId = parseInt(a.id.split("-")[1]);
-    const bId = parseInt(b.id.split("-")[1]);
-    return aId - bId;
+    const aModified = a.modified;
+    const bModified = b.modified;
+    return aModified - bModified;
   });
 
   const issueRows = issues.map((issue, idx) => (

@@ -7,8 +7,9 @@ import ZoomIcon from "./assets/icons/zoom.svg";
 import Modal from "./modal";
 import Toggle from "./toggle";
 import React, { useState } from "react";
+import { Issue, Priority, Status } from "./issue";
+import { nanoid } from "nanoid";
 // import Editor from "rich-markdown-editor";
-// import { Priority, Status } from "./issue";
 // import { showInfo, showWarning } from 'utils/notification';
 // import LabelMenu from './contextmenu/LabelMenu';
 // import PriorityMenu from './contextmenu/PriorityMenu';
@@ -19,6 +20,7 @@ import React, { useState } from "react";
 interface Props {
   isOpen: boolean;
   onDismiss?: () => void;
+  onCreateIssue: (i: Issue) => void;
 }
 // function getPriorityString(priority: PriorityEnum) {
 //   switch (priority) {
@@ -37,9 +39,12 @@ interface Props {
 //   }
 // }
 
-export default function IssueModal({ isOpen, onDismiss }: Props) {
+export default function IssueModal({
+  isOpen,
+  onDismiss,
+  onCreateIssue,
+}: Props) {
   const [title, setTitle] = useState("");
-  //   const [description, setDescription] = useState("");
   //   const [priority, setPriority] = useState(Priority.NONE);
   //   const [status, setStatus] = useState(Status.BACKLOG);
 
@@ -48,10 +53,19 @@ export default function IssueModal({ isOpen, onDismiss }: Props) {
       //   showWarning("Please enter a title before submiting", "Title required");
       return;
     }
-
-    // clear state
-    // close modal
+    onCreateIssue({
+      id: nanoid(),
+      title,
+      description: "",
+      modified: new Date().getTime(),
+      priority: Priority.NONE,
+      status: Status.BACKLOG,
+    });
     if (onDismiss) onDismiss();
+    resetModalState();
+  };
+
+  const resetModalState = () => {
     setTitle("");
     // setDescription("");
     // setPriority(Priority.NONE);
