@@ -3,7 +3,7 @@ import { Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
 import { createClient } from "@supabase/supabase-js";
-import { getAllIssues, SampleIssues } from "frontend/issue";
+import { getIssues, SampleIssues } from "frontend/issue";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
@@ -23,13 +23,14 @@ export default function Home() {
         pullURL: `/api/replicache-pull?spaceID=${spaceID}`,
         name: spaceID,
         mutators,
+        pullInterval: 30000,
       });
 
       const unsub = r.subscribe(
         async (tx) => {
           return {
             initialized: (await tx.get("initialized")) || false,
-            issues: await getAllIssues(tx),
+            issues: await getIssues(tx, 1),
           };
         },
         {
