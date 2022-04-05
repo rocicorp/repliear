@@ -17,6 +17,7 @@ class MyDocument extends Document {
       <Html>
         <Head></Head>
         <body>
+          <div id="root-modal" style={{ position: "relative" }}></div>
           <Main />
           <NextScript />
         </body>

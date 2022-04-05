@@ -96,8 +96,18 @@ const i3: Issue = {
 
 export const SampleIssues: Issue[] = [i1, i2, i3];
 
-export async function getAllIssues(tx: ReadTransaction): Promise<Issue[]> {
-  const entries = await tx.scan({ prefix: issuePrefix }).entries().toArray();
+export async function getAllIssues(tx: ReadTransaction) {
+  return getIssues(tx);
+}
+
+export async function getIssues(
+  tx: ReadTransaction,
+  limit?: number
+): Promise<Issue[]> {
+  const entries = await tx
+    .scan({ prefix: issuePrefix, limit })
+    .entries()
+    .toArray();
   const issues = entries.map(([key, val]) => ({
     id: issueID(key),
     ...issueValueSchema.parse(val),

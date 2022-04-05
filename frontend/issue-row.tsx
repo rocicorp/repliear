@@ -47,9 +47,7 @@ Props) {
           onSelect={handleChangePriority}
         /> */}
       </div>
-      <div className="flex-shrink-0 hidden ml-2 font-normal text-gray-500 sm:block w-11 md:block">
-        {issue.id}
-      </div>
+      <div className="flex-shrink-0 hidden ml-2 font-normal text-gray-500 sm:block w-11 md:block"></div>
       <div className="flex-shrink-0 ml-2">
         {/* <StatusMenu
           id={"r-status-" + issue.id}
