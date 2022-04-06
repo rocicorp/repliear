@@ -7,10 +7,11 @@ import ZoomIcon from "./assets/icons/zoom.svg";
 import Modal from "./modal";
 import Toggle from "./toggle";
 import React, { useState } from "react";
-import { Issue, Priority, PriorityEnum, Status } from "./issue";
+import { Issue, Priority, Status } from "./issue";
 import { nanoid } from "nanoid";
 
 import PriorityMenu from "./priority-menu";
+import StatusMenu from "./status-menu";
 
 // import { showInfo, showWarning } from 'utils/notification';
 
@@ -32,7 +33,7 @@ export default function IssueModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState(Priority.NONE);
-  //   const [status, setStatus] = useState(Status.BACKLOG);
+  const [status, setStatus] = useState(Status.BACKLOG);
 
   const handleSubmit = () => {
     if (title === "") {
@@ -45,7 +46,7 @@ export default function IssueModal({
       description,
       modified: new Date().getTime(),
       priority,
-      status: Status.BACKLOG,
+      status,
     });
     if (onDismiss) onDismiss();
     resetModalState();
@@ -55,7 +56,7 @@ export default function IssueModal({
     setTitle("");
     setDescription("");
     setPriority(Priority.NONE);
-    // setStatus(Status.BACKLOG);
+    setStatus(Status.BACKLOG);
   };
 
   const handleClickCloseBtn = () => {
@@ -88,13 +89,7 @@ export default function IssueModal({
       <div className="flex flex-col flex-1 pb-3.5 overflow-y-auto">
         {/* Issue title */}
         <div className="flex items-center w-full mt-1.5 px-4">
-          {/* <StatusMenu
-                    id='status-menu'
-                    button={<button className='flex items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100'><StatusIcon status={status} /></button>}
-                    onSelect={(st) => {
-                        setStatus(st);
-                    }}
-                /> */}
+          <StatusMenu onSelect={setStatus} />
           <input
             className="w-full ml-1.5 text-lg font-semibold placeholder-gray-400 border-none h-7 focus:outline-none"
             placeholder="Issue title"
@@ -129,7 +124,6 @@ export default function IssueModal({
           <AttachmentIcon />
         </button>
         <div className="flex items-center">
-          {/* <input type='checkbox' /> */}
           <Toggle />
           <span className="ml-2 font-normal">Create more</span>
           <button
