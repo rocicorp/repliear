@@ -9,14 +9,15 @@ import InProgressIcon from "./assets/icons/half-circle.svg";
 import { Status } from "./issue";
 
 interface Props {
-  onSelect: React.Dispatch<React.SetStateAction<Status>>;
+  onSelect: (status: Status) => void;
+  defaultStatus?: Status;
 }
 
-const StatusMenu = ({ onSelect }: Props) => {
+const StatusMenu = ({ onSelect, defaultStatus }: Props) => {
   const [statusRef, setStatusRef] = useState<HTMLButtonElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [statusDropDownVisible, setStatusDropDownVisible] = useState(false);
-  const [status, setStatus] = useState(Status.BACKLOG);
+  const [status, setStatus] = useState(defaultStatus || Status.BACKLOG);
 
   const { styles, attributes, update } = usePopper(statusRef, popperRef, {
     placement: "bottom-start",

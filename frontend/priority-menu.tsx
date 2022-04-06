@@ -10,16 +10,17 @@ import { Priority, PriorityEnum } from "./issue";
 
 interface Props {
   labelVisible: boolean;
-  onSelect: React.Dispatch<React.SetStateAction<Priority>>;
+  onSelect: (priority: Priority) => void;
+  defaultPriority?: Priority;
 }
 
-const PriorityMenu = ({ labelVisible, onSelect }: Props) => {
+const PriorityMenu = ({ labelVisible, onSelect, defaultPriority }: Props) => {
   const [priorityRef, setPriorityRef] = useState<HTMLButtonElement | null>(
     null
   );
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [priorityDropDownVisible, setPriorityDropDownVisible] = useState(false);
-  const [priority, setPriority] = useState(Priority.NONE);
+  const [priority, setPriority] = useState(defaultPriority || Priority.NONE);
 
   const { styles, attributes, update } = usePopper(priorityRef, popperRef, {
     placement: "bottom-start",
@@ -75,7 +76,11 @@ const PriorityMenu = ({ labelVisible, onSelect }: Props) => {
   return (
     <>
       <button
-        className="inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded focus:outline-none hover:bg-gray-100 hover:text-gray-700"
+        className={
+          labelVisible
+            ? `inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded focus:outline-none hover:bg-gray-100 hover:text-gray-700`
+            : ""
+        }
         ref={setPriorityRef}
         onClick={handleDropdownClick}
       >

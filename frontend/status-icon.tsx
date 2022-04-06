@@ -12,7 +12,7 @@ interface Props {
 }
 
 const getStatusIcon = (issueStatus: Status, className?: string) => {
-  const classes = classNames("w-3.5 h-3.5 rounded", className);
+  const classes = classNames("w-3.8 h-3.8 rounded", className);
 
   switch (issueStatus) {
     case Status.BACKLOG:

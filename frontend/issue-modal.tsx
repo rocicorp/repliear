@@ -2,7 +2,6 @@ import AttachmentIcon from "./assets/icons/attachment.svg";
 import OwnerIcon from "./assets/icons/avatar.svg";
 import CloseIcon from "./assets/icons/close.svg";
 import GitIssueIcon from "./assets/icons/git-issue.svg";
-// import LabelIcon from "./assets/icons/label.svg";
 import ZoomIcon from "./assets/icons/zoom.svg";
 import Modal from "./modal";
 import Toggle from "./toggle";
@@ -14,10 +13,6 @@ import PriorityMenu from "./priority-menu";
 import StatusMenu from "./status-menu";
 
 // import { showInfo, showWarning } from 'utils/notification';
-
-// import PriorityMenu from './contextmenu/PriorityMenu';
-// import StatusMenu from './contextmenu/StatusMenu';
-// import StatusIcon from "./status-icon";
 
 interface Props {
   isOpen: boolean;
