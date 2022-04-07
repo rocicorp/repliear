@@ -1,28 +1,27 @@
-// import PriorityMenu from 'components/contextmenu/PriorityMenu';
-// import StatusMenu from 'components/contextmenu/StatusMenu';
-import PriorityIcon from "./priority-icon";
 import React from "react";
-import type { Issue } from "./issue";
+import type { Issue, Priority, Status } from "./issue";
 import { formatDate } from "../util/date";
+import PriorityMenu from "./priority-menu";
+import StatusMenu from "./status-menu";
 
 interface Props {
   issue: Issue;
-  onChangePriority?: (issue: Issue, priority: string) => void;
-  onChangeStatus?: (issue: Issue, priority: string) => void;
+  onChangePriority?: (issue: Issue, priority: Priority) => void;
+  onChangeStatus?: (issue: Issue, status: Status) => void;
 }
 
 export default function IssueRow({
   issue,
-}: //   onChangePriority,
-//   onChangeStatus,
-Props) {
-  //   const handleChangePriority = (p: string) => {
-  //     if (onChangePriority) onChangePriority(issue, p);
-  //   };
+  onChangePriority,
+  onChangeStatus,
+}: Props) {
+  const handleChangePriority = (p: Priority) => {
+    if (onChangePriority) onChangePriority(issue, p);
+  };
 
-  //   const handleChangeStatus = (status: string) => {
-  //     if (onChangeStatus) onChangeStatus(issue, status);
-  //   };
+  const handleChangeStatus = (status: Status) => {
+    if (onChangeStatus) onChangeStatus(issue, status);
+  };
   return (
     <div
       key={issue.id}
@@ -36,30 +35,24 @@ Props) {
         />
       </div>
       <div className="flex-shrink-0 ml-2">
-        <PriorityIcon priority={issue.priority} />
-        {/* <PriorityMenu
-          id={"r-priority-" + issue.id}
-          button={
-            <div className="flex-shrink-0 ml-2">
-              <PriorityIcon priority={issue.priority} />
-            </div>
-          }
+        <PriorityMenu
+          labelVisible={false}
           onSelect={handleChangePriority}
-        /> */}
+          defaultPriority={issue.priority}
+        />
       </div>
       <div className="flex-shrink-0 hidden ml-2 font-normal text-gray-500 sm:block w-11 md:block"></div>
       <div className="flex-shrink-0 ml-2">
-        {/* <StatusMenu
-          id={"r-status-" + issue.id}
-          button={statusIcon}
+        <StatusMenu
           onSelect={handleChangeStatus}
-        /> */}
+          defaultStatus={issue.status}
+        />
       </div>
       <div className="flex-wrap flex-shrink ml-2 overflow-hidden font-medium line-clamp-1 overflow-ellipsis">
         {issue.title.substr(0, 3000) || ""}
       </div>
       <div className="flex flex-grow ml-2"></div>
-      <div className="flex-shrink-0 hidden w-10 ml-2 mr-3 font-normal sm:block">
+      <div className="flex-shrink-0 hidden w-11 ml-2 mr-3 font-normal sm:block">
         {formatDate(new Date(issue.modified))}
       </div>
     </div>
