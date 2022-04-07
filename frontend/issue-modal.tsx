@@ -84,7 +84,7 @@ export default function IssueModal({
       <div className="flex flex-col flex-1 pb-3.5 overflow-y-auto">
         {/* Issue title */}
         <div className="flex items-center w-full mt-1.5 px-4">
-          <StatusMenu onSelect={setStatus} />
+          <StatusMenu onSelect={setStatus} status={status} />
           <input
             className="w-full ml-1.5 text-lg font-semibold placeholder-gray-400 border-none h-7 focus:outline-none"
             placeholder="Issue title"
@@ -106,7 +106,11 @@ export default function IssueModal({
 
       {/* Issue labels & priority */}
       <div className="flex items-center px-4 pb-3 mt-1 border-b border-gray-200">
-        <PriorityMenu onSelect={setPriority} labelVisible={true} />
+        <PriorityMenu
+          onSelect={setPriority}
+          labelVisible={true}
+          priority={priority}
+        />
         <button className="inline-flex items-center h-6 px-2 ml-2 text-gray-500 bg-gray-200 border-none rounded focus:outline-none hover:bg-gray-100 hover:text-gray-700">
           <OwnerIcon className="w-3.5 h-3.5 ml-2 mr-0.5" />
           <span>Assignee</span>

@@ -38,15 +38,12 @@ export default function IssueRow({
         <PriorityMenu
           labelVisible={false}
           onSelect={handleChangePriority}
-          defaultPriority={issue.priority}
+          priority={issue.priority}
         />
       </div>
       <div className="flex-shrink-0 hidden ml-2 font-normal text-gray-500 sm:block w-11 md:block"></div>
       <div className="flex-shrink-0 ml-2">
-        <StatusMenu
-          onSelect={handleChangeStatus}
-          defaultStatus={issue.status}
-        />
+        <StatusMenu onSelect={handleChangeStatus} status={issue.status} />
       </div>
       <div className="flex-wrap flex-shrink ml-2 overflow-hidden font-medium line-clamp-1 overflow-ellipsis">
         {issue.title.substr(0, 3000) || ""}
