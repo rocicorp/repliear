@@ -11,20 +11,18 @@ import { Priority, PriorityEnum } from "./issue";
 interface Props {
   labelVisible: boolean;
   onSelect: (priority: Priority) => void;
-  defaultPriority?: Priority;
+  priority: Priority;
 }
 
-const PriorityMenu = ({ labelVisible, onSelect, defaultPriority }: Props) => {
+const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
   const [priorityRef, setPriorityRef] = useState<HTMLButtonElement | null>(
     null
   );
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [priorityDropDownVisible, setPriorityDropDownVisible] = useState(false);
-  const [priority, setPriority] = useState(defaultPriority || Priority.NONE);
 
   const { styles, attributes, update } = usePopper(priorityRef, popperRef, {
     placement: "bottom-start",
-    strategy: "fixed",
   });
 
   const handleDropdownClick = () => {
@@ -64,7 +62,6 @@ const PriorityMenu = ({ labelVisible, onSelect, defaultPriority }: Props) => {
         className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
         onClick={() => {
           onSelect(priority);
-          setPriority(priority);
           setPriorityDropDownVisible(false);
         }}
       >

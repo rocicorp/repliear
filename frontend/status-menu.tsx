@@ -10,18 +10,16 @@ import { Status } from "./issue";
 
 interface Props {
   onSelect: (status: Status) => void;
-  defaultStatus?: Status;
+  status: Status;
 }
 
-const StatusMenu = ({ onSelect, defaultStatus }: Props) => {
+const StatusMenu = ({ onSelect, status }: Props) => {
   const [statusRef, setStatusRef] = useState<HTMLButtonElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [statusDropDownVisible, setStatusDropDownVisible] = useState(false);
-  const [status, setStatus] = useState(defaultStatus || Status.BACKLOG);
 
   const { styles, attributes, update } = usePopper(statusRef, popperRef, {
     placement: "bottom-start",
-    strategy: "fixed",
   });
 
   const handleDropdownClick = () => {
@@ -44,7 +42,6 @@ const StatusMenu = ({ onSelect, defaultStatus }: Props) => {
         className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
         onClick={() => {
           onSelect(status);
-          setStatus(status);
           setStatusDropDownVisible(false);
         }}
       >

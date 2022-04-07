@@ -24,10 +24,10 @@ const IssueList = ({ issues, onUpdateIssue }: Props) => {
     onUpdateIssue(issue);
   };
 
-  const issueRows = issues.map((issue, idx) => (
+  const issueRows = issues.map((issue) => (
     <IssueRow
       issue={issue}
-      key={idx}
+      key={issue.id}
       onChangePriority={handleChangePriority}
       onChangeStatus={handleChangeStatus}
     />
