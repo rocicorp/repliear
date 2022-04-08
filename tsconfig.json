@@ -18,11 +18,13 @@
     "noFallthroughCasesInSwitch": true,
     "importsNotUsedAsValues": "error",
     "forceConsistentCasingInFileNames": true,
-
+    "sourceMap": true,
     "allowJs": true,
     "incremental": true,
     "noEmit": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "outDir": "out",
+    "rootDir": "."
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": [".next", "dist", "node_modules", "out", "next.config.js", "reps"]
