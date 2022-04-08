@@ -8,10 +8,9 @@ async function main(
 
 async function mainImpl(
   gitHubKey: string | undefined,
-  gitHubRepo: string | undefined
-  //stdout: NodeJS.WritableStream = process.stdout
+  gitHubRepo: string | undefined,
+  stdout: NodeJS.WritableStream = process.stdout
 ): Promise<void> {
-  const fetch = require("node-fetch");
   if (!gitHubKey || !gitHubRepo) {
     console.log("ERROR: must have a GITHUB_KEY and/or GITHUB_REPO defined");
     process.exit(1);
@@ -19,17 +18,32 @@ async function mainImpl(
   console.log("gitHubKey:\t", gitHubKey);
   console.log("gitHubRepo:\t", gitHubRepo);
 
-  //const MAX_ISSUE_PER_PAGE = 1000;
+  const totalClosedIssueCount = await getIssueCount(gitHubKey, "closed");
+  const totalOpenIssueCount = await getIssueCount(gitHubKey, "open");
 
-  const issueCountUrl =
-    "https://api.github.com/search/issues?q=repo:nodejs/node+type:issue+state:closed+state:open&page=0&per_page=1";
+  console.log("totalClosedIssueCount: ", totalClosedIssueCount);
+  console.log("totalOpenIssueCount: ", totalOpenIssueCount);
 
-  //const issueUrl = `https://api.github.com/repos/facebook/react/issues?state=closed&per_page=1000&page={}`;
-  let totalClosedIssueCount = 0;
+  const issuesOpen = await getIssues(gitHubKey, "open", 1);
 
-  //let totalOpenIssueCount = 0;
+  const issuesClosed = await getIssues(gitHubKey, "closed", 1);
 
-  await fetch(issueCountUrl, {
+  stdout.write(JSON.stringify(issuesOpen));
+  stdout.write(JSON.stringify(issuesClosed));
+
+  process.exit(0);
+}
+
+async function getIssueCount(
+  gitHubKey: string,
+  state: "open" | "closed"
+): Promise<number> {
+  const fetch = require("node-fetch");
+
+  const issueCountUrl = (state: "open" | "closed") =>
+    `https://api.github.com/search/issues?q=repo:${gitHubRepo}+type:issue+state:${state}&page=0&per_page=1`;
+
+  return await fetch(issueCountUrl(state), {
     headers: {
       "Content-Type": "application/json",
       Authorization: `token ${gitHubKey}`,
@@ -39,11 +53,39 @@ async function mainImpl(
     .then((response) => response.json())
     // @ts-ignore
     .then((data) => {
-      totalClosedIssueCount = data.total_count;
+      return data.total_count;
     });
+}
 
-  console.log("totalClosedIssueCount: ", totalClosedIssueCount);
-  process.exit(0);
+async function getIssues(
+  gitHubKey: string,
+  state: "open" | "closed",
+  totalPages: number
+): Promise<any[]> {
+  const fetch = require("node-fetch");
+
+  const MAX_ISSUE_PER_PAGE = 1000;
+
+  const issueUrl = (state: "open" | "closed", page: number) =>
+    `https://api.github.com/repos/facebook/react/issues?state=${state}&per_page=${MAX_ISSUE_PER_PAGE}&page=${page}`;
+  let issues = [];
+  for (let i = 1; i == totalPages; i++) {
+    let pagedIssues = await fetch(issueUrl(state, i), {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `token ${gitHubKey}`,
+      },
+    })
+      // @ts-ignore
+      .then((response) => response.json())
+      // @ts-ignore
+      .then((data) => {
+        return data;
+      });
+
+    issues.push(pagedIssues);
+  }
+  return issues;
 }
 
 const gitHubKey = process.env.GITHUB_KEY;
