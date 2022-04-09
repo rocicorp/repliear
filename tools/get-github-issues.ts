@@ -36,8 +36,6 @@ async function mainImpl(
   );
 
   const allIssues = await getIssues(gitHubKey, totalAllIssuePage);
-
-  // const allIssues = [...issuesOpen, ...issuesClosed];
   stdout.write(JSON.stringify(allIssues, null, 4));
   process.exit(0);
 }
