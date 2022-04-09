@@ -99,9 +99,27 @@ async function getIssues(
         return data;
       });
 
+    pagedIssues = await fillComments(pagedIssues, gitHubKey);
     issues.push(pagedIssues);
   }
   return issues;
+}
+
+async function fillComments(pagedIssues: any[], gitHubKey: string) {
+  const commentedIssues = await pagedIssues.map(async (i) => {
+    let r = await fetch(i.comments_url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `token ${gitHubKey}`,
+      },
+    });
+    const commentJson = await r.json();
+    return {
+      ...i,
+      comments_expanded: commentJson
+    };
+  });
+  return await commentedIssues;
 }
 
 main(gitHubKey, gitHubRepo);
