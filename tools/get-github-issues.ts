@@ -59,16 +59,22 @@ async function getIssues(
   totalPages: number
 ): Promise<any[]> {
   const MAX_ISSUE_PER_PAGE = 100;
-  const issueUrl = (page: number) =>
-    `https://api.github.com/search/issues?q=repo:${gitHubRepo}+is:issue&page=${page}&per_page=${MAX_ISSUE_PER_PAGE}`;
+  const issueUrl = (page: number, createdDate: string) =>
+    `https://api.github.com/search/issues?q=repo:${gitHubRepo}+is:issue+created:>${createdDate}&page=${page}&per_page=${MAX_ISSUE_PER_PAGE}&sort=created&order=asc`;
 
-  let issues = [];
-  for (let i = 1; i <= totalPages; i++) {
+  let issues: any[] = [];
+  var lastDateStr = new Date(0).toISOString();
+  let currentDateStr = new Date(0).toISOString();
+  let issueUrlQueue: any[] = [issueUrl(1, currentDateStr)];
+  let page = 1;
+  let totalCount = 0;
+  while (issueUrlQueue.length > 0) {
     process.stdout.write(
-      `\r[${Math.round((i / totalPages) * 100)}%] ${i}/${totalPages}`
+      `\r[${Math.round(
+        (totalCount / totalPages) * 100
+      )}%] ${totalCount}/${totalPages}`
     );
-
-    const url = issueUrl(i);
+    let url = issueUrlQueue.pop();
     const response = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
@@ -77,14 +83,37 @@ async function getIssues(
     });
 
     const responseIssues = await response.json();
+    if (
+      responseIssues.message ===
+      "Only the first 1000 search results are available"
+    ) {
+      currentDateStr = lastDateStr;
+      page = 1;
+      issueUrlQueue.push(issueUrl(page, currentDateStr));
+      continue;
+    }
+    lastDateStr =
+      responseIssues.items &&
+      responseIssues.items[responseIssues.items.length - 1]?.created_at;
     let pagedIssues = responseIssues.items;
     pagedIssues = await fillComments(pagedIssues, gitHubKey);
-    issues.push(pagedIssues);
+    if (!pagedIssues) {
+      break;
+    }
+    issues = [...issues, ...pagedIssues];
+    page++;
+    totalCount++;
+    issueUrlQueue.push(issueUrl(page, currentDateStr));
+    sleep(2000)
   }
-
   return issues;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 async function fillComments(pagedIssues: any[], gitHubKey: string) {
   if (!pagedIssues) {
     return pagedIssues;
