@@ -3,7 +3,7 @@ import { Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
 import { createClient } from "@supabase/supabase-js";
-import { createSampleIssues, getIssues, SampleIssues } from "frontend/issue";
+import { getIssues, SampleIssues } from "frontend/issue";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
@@ -38,7 +38,7 @@ export default function Home() {
             if (data.initialized) {
               unsub();
               if (data.issues.length === 0) {
-                for (const i of createSampleIssues(1000)) {
+                for (const i of SampleIssues) {
                   void r.mutate.putIssue(i);
                 }
               }

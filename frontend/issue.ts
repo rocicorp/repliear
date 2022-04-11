@@ -96,21 +96,6 @@ const i3: Issue = {
 
 export const SampleIssues: Issue[] = [i1, i2, i3];
 
-export function createSampleIssues(count: number): Issue[] {
-  const issues = [];
-  for (let i = 0; i < count; i++) {
-    issues.push({
-      priority: Priority.NONE,
-      id: `${i}`,
-      title: `Issue ${i}`,
-      description: "",
-      status: Status.BACKLOG,
-      modified: 0,
-    });
-  }
-  return issues;
-}
-
 export async function getAllIssues(tx: ReadTransaction) {
   return getIssues(tx);
 }
