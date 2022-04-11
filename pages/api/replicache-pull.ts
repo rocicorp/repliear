@@ -5,16 +5,18 @@ import {
   getChangedEntries,
   getCookie,
   getLastMutationID,
+  initSpace,
 } from "../../backend/data";
 import { z } from "zod";
 import type { PullResponse } from "replicache";
+import { ReplicacheTransaction } from "backend/replicache-transaction";
 
 const pullRequest = z.object({
   clientID: z.string(),
   cookie: z.union([z.number(), z.null()]),
 });
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
+const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log(`Processing pull`, JSON.stringify(req.body, null, ""));
 
   const spaceID = req.query["spaceID"].toString();
@@ -29,6 +31,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const [entries, lastMutationID, responseCookie] = await transact(
     async (executor) => {
       await createDatabase(executor);
+      const tx = new ReplicacheTransaction(executor, spaceID, pull.clientID, 1);
+      await initSpace(executor, spaceID, tx);
+      await tx.flush();
 
       return Promise.all([
         getChangedEntries(executor, spaceID, requestCookie ?? 0),
@@ -71,7 +76,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     }
   }
 
-  console.log(`Returning`, JSON.stringify(resp, null, ""));
   res.json(resp);
   res.end();
 };
+
+export default pull;

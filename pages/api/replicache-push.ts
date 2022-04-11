@@ -3,6 +3,7 @@ import {
   createDatabase,
   getCookie,
   getLastMutationID,
+  //  initSpace,
   setCookie,
   setLastMutationID,
 } from "../../backend/data";
@@ -25,7 +26,7 @@ const pushRequestSchema = z.object({
   mutations: z.array(mutationSchema),
 });
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
+const push = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log("Processing push", JSON.stringify(req.body, null, ""));
 
   const spaceID = req.query["spaceID"].toString();
@@ -97,3 +98,5 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   res.status(200).json({});
 };
+
+export default push;

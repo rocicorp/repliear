@@ -1,6 +1,9 @@
 import type { JSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
+import reactIssues from "./issues-react.json.gz";
+import type { ReplicacheTransaction } from "./replicache-transaction";
+import { Priority, putIssue, Status } from "frontend/issue";
 
 export async function createDatabase(executor: Executor) {
   const schemaVersion = await getSchemaVersion(executor);
@@ -61,16 +64,47 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (version)`);
 }
 
+export async function initSpace(
+  executor: Executor,
+  spaceID: string,
+  tx: ReplicacheTransaction
+) {
+  const {
+    rows,
+  } = await executor(`select version from space where id = $1 limit 1`, [
+    spaceID,
+  ]);
+  if (rows.length === 0) {
+    console.log("INITING SPACE", spaceID);
+    await setCookie(executor, spaceID, 0);
+    for (let i = 0; i < 1000; i++) {
+      const reactIssue = reactIssues[i];
+      const issue = {
+        priority: Priority.LOW,
+        id: "" + reactIssue.id,
+        title: reactIssue.title,
+        description: reactIssue.body,
+        status: Status.TODO,
+        modified: Date.parse(reactIssue.updated_at),
+      };
+      //console.log(issue);
+      await putIssue(tx, issue);
+    }
+  } else {
+    console.log("ALREADY INITTED SPACE", spaceID);
+  }
+}
+
 export async function getEntry(
   executor: Executor,
-  spaceid: string,
+  spaceID: string,
   key: string
 ): Promise<JSONValue | undefined> {
   const {
     rows,
   } = await executor(
     "select value from entry where spaceid = $1 and key = $2 and deleted = false",
-    [spaceid, key]
+    [spaceID, key]
   );
   const value = rows[0]?.value;
   if (value === undefined) {
