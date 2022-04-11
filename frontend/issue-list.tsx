@@ -1,6 +1,8 @@
-import React from "react";
+import React, { CSSProperties } from "react";
 import IssueRow from "./issue-row";
 import type { Issue, Priority, Status } from "./issue";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { FixedSizeList } from "react-window";
 
 interface Props {
   issues: Issue[];
@@ -24,15 +26,33 @@ const IssueList = ({ issues, onUpdateIssue }: Props) => {
     onUpdateIssue(issue);
   };
 
-  const issueRows = issues.map((issue) => (
-    <IssueRow
-      issue={issue}
-      key={issue.id}
-      onChangePriority={handleChangePriority}
-      onChangeStatus={handleChangeStatus}
-    />
-  ));
-  return <div className="flex flex-col overflow-auto">{issueRows}</div>;
+  const Row = ({ index, style }: { index: number; style: CSSProperties }) => (
+    <div style={style}>
+      <IssueRow
+        issue={issues[index]}
+        key={issues[index].id}
+        onChangePriority={handleChangePriority}
+        onChangeStatus={handleChangeStatus}
+      />
+    </div>
+  );
+  return (
+    <div className="flex flex-col flex-grow overflow-auto">
+      <AutoSizer>
+        {({ height, width }) => (
+          <FixedSizeList
+            height={height}
+            itemCount={issues.length}
+            itemSize={43}
+            width={width}
+            overscanCount={10}
+          >
+            {Row}
+          </FixedSizeList>
+        )}
+      </AutoSizer>
+    </div>
+  );
 };
 
 export default IssueList;
