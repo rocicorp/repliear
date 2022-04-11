@@ -63,7 +63,7 @@ async function getIssues(
     `https://api.github.com/search/issues?q=repo:${gitHubRepo}+is:issue+created:>${createdDate}&page=${page}&per_page=${MAX_ISSUE_PER_PAGE}&sort=created&order=asc`;
 
   let issues: any[] = [];
-  var lastDateStr = new Date(0).toISOString();
+  let lastDateStr = new Date(0).toISOString();
   let currentDateStr = new Date(0).toISOString();
   let issueUrlQueue: any[] = [issueUrl(1, currentDateStr)];
   let page = 1;
@@ -92,20 +92,32 @@ async function getIssues(
       issueUrlQueue.push(issueUrl(page, currentDateStr));
       continue;
     }
+
+    if (responseIssues.message) {
+      console.log(responseIssues.message);
+    }
+
+    if (responseIssues.items === 0) {
+      break;
+    }
     lastDateStr =
       responseIssues.items &&
       responseIssues.items[responseIssues.items.length - 1]?.created_at;
-    let pagedIssues = responseIssues.items;
-    pagedIssues = await fillComments(pagedIssues, gitHubKey);
-    if (!pagedIssues) {
+    if (!lastDateStr) {
       break;
     }
+
+    let pagedIssues = responseIssues.items;
+
+    pagedIssues = await fillComments(pagedIssues, gitHubKey);
+
     issues = [...issues, ...pagedIssues];
     page++;
     totalCount++;
     issueUrlQueue.push(issueUrl(page, currentDateStr));
-    sleep(2000)
+    await sleep(2000);
   }
+  console.log("\nfound: ", issues.length);
   return issues;
 }
 
