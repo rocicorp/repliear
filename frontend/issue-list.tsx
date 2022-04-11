@@ -44,8 +44,8 @@ const IssueList = ({ issues, onUpdateIssue }: Props) => {
             height={height}
             itemCount={issues.length}
             itemSize={43}
-            width={width}
             overscanCount={10}
+            width={width}
           >
             {Row}
           </FixedSizeList>
