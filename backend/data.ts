@@ -1,7 +1,7 @@
 import type { JSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
-import reactIssues from "./issues-react.json.gz";
+import reactIssues from "issues-react.json.gz";
 import type { ReplicacheTransaction } from "./replicache-transaction";
 import { Priority, putIssue, Status } from "frontend/issue";
 
@@ -81,10 +81,10 @@ export async function initSpace(
       const reactIssue = reactIssues[i];
       const issue = {
         priority: Priority.LOW,
-        id: "" + reactIssue.id,
+        id: reactIssue.id.toString(),
         title: reactIssue.title,
         description: reactIssue.body,
-        status: Status.TODO,
+        status: reactIssue.state === "open" ? Status.TODO : Status.DONE,
         modified: Date.parse(reactIssue.updated_at),
       };
       //console.log(issue);
