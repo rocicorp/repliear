@@ -2,7 +2,7 @@ declare module "issues-react.json.gz" {
   const gitHubIssues: {
     id: number;
     title: string;
-    body: string;
+    body: string | null;
     state: "open" | "closed";
     // eslint-disable-next-line @typescript-eslint/naming-convention
     updated_at: string;

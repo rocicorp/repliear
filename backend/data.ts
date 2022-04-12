@@ -85,13 +85,18 @@ export async function initSpace(executor: Executor, spaceID: string) {
     "fake-client-id-for-server-init",
     initialVersion
   );
-  for (let i = 0; i < 1000; i++) {
+  console.log("num issues", reactIssues.length);
+
+  for (let i = 0; i < reactIssues.length; i++) {
     const reactIssue = reactIssues[i];
     const issue = {
       priority: Priority.NONE,
       id: reactIssue.id.toString(),
-      title: reactIssue.title,
-      description: reactIssue.body,
+      // TODO: Remove this title and body truncation when we add incremental
+      // client view sync.  Without this the initial pull response
+      // exceeds the nextjs max response size.
+      title: reactIssue.title.substring(0, 150),
+      description: (reactIssue.body || "").substring(0, 150),
       status: reactIssue.state === "open" ? Status.TODO : Status.DONE,
       modified: Date.parse(reactIssue.updated_at),
     };
