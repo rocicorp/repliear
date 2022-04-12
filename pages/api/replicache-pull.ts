@@ -9,7 +9,6 @@ import {
 } from "../../backend/data";
 import { z } from "zod";
 import type { PullResponse } from "replicache";
-import { ReplicacheTransaction } from "backend/replicache-transaction";
 
 const pullRequest = z.object({
   clientID: z.string(),
@@ -31,9 +30,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   const [entries, lastMutationID, responseCookie] = await transact(
     async (executor) => {
       await createDatabase(executor);
-      const tx = new ReplicacheTransaction(executor, spaceID, pull.clientID, 1);
-      await initSpace(executor, spaceID, tx);
-      await tx.flush();
+      await initSpace(executor, spaceID, pull.clientID);
 
       return Promise.all([
         getChangedEntries(executor, spaceID, requestCookie ?? 0),

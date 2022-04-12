@@ -2,7 +2,7 @@ import type { JSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
 import reactIssues from "issues-react.json.gz";
-import type { ReplicacheTransaction } from "./replicache-transaction";
+import { ReplicacheTransaction } from "./replicache-transaction";
 import { Priority, putIssue, Status } from "frontend/issue";
 
 export async function createDatabase(executor: Executor) {
@@ -67,32 +67,42 @@ export async function createSchemaVersion1(executor: Executor) {
 export async function initSpace(
   executor: Executor,
   spaceID: string,
-  tx: ReplicacheTransaction
+  clientID: string
 ) {
-  const {
-    rows,
-  } = await executor(`select version from space where id = $1 limit 1`, [
+  console.log("initSpace", spaceID, clientID);
+  const { rows } = await executor(`select version from space where id = $1`, [
     spaceID,
   ]);
-  if (rows.length === 0) {
-    console.log("INITING SPACE", spaceID);
-    await setCookie(executor, spaceID, 0);
-    for (let i = 0; i < 1000; i++) {
-      const reactIssue = reactIssues[i];
-      const issue = {
-        priority: Priority.LOW,
-        id: reactIssue.id.toString(),
-        title: reactIssue.title,
-        description: reactIssue.body,
-        status: reactIssue.state === "open" ? Status.TODO : Status.DONE,
-        modified: Date.parse(reactIssue.updated_at),
-      };
-      //console.log(issue);
-      await putIssue(tx, issue);
-    }
-  } else {
-    console.log("ALREADY INITTED SPACE", spaceID);
+  console.log("rows", rows);
+  if (rows.length !== 0) {
+    console.log("Space already initialized", spaceID);
+    return;
   }
+  console.log("Initializing space", spaceID);
+  const initialVersion = 1;
+  await executor(
+    `insert into space (id, version, lastmodified) values ($1, $2, now())`,
+    [spaceID, initialVersion]
+  );
+  const tx = new ReplicacheTransaction(
+    executor,
+    spaceID,
+    clientID,
+    initialVersion
+  );
+  for (let i = 0; i < 1000; i++) {
+    const reactIssue = reactIssues[i];
+    const issue = {
+      priority: Priority.NONE,
+      id: reactIssue.id.toString(),
+      title: reactIssue.title,
+      description: reactIssue.body,
+      status: reactIssue.state === "open" ? Status.TODO : Status.DONE,
+      modified: Date.parse(reactIssue.updated_at),
+    };
+    await putIssue(tx, issue);
+  }
+  await tx.flush();
 }
 
 export async function getEntry(
@@ -177,10 +187,7 @@ export async function setCookie(
   version: number
 ): Promise<void> {
   await executor(
-    `
-    insert into space (id, version, lastmodified) values ($1, $2, now())
-      on conflict (id) do update set version = $2, lastmodified = now()
-    `,
+    `update space set version = $2, lastmodified = now() where id = $1`,
     [spaceID, version]
   );
 }
