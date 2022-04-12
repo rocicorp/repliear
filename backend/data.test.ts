@@ -211,10 +211,10 @@ test("delEntry", async () => {
 });
 
 test("initSpace", async () => {
-  const testSpaceID = "s1";
+  const testSpaceID = "initSpace-Space1";
   await withExecutor(async (executor) => {
     expect(await getCookie(executor, testSpaceID)).undefined;
-    await initSpace(executor, "s1", SampleIssues);
+    await initSpace(executor, "initSpace-Space1", SampleIssues);
     expect(await getCookie(executor, testSpaceID)).eq(1);
     expect((await getChangedEntries(executor, testSpaceID, 0)).length).eq(
       SampleIssues.length

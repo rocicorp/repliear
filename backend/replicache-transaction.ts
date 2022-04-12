@@ -1,5 +1,5 @@
 import type { JSONValue, ScanResult, WriteTransaction } from "replicache";
-import { delEntry, getEntry, putEntry } from "./data";
+import { delEntry, getEntry, putEntries } from "./data";
 import type { Executor } from "./pg";
 
 /**
@@ -66,22 +66,23 @@ export class ReplicacheTransaction implements WriteTransaction {
   }
 
   async flush(): Promise<void> {
-    await Promise.all(
-      [...this._cache.entries()]
-        .filter(([, { dirty }]) => dirty)
-        .map(([k, { value }]) => {
-          if (value === undefined) {
-            return delEntry(this._executor, this._spaceID, k, this._version);
-          } else {
-            return putEntry(
-              this._executor,
-              this._spaceID,
-              k,
-              value,
-              this._version
-            );
-          }
-        })
+    const dirtyEntries = [...this._cache.entries()].filter(
+      ([, { dirty }]) => dirty
     );
+    const entriesToPut: [string, JSONValue][] = [];
+    for (const dirtyEntry of dirtyEntries) {
+      if (dirtyEntry[1].value !== undefined) {
+        entriesToPut.push([dirtyEntry[0], dirtyEntry[1].value]);
+      }
+    }
+    const entriesToDel = dirtyEntries.filter(
+      ([, { value }]) => value === undefined
+    );
+    await Promise.all([
+      ...entriesToDel.map(([k]) => {
+        return delEntry(this._executor, this._spaceID, k, this._version);
+      }),
+      putEntries(this._executor, this._spaceID, entriesToPut, this._version),
+    ]);
   }
 }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Executor } from "./pg";
 import { ReplicacheTransaction } from "./replicache-transaction";
 import { Issue, putIssue } from "../frontend/issue";
+import { flatten } from "lodash";
 
 export async function createDatabase(executor: Executor) {
   const schemaVersion = await getSchemaVersion(executor);
@@ -76,26 +77,49 @@ export async function initSpace(
     return;
   }
   console.log("Initializing space", spaceID);
+
+  const sampleSpaceID = "sampleSpaceID";
   const initialVersion = 1;
+
+  const {
+    rows: sampleSpaceRows,
+  } = await executor(`select version from space where id = $1`, [
+    sampleSpaceID,
+  ]);
+
+  if (sampleSpaceRows.length === 0) {
+    await executor(
+      `insert into space (id, version, lastmodified) values ($1, $2, now())`,
+      [sampleSpaceID, initialVersion]
+    );
+    const tx = new ReplicacheTransaction(
+      executor,
+      sampleSpaceID,
+      "fake-client-id-for-server-init",
+      initialVersion
+    );
+    const start = Date.now();
+    for (const issue of issues) {
+      await putIssue(tx, issue);
+    }
+    console.log("puts took " + (Date.now() - start) + "ms");
+    const start2 = Date.now();
+    await tx.flush();
+    console.log("flush took " + (Date.now() - start2) + "ms");
+  }
+  const start = Date.now();
   await executor(
     `insert into space (id, version, lastmodified) values ($1, $2, now())`,
     [spaceID, initialVersion]
   );
-  const tx = new ReplicacheTransaction(
-    executor,
-    spaceID,
-    "fake-client-id-for-server-init",
-    initialVersion
+  await executor(
+    `
+     insert into entry (spaceid, key, value, deleted, version, lastmodified)
+     select $1, key, value, deleted, version, lastmodified from entry where spaceid = $2
+    `,
+    [spaceID, sampleSpaceID]
   );
-
-  const start = Date.now();
-  for (const issue of issues) {
-    await putIssue(tx, issue);
-  }
-  console.log("puts took " + (Date.now() - start) + "ms");
-  const start2 = Date.now();
-  await tx.flush();
-  console.log("flush took " + (Date.now() - start2) + "ms");
+  console.log("copy took " + (Date.now() - start) + "ms");
 }
 
 export async function getEntry(
@@ -127,8 +151,33 @@ export async function putEntry(
     `
     insert into entry (spaceid, key, value, deleted, version, lastmodified)
     values ($1, $2, $3, false, $4, now())
+      on conflict (spaceid, key) do update set
+        value = $3, deleted = false, version = $4, lastmodified = now()
     `,
     [spaceID, key, JSON.stringify(value), version]
+  );
+}
+
+export async function putEntries(
+  executor: Executor,
+  spaceID: string,
+  entries: [key: string, value: JSONValue][],
+  version: number
+): Promise<void> {
+  const valuesSql = Array.from(
+    { length: entries.length },
+    (_, i) => `($1, $${i * 2 + 3}, $${i * 2 + 4}, false, $2, now())`
+  ).join();
+  await executor(
+    `
+    insert into entry (spaceid, key, value, deleted, version, lastmodified)
+    values ${valuesSql}
+    `,
+    [
+      spaceID,
+      version,
+      ...flatten(entries.map(([key, value]) => [key, JSON.stringify(value)])),
+    ]
   );
 }
 
