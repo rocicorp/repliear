@@ -37,7 +37,7 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
   const t0 = Date.now();
   await transact(async (executor) => {
     await createDatabase(executor);
-    await initSpace(executor, spaceID, push.clientID);
+    await initSpace(executor, spaceID);
 
     const prevVersion = await getCookie(executor, spaceID);
     assertNotUndefined(prevVersion);

@@ -30,7 +30,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   const [entries, lastMutationID, responseCookie] = await transact(
     async (executor) => {
       await createDatabase(executor);
-      await initSpace(executor, spaceID, pull.clientID);
+      await initSpace(executor, spaceID);
 
       return Promise.all([
         getChangedEntries(executor, spaceID, requestCookie ?? 0),

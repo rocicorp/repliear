@@ -64,12 +64,7 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (version)`);
 }
 
-export async function initSpace(
-  executor: Executor,
-  spaceID: string,
-  clientID: string
-) {
-  console.log("initSpace", spaceID, clientID);
+export async function initSpace(executor: Executor, spaceID: string) {
   const { rows } = await executor(`select version from space where id = $1`, [
     spaceID,
   ]);
@@ -87,7 +82,7 @@ export async function initSpace(
   const tx = new ReplicacheTransaction(
     executor,
     spaceID,
-    clientID,
+    "fake-client-id-for-server-init",
     initialVersion
   );
   for (let i = 0; i < 1000; i++) {
