@@ -68,7 +68,6 @@ export async function initSpace(executor: Executor, spaceID: string) {
   const { rows } = await executor(`select version from space where id = $1`, [
     spaceID,
   ]);
-  console.log("rows", rows);
   if (rows.length !== 0) {
     console.log("Space already initialized", spaceID);
     return;
@@ -85,7 +84,6 @@ export async function initSpace(executor: Executor, spaceID: string) {
     "fake-client-id-for-server-init",
     initialVersion
   );
-  console.log("num issues", reactIssues.length);
 
   for (let i = 0; i < reactIssues.length; i++) {
     const reactIssue = reactIssues[i];
