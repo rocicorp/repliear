@@ -14,6 +14,7 @@ import { mutators } from "../../frontend/mutators";
 import { z } from "zod";
 import { jsonSchema } from "../../util/json";
 import { assertNotUndefined } from "../../util/asserts";
+import { reactIssues } from "../../backend/sample-issues";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
 // See notes in bug: https://github.com/rocicorp/replidraw/issues/47
@@ -37,7 +38,7 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
   const t0 = Date.now();
   await transact(async (executor) => {
     await createDatabase(executor);
-    await initSpace(executor, spaceID);
+    await initSpace(executor, spaceID, reactIssues);
 
     const prevVersion = await getCookie(executor, spaceID);
     assertNotUndefined(prevVersion);

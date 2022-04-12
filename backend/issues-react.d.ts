@@ -1,4 +1,4 @@
-declare module "issues-react.json.gz" {
+declare module "*issues-react.js.gz" {
   const gitHubIssues: {
     id: number;
     title: string;

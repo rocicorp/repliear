@@ -9,6 +9,7 @@ import {
 } from "../../backend/data";
 import { z } from "zod";
 import type { PullResponse } from "replicache";
+import { reactIssues } from "../../backend/sample-issues";
 
 const pullRequest = z.object({
   clientID: z.string(),
@@ -30,7 +31,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   const [entries, lastMutationID, responseCookie] = await transact(
     async (executor) => {
       await createDatabase(executor);
-      await initSpace(executor, spaceID);
+      await initSpace(executor, spaceID, reactIssues);
 
       return Promise.all([
         getChangedEntries(executor, spaceID, requestCookie ?? 0),

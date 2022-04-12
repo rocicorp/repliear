@@ -1,9 +1,8 @@
 import type { JSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
-import reactIssues from "issues-react.json.gz";
 import { ReplicacheTransaction } from "./replicache-transaction";
-import { Priority, putIssue, Status } from "frontend/issue";
+import { Issue, putIssue } from "../frontend/issue";
 
 export async function createDatabase(executor: Executor) {
   const schemaVersion = await getSchemaVersion(executor);
@@ -64,7 +63,11 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (version)`);
 }
 
-export async function initSpace(executor: Executor, spaceID: string) {
+export async function initSpace(
+  executor: Executor,
+  spaceID: string,
+  issues: Issue[]
+) {
   const { rows } = await executor(`select version from space where id = $1`, [
     spaceID,
   ]);
@@ -85,22 +88,14 @@ export async function initSpace(executor: Executor, spaceID: string) {
     initialVersion
   );
 
-  for (let i = 0; i < reactIssues.length; i++) {
-    const reactIssue = reactIssues[i];
-    const issue = {
-      priority: Priority.NONE,
-      id: reactIssue.id.toString(),
-      // TODO: Remove this title and body truncation when we add incremental
-      // client view sync.  Without this the initial pull response
-      // exceeds the nextjs max response size.
-      title: reactIssue.title.substring(0, 150),
-      description: (reactIssue.body || "").substring(0, 150),
-      status: reactIssue.state === "open" ? Status.TODO : Status.DONE,
-      modified: Date.parse(reactIssue.updated_at),
-    };
+  const start = Date.now();
+  for (const issue of issues) {
     await putIssue(tx, issue);
   }
+  console.log("puts took " + (Date.now() - start) + "ms");
+  const start2 = Date.now();
   await tx.flush();
+  console.log("flush took " + (Date.now() - start2) + "ms");
 }
 
 export async function getEntry(
@@ -132,8 +127,6 @@ export async function putEntry(
     `
     insert into entry (spaceid, key, value, deleted, version, lastmodified)
     values ($1, $2, $3, false, $4, now())
-      on conflict (spaceid, key) do update set
-        value = $3, deleted = false, version = $4, lastmodified = now()
     `,
     [spaceID, key, JSON.stringify(value), version]
   );

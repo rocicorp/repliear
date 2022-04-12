@@ -16,7 +16,6 @@ module.exports = {
       enforce: "pre",
       use: "gzip-loader",
     });
-    config.resolve.preferRelative = true;
 
     return config;
   },

@@ -1,7 +1,16 @@
 import { expect } from "chai";
+import { SampleIssues } from "../frontend/issue";
 import { setup, test } from "mocha";
 import type { JSONValue } from "replicache";
-import { createDatabase, delEntry, getEntry, putEntry } from "./data";
+import {
+  createDatabase,
+  delEntry,
+  getChangedEntries,
+  getCookie,
+  getEntry,
+  initSpace,
+  putEntry,
+} from "./data";
 import { transact, withExecutor } from "./pg";
 
 setup(async () => {
@@ -199,4 +208,16 @@ test("delEntry", async () => {
       }
     });
   }
+});
+
+test("initSpace", async () => {
+  const testSpaceID = "s1";
+  await withExecutor(async (executor) => {
+    expect(await getCookie(executor, testSpaceID)).undefined;
+    await initSpace(executor, "s1", SampleIssues);
+    expect(await getCookie(executor, testSpaceID)).eq(1);
+    expect((await getChangedEntries(executor, testSpaceID, 0)).length).eq(
+      SampleIssues.length
+    );
+  });
 });
