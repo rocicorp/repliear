@@ -4,10 +4,14 @@ import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
 import { createClient } from "@supabase/supabase-js";
 import { getIssues, SampleIssues } from "frontend/issue";
+import { useRouter } from "next/router";
 
 export default function Home() {
+  const router = useRouter();
   const [rep, setRep] = useState<Replicache<M> | null>(null);
 
+  const { spaceIDParam } = router.query;
+  const spaceID = instanceof spaceIDParam ===  "string" ? spaceIDParam : "";
   // TODO: Think through Replicache + SSR.
   useEffect(() => {
     // disabled eslint await requirement
@@ -16,8 +20,6 @@ export default function Home() {
       if (rep) {
         return;
       }
-
-      const [, , spaceID] = location.pathname.split("/");
       const r = new Replicache({
         pushURL: `/api/replicache-push?spaceID=${spaceID}`,
         pullURL: `/api/replicache-pull?spaceID=${spaceID}`,
@@ -66,7 +68,7 @@ export default function Home() {
   }
   return (
     <div className="repliear">
-      <App rep={rep} />
+      <App rep={rep} spaceID={spaceID} />
     </div>
   );
 }

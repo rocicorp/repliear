@@ -8,7 +8,7 @@ import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 
-const App = ({ rep }: { rep: Replicache<M> }) => {
+const App = ({ rep, spaceID }: { rep: Replicache<M>; spaceID: string }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const issues = useSubscribe(rep, getAllIssues, []);
 
@@ -23,6 +23,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     <div>
       <div className="flex w-full h-screen overflow-y-hidden">
         <LeftMenu
+          spaceID={spaceID}
           menuVisible={menuVisible}
           onCloseMenu={() => setMenuVisible(false)}
           onCreateIssue={handleCreateIssue}

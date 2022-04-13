@@ -10,13 +10,19 @@ import SearchBox from "./searchbox";
 import IssueModal from "./issue-modal";
 import type { Issue } from "./issue";
 interface Props {
+  spaceID: string;
   // Show menu (for small screen only)
   menuVisible: boolean;
   onCloseMenu?: () => void;
   onCreateIssue: (i: Issue) => void;
 }
 
-const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
+const LeftMenu = ({
+  spaceID,
+  menuVisible,
+  onCloseMenu,
+  onCreateIssue,
+}: Props) => {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
 
@@ -76,19 +82,24 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <ItemGroup title="Issues">
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
               <span className="w-3 h-3 mr-2"></span>
-              <Link href="/">
+              <Link
+                href={{
+                  pathname: "/d/[spaceID]/active",
+                  query: { spaceID },
+                }}
+              >
                 <span>Active</span>
               </Link>
             </div>
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
               <span className="w-3 h-3 mr-2"></span>
-              <Link href="/">
+              <Link href={`/d/${spaceID}/backlog`}>
                 <span>Backlog</span>
               </Link>
             </div>
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-100">
               <span className="w-3 h-3 mr-2"></span>
-              <Link href="/board">
+              <Link href={`/d/${spaceID}/board`}>
                 <span>Board</span>
               </Link>
             </div>
