@@ -64,6 +64,8 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (version)`);
 }
 
+export const SAMPLE_SPACE_ID = "sampleSpaceID";
+
 export async function initSpace(
   executor: Executor,
   spaceID: string,
@@ -78,23 +80,23 @@ export async function initSpace(
   }
   console.log("Initializing space", spaceID);
 
-  const sampleSpaceID = "sampleSpaceID";
   const initialVersion = 1;
 
   const {
     rows: sampleSpaceRows,
   } = await executor(`select version from space where id = $1`, [
-    sampleSpaceID,
+    SAMPLE_SPACE_ID,
   ]);
 
   if (sampleSpaceRows.length === 0) {
     await executor(
       `insert into space (id, version, lastmodified) values ($1, $2, now())`,
-      [sampleSpaceID, initialVersion]
+      [SAMPLE_SPACE_ID, initialVersion]
     );
+    console.log("Initializing template space", SAMPLE_SPACE_ID);
     const tx = new ReplicacheTransaction(
       executor,
-      sampleSpaceID,
+      SAMPLE_SPACE_ID,
       "fake-client-id-for-server-init",
       initialVersion
     );
@@ -102,12 +104,11 @@ export async function initSpace(
     for (const issue of await getSampleIssues()) {
       await putIssue(tx, issue);
     }
-    console.log("puts took " + (Date.now() - start) + "ms");
-    const start2 = Date.now();
     await tx.flush();
-    console.log("flush took " + (Date.now() - start2) + "ms");
+    console.log("Creating template space took " + (Date.now() - start) + "ms");
   }
   const start = Date.now();
+  console.log("Copying from template space");
   await executor(
     `insert into space (id, version, lastmodified) values ($1, $2, now())`,
     [spaceID, initialVersion]
@@ -117,9 +118,11 @@ export async function initSpace(
      insert into entry (spaceid, key, value, deleted, version, lastmodified)
      select $1, key, value, deleted, version, lastmodified from entry where spaceid = $2
     `,
-    [spaceID, sampleSpaceID]
+    [spaceID, SAMPLE_SPACE_ID]
   );
-  console.log("copy took " + (Date.now() - start) + "ms");
+  console.log(
+    "Copying from template space took " + (Date.now() - start) + "ms"
+  );
 }
 
 export async function getEntry(
