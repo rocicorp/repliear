@@ -9,11 +9,11 @@ interface Props {
   onUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
 }
 const IssueList = ({ issues, onUpdateIssue }: Props) => {
-  // sort issues by id
+  // sort issues from most recently modified to least recently modified
   issues = issues.sort((a, b) => {
     const aModified = a.modified;
     const bModified = b.modified;
-    return aModified - bModified;
+    return bModified - aModified;
   });
 
   const handleChangePriority = (issue: Issue, priority: Priority) => {
