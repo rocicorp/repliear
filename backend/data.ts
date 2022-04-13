@@ -140,24 +140,6 @@ export async function getEntry(
   return JSON.parse(value);
 }
 
-export async function putEntry(
-  executor: Executor,
-  spaceID: string,
-  key: string,
-  value: JSONValue,
-  version: number
-): Promise<void> {
-  await executor(
-    `
-    insert into entry (spaceid, key, value, deleted, version, lastmodified)
-    values ($1, $2, $3, false, $4, now())
-      on conflict (spaceid, key) do update set
-        value = $3, deleted = false, version = $4, lastmodified = now()
-    `,
-    [spaceID, key, JSON.stringify(value), version]
-  );
-}
-
 export async function putEntries(
   executor: Executor,
   spaceID: string,
@@ -186,15 +168,19 @@ export async function putEntries(
   );
 }
 
-export async function delEntry(
+export async function delEntries(
   executor: Executor,
   spaceID: string,
-  key: string,
+  keys: string[],
   version: number
 ): Promise<void> {
+  if (keys.length === 0) {
+    return;
+  }
+  const keyParamsSQL = keys.map((_, i) => `$${i + 3}`).join(",");
   await executor(
-    `update entry set deleted = true, version = $3 where spaceid = $1 and key = $2`,
-    [spaceID, key, version]
+    `update entry set deleted = true, version = $2 where spaceid = $1 and key in(${keyParamsSQL})`,
+    [spaceID, version, ...keys]
   );
 }
 

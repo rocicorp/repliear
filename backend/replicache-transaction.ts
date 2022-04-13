@@ -1,5 +1,5 @@
 import type { JSONValue, ScanResult, WriteTransaction } from "replicache";
-import { delEntry, getEntry, putEntries } from "./data";
+import { delEntries, getEntry, putEntries } from "./data";
 import type { Executor } from "./pg";
 
 /**
@@ -75,13 +75,11 @@ export class ReplicacheTransaction implements WriteTransaction {
         entriesToPut.push([dirtyEntry[0], dirtyEntry[1].value]);
       }
     }
-    const entriesToDel = dirtyEntries.filter(
-      ([, { value }]) => value === undefined
-    );
+    const keysToDel = dirtyEntries
+      .filter(([, { value }]) => value === undefined)
+      .map(([key]) => key);
     await Promise.all([
-      ...entriesToDel.map(([k]) => {
-        return delEntry(this._executor, this._spaceID, k, this._version);
-      }),
+      delEntries(this._executor, this._spaceID, keysToDel, this._version),
       putEntries(this._executor, this._spaceID, entriesToPut, this._version),
     ]);
   }

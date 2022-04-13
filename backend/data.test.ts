@@ -4,12 +4,12 @@ import { setup, test } from "mocha";
 import type { JSONValue } from "replicache";
 import {
   createDatabase,
-  delEntry,
+  delEntries,
   getChangedEntries,
   getCookie,
   getEntry,
   initSpace,
-  putEntry,
+  putEntries,
 } from "./data";
 import { transact, withExecutor } from "./pg";
 
@@ -90,12 +90,18 @@ test("getEntry", async () => {
 
 test("getEntry RoundTrip types", async () => {
   await withExecutor(async (executor) => {
-    await putEntry(executor, "s1", "boolean", true, 1);
-    await putEntry(executor, "s1", "number", 42, 1);
-    await putEntry(executor, "s1", "string", "foo", 1);
-    await putEntry(executor, "s1", "array", [1, 2, 3], 1);
-    await putEntry(executor, "s1", "object", { a: 1, b: 2 }, 1);
-
+    await putEntries(
+      executor,
+      "s1",
+      [
+        ["boolean", true],
+        ["number", 42],
+        ["string", "foo"],
+        ["array", [1, 2, 3]],
+        ["object", { a: 1, b: 2 }],
+      ],
+      1
+    );
     expect(await getEntry(executor, "s1", "boolean")).eq(true);
     expect(await getEntry(executor, "s1", "number")).eq(42);
     expect(await getEntry(executor, "s1", "string")).eq("foo");
@@ -104,7 +110,7 @@ test("getEntry RoundTrip types", async () => {
   });
 });
 
-test("putEntry", async () => {
+test("putEntries", async () => {
   type Case = {
     name: string;
     duplicate: boolean;
@@ -134,12 +140,12 @@ test("putEntry", async () => {
       await executor(`delete from entry where spaceid = 's1' and key = 'foo'`);
 
       if (c.duplicate) {
-        await putEntry(executor, "s1", "foo", 41, 1);
+        await putEntries(executor, "s1", [["foo", 41]], 1);
         if (c.deleted) {
-          await delEntry(executor, "s1", "foo", 1);
+          await delEntries(executor, "s1", ["foo"], 1);
         }
       }
-      const res: Promise<void> = putEntry(executor, "s1", "foo", 42, 2);
+      const res: Promise<void> = putEntries(executor, "s1", [["foo", 42]], 2);
       await res.catch(() => ({}));
 
       const qr = await executor(
@@ -159,7 +165,7 @@ test("putEntry", async () => {
   });
 });
 
-test("delEntry", async () => {
+test("delEntries", async () => {
   type Case = {
     name: string;
     exists: boolean;
@@ -185,7 +191,7 @@ test("delEntry", async () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let error: any | undefined;
-      await delEntry(executor, "s1", "foo", 2).catch(
+      await delEntries(executor, "s1", ["foo"], 2).catch(
         (e) => (error = String(e))
       );
 
