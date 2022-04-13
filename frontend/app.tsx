@@ -3,7 +3,7 @@ import type { Replicache } from "replicache";
 import { useSubscribe } from "replicache-react";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
-import { getAllIssues, Issue } from "./issue";
+import { getAllIssues, Issue, IssueValue } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
@@ -13,7 +13,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   const issues = useSubscribe(rep, getAllIssues, []);
 
   const handleCreateIssue = (issue: Issue) => rep.mutate.putIssue(issue);
-  const handleUpdateIssue = (id: string, changes: Partial<Issue>) =>
+  const handleUpdateIssue = (id: string, changes: Partial<IssueValue>) =>
     rep.mutate.updateIssue({
       id,
       changes,

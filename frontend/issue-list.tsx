@@ -1,12 +1,12 @@
 import React, { CSSProperties } from "react";
 import IssueRow from "./issue-row";
-import type { Issue, Priority, Status } from "./issue";
+import type { Issue, IssueValue, Priority, Status } from "./issue";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 
 interface Props {
   issues: Issue[];
-  onUpdateIssue: (id: string, changes: Partial<Issue>) => void;
+  onUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
 }
 const IssueList = ({ issues, onUpdateIssue }: Props) => {
   // sort issues by id
