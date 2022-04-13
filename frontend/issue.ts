@@ -73,10 +73,15 @@ export async function getAllIssues(tx: ReadTransaction) {
 
 export async function getIssues(
   tx: ReadTransaction,
+  startKey?: string,
   limit?: number
 ): Promise<Issue[]> {
   const entries = await tx
-    .scan({ prefix: issuePrefix, limit })
+    .scan({
+      prefix: issuePrefix,
+      start: startKey ? { key: startKey } : undefined,
+      limit,
+    })
     .entries()
     .toArray();
   const issues = entries.map(([key, val]) => ({

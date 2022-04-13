@@ -1,16 +1,16 @@
 import React from "react";
 import type { Replicache } from "replicache";
-import { useSubscribe } from "replicache-react";
+//import { useSubscribe } from "replicache-react";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
-import { getAllIssues, Issue, IssueValue } from "./issue";
+import type { Issue, IssueValue } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [menuVisible, setMenuVisible] = useState(false);
-  const issues = useSubscribe(rep, getAllIssues, []);
+  //const issues = useSubscribe(rep, getAllIssues, []);
 
   const handleCreateIssue = (issue: Issue) => rep.mutate.putIssue(issue);
   const handleUpdateIssue = (id: string, changes: Partial<IssueValue>) =>
@@ -31,9 +31,9 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           <TopFilter
             onToggleMenu={() => setMenuVisible(!menuVisible)}
             title="All issues"
-            issues={issues}
+            issuesCount={10000}
           />
-          <IssueList issues={issues} onUpdateIssue={handleUpdateIssue} />
+          <IssueList rep={rep} onUpdateIssue={handleUpdateIssue} />
         </div>
       </div>
     </div>
