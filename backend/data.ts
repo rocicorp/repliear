@@ -67,7 +67,7 @@ export async function createSchemaVersion1(executor: Executor) {
 export async function initSpace(
   executor: Executor,
   spaceID: string,
-  getIssues: () => Promise<Issue[]>
+  getSampleIssues: () => Promise<Issue[]>
 ) {
   const { rows } = await executor(`select version from space where id = $1`, [
     spaceID,
@@ -99,7 +99,7 @@ export async function initSpace(
       initialVersion
     );
     const start = Date.now();
-    for (const issue of await getIssues()) {
+    for (const issue of await getSampleIssues()) {
       await putIssue(tx, issue);
     }
     console.log("puts took " + (Date.now() - start) + "ms");
