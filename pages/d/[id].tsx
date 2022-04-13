@@ -11,7 +11,8 @@ export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
 
   const { spaceIDParam } = router.query;
-  const spaceID = instanceof spaceIDParam ===  "string" ? spaceIDParam : "";
+  const spaceID =
+    typeof spaceIDParam === "string" ? spaceIDParam : spaceIDParam[0];
   // TODO: Think through Replicache + SSR.
   useEffect(() => {
     // disabled eslint await requirement
