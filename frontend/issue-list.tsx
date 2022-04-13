@@ -6,7 +6,7 @@ import { FixedSizeList } from "react-window";
 
 interface Props {
   issues: Issue[];
-  onUpdateIssue: (i: Issue) => void;
+  onUpdateIssue: (id: string, changes: Partial<Issue>) => void;
 }
 const IssueList = ({ issues, onUpdateIssue }: Props) => {
   // sort issues by id
@@ -17,13 +17,11 @@ const IssueList = ({ issues, onUpdateIssue }: Props) => {
   });
 
   const handleChangePriority = (issue: Issue, priority: Priority) => {
-    issue.priority = priority;
-    onUpdateIssue(issue);
+    onUpdateIssue(issue.id, { priority });
   };
 
   const handleChangeStatus = (issue: Issue, status: Status) => {
-    issue.status = status;
-    onUpdateIssue(issue);
+    onUpdateIssue(issue.id, { status });
   };
 
   const Row = ({ index, style }: { index: number; style: CSSProperties }) => (

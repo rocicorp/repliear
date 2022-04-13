@@ -13,10 +13,10 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   const issues = useSubscribe(rep, getAllIssues, []);
 
   const handleCreateIssue = (issue: Issue) => rep.mutate.putIssue(issue);
-  const handleUpdateIssue = (issue: Issue) =>
+  const handleUpdateIssue = (id: string, changes: Partial<Issue>) =>
     rep.mutate.updateIssue({
-      id: issue.id,
-      changes: { status: issue.status, priority: issue.priority },
+      id,
+      changes,
     });
 
   return (
