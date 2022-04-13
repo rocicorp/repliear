@@ -24,6 +24,7 @@ teardown(async () => {
   await withExecutor(async (executor) => {
     await executor(`delete from entry where spaceid = $1`, [SAMPLE_SPACE_ID]);
     await executor(`delete from space where id = $1`, [SAMPLE_SPACE_ID]);
+    await executor(`delete from entry where spaceid like 'test-s-%'`);
     await executor(`delete from space where id like 'test-s-%'`);
   });
 });
