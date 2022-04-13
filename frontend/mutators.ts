@@ -12,7 +12,7 @@ export const mutators: MutatorDefs = {
       changes,
     }: {
       id: string;
-      changes: IssueValue;
+      changes: Partial<IssueValue>;
     }
   ): Promise<void> => {
     const issue = await getIssue(tx, id);
