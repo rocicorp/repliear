@@ -10,7 +10,7 @@ export const reactIssues = reactGitHubIssues.map((reactIssue) => ({
   // client view sync.  Without this the initial pull response
   // exceeds the nextjs max response size.
   title: reactIssue.title.substring(0, 150),
-  description: reactIssue.body || "".substring(0, 150),
+  description: (reactIssue.body || "").substring(0, 150),
   status: reactIssue.state === "open" ? Status.TODO : Status.DONE,
   modified: Date.parse(reactIssue.updated_at),
 }));
