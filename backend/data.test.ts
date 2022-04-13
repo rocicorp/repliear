@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { SampleIssues } from "../frontend/issue";
+import { Issue, Priority, Status } from "../frontend/issue";
 import { setup, teardown, test } from "mocha";
 import type { JSONValue } from "replicache";
 import {
@@ -13,6 +13,35 @@ import {
   SAMPLE_SPACE_ID,
 } from "./data";
 import { transact, withExecutor } from "./pg";
+
+const i1: Issue = {
+  priority: Priority.HIGH,
+  id: "1",
+  title: "Issue 1",
+  description: "",
+  status: Status.IN_PROGRESS,
+  modified: 0,
+};
+
+const i2: Issue = {
+  priority: Priority.MEDIUM,
+  id: "2",
+  title: "Issue 2",
+  description: "",
+  status: Status.IN_PROGRESS,
+  modified: 0,
+};
+
+const i3: Issue = {
+  priority: Priority.LOW,
+  id: "3",
+  title: "Issue 3",
+  description: "",
+  status: Status.TODO,
+  modified: 0,
+};
+
+export const SampleIssues: Issue[] = [i1, i2, i3];
 
 setup(async () => {
   // TODO: This is a very expensive way to unit test :).
