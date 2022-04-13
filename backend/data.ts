@@ -1,6 +1,9 @@
 import type { JSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
+import { ReplicacheTransaction } from "./replicache-transaction";
+import { Issue, putIssue } from "../frontend/issue";
+import { flatten } from "lodash";
 
 export async function createDatabase(executor: Executor) {
   const schemaVersion = await getSchemaVersion(executor);
@@ -61,16 +64,77 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (version)`);
 }
 
+export const SAMPLE_SPACE_ID = "sampleSpaceID";
+
+export async function initSpace(
+  executor: Executor,
+  spaceID: string,
+  getSampleIssues: () => Promise<Issue[]>
+) {
+  const { rows } = await executor(`select version from space where id = $1`, [
+    spaceID,
+  ]);
+  if (rows.length !== 0) {
+    console.log("Space already initialized", spaceID);
+    return;
+  }
+  console.log("Initializing space", spaceID);
+
+  const initialVersion = 1;
+
+  const {
+    rows: sampleSpaceRows,
+  } = await executor(`select version from space where id = $1`, [
+    SAMPLE_SPACE_ID,
+  ]);
+
+  if (sampleSpaceRows.length === 0) {
+    await executor(
+      `insert into space (id, version, lastmodified) values ($1, $2, now())`,
+      [SAMPLE_SPACE_ID, initialVersion]
+    );
+    console.log("Initializing template space", SAMPLE_SPACE_ID);
+    const tx = new ReplicacheTransaction(
+      executor,
+      SAMPLE_SPACE_ID,
+      "fake-client-id-for-server-init",
+      initialVersion
+    );
+    const start = Date.now();
+    for (const issue of await getSampleIssues()) {
+      await putIssue(tx, issue);
+    }
+    await tx.flush();
+    console.log("Creating template space took " + (Date.now() - start) + "ms");
+  }
+  const start = Date.now();
+  console.log("Copying from template space");
+  await executor(
+    `insert into space (id, version, lastmodified) values ($1, $2, now())`,
+    [spaceID, initialVersion]
+  );
+  await executor(
+    `
+     insert into entry (spaceid, key, value, deleted, version, lastmodified)
+     select $1, key, value, deleted, version, lastmodified from entry where spaceid = $2
+    `,
+    [spaceID, SAMPLE_SPACE_ID]
+  );
+  console.log(
+    "Copying from template space took " + (Date.now() - start) + "ms"
+  );
+}
+
 export async function getEntry(
   executor: Executor,
-  spaceid: string,
+  spaceID: string,
   key: string
 ): Promise<JSONValue | undefined> {
   const {
     rows,
   } = await executor(
     "select value from entry where spaceid = $1 and key = $2 and deleted = false",
-    [spaceid, key]
+    [spaceID, key]
   );
   const value = rows[0]?.value;
   if (value === undefined) {
@@ -79,33 +143,47 @@ export async function getEntry(
   return JSON.parse(value);
 }
 
-export async function putEntry(
+export async function putEntries(
   executor: Executor,
   spaceID: string,
-  key: string,
-  value: JSONValue,
+  entries: [key: string, value: JSONValue][],
   version: number
 ): Promise<void> {
+  if (entries.length === 0) {
+    return;
+  }
+  const valuesSql = Array.from(
+    { length: entries.length },
+    (_, i) => `($1, $${i * 2 + 3}, $${i * 2 + 4}, false, $2, now())`
+  ).join();
   await executor(
     `
     insert into entry (spaceid, key, value, deleted, version, lastmodified)
-    values ($1, $2, $3, false, $4, now())
-      on conflict (spaceid, key) do update set
-        value = $3, deleted = false, version = $4, lastmodified = now()
+    values ${valuesSql}
+    on conflict (spaceid, key) do update set
+      value = excluded.value, deleted = false, version = excluded.version, lastmodified = now()
     `,
-    [spaceID, key, JSON.stringify(value), version]
+    [
+      spaceID,
+      version,
+      ...flatten(entries.map(([key, value]) => [key, JSON.stringify(value)])),
+    ]
   );
 }
 
-export async function delEntry(
+export async function delEntries(
   executor: Executor,
   spaceID: string,
-  key: string,
+  keys: string[],
   version: number
 ): Promise<void> {
+  if (keys.length === 0) {
+    return;
+  }
+  const keyParamsSQL = keys.map((_, i) => `$${i + 3}`).join(",");
   await executor(
-    `update entry set deleted = true, version = $3 where spaceid = $1 and key = $2`,
-    [spaceID, key, version]
+    `update entry set deleted = true, version = $2 where spaceid = $1 and key in(${keyParamsSQL})`,
+    [spaceID, version, ...keys]
   );
 }
 
@@ -143,10 +221,7 @@ export async function setCookie(
   version: number
 ): Promise<void> {
   await executor(
-    `
-    insert into space (id, version, lastmodified) values ($1, $2, now())
-      on conflict (id) do update set version = $2, lastmodified = now()
-    `,
+    `update space set version = $2, lastmodified = now() where id = $1`,
     [spaceID, version]
   );
 }

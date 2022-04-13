@@ -11,6 +11,11 @@ module.exports = {
       issuer: /\.[jt]sx?$/,
       use: ["@svgr/webpack"],
     });
+    config.module.rules.push({
+      test: /\.gz$/,
+      enforce: "pre",
+      use: "gzip-loader",
+    });
 
     return config;
   },

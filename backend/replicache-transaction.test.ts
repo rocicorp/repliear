@@ -1,6 +1,6 @@
 import { ReplicacheTransaction } from "./replicache-transaction";
 import { expect } from "chai";
-import { test, setup } from "mocha";
+import { test, teardown, setup } from "mocha";
 import { transact, withExecutor } from "./pg";
 import { createDatabase, getEntry } from "./data";
 
@@ -8,9 +8,16 @@ setup(async () => {
   await transact((executor) => createDatabase(executor));
 });
 
+teardown(async () => {
+  await withExecutor(async (executor) => {
+    await executor(`delete from entry where spaceid like 'test-s-%'`);
+    await executor(`delete from space where id like 'test-s-%'`);
+  });
+});
+
 test("ReplicacheTransaction", async () => {
   await withExecutor(async (executor) => {
-    const t1 = new ReplicacheTransaction(executor, "s1", "c1", 1);
+    const t1 = new ReplicacheTransaction(executor, "test-s-s1", "c1", 1);
 
     expect(t1.clientID).equal("c1");
     expect(await t1.has("foo")).false;
@@ -22,16 +29,16 @@ test("ReplicacheTransaction", async () => {
 
     await t1.flush();
 
-    expect(await getEntry(executor, "s1", "foo")).equal("bar");
+    expect(await getEntry(executor, "test-s-s1", "foo")).equal("bar");
 
-    const t2 = new ReplicacheTransaction(executor, "s1", "c1", 2);
+    const t2 = new ReplicacheTransaction(executor, "test-s-s1", "c1", 2);
     await t2.del("foo");
     await t2.flush();
 
-    expect(await getEntry(executor, "s1", "foo")).equal(undefined);
+    expect(await getEntry(executor, "test-s-s1", "foo")).equal(undefined);
     const qr = await executor(
       `select value, deleted, version
-      from entry where spaceid = 's1' and key = 'foo'`
+      from entry where spaceid = 'test-s-s1' and key = 'foo'`
     );
     const [row] = qr.rows;
     expect(row).deep.equal({
@@ -44,16 +51,16 @@ test("ReplicacheTransaction", async () => {
 
 test("ReplicacheTransaction overlap", async () => {
   await withExecutor(async (executor) => {
-    const t1 = new ReplicacheTransaction(executor, "s1", "c1", 1);
+    const t1 = new ReplicacheTransaction(executor, "test-s-s1", "c1", 1);
     await t1.put("foo", "bar");
 
-    const t2 = new ReplicacheTransaction(executor, "s1", "c1", 1);
+    const t2 = new ReplicacheTransaction(executor, "test-s-s1", "c1", 1);
     expect(await t2.has("foo")).false;
 
     await t1.flush();
     expect(await t2.has("foo")).false;
 
-    const t3 = new ReplicacheTransaction(executor, "s1", "c1", 1);
+    const t3 = new ReplicacheTransaction(executor, "test-s-s1", "c1", 1);
     expect(await t3.has("foo")).true;
   });
 });

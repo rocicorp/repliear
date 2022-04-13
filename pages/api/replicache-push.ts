@@ -3,6 +3,8 @@ import {
   createDatabase,
   getCookie,
   getLastMutationID,
+  initSpace,
+  //  initSpace,
   setCookie,
   setLastMutationID,
 } from "../../backend/data";
@@ -11,6 +13,8 @@ import { ReplicacheTransaction } from "../../backend/replicache-transaction";
 import { mutators } from "../../frontend/mutators";
 import { z } from "zod";
 import { jsonSchema } from "../../util/json";
+import { assertNotUndefined } from "../../util/asserts";
+import { getReactIssues } from "../../backend/sample-issues";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
 // See notes in bug: https://github.com/rocicorp/replidraw/issues/47
@@ -25,7 +29,7 @@ const pushRequestSchema = z.object({
   mutations: z.array(mutationSchema),
 });
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
+const push = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log("Processing push", JSON.stringify(req.body, null, ""));
 
   const spaceID = req.query["spaceID"].toString();
@@ -34,8 +38,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const t0 = Date.now();
   await transact(async (executor) => {
     await createDatabase(executor);
+    await initSpace(executor, spaceID, getReactIssues);
 
-    const prevVersion = (await getCookie(executor, spaceID)) ?? 0;
+    const prevVersion = await getCookie(executor, spaceID);
+    assertNotUndefined(prevVersion);
     const nextVersion = prevVersion + 1;
     let lastMutationID =
       (await getLastMutationID(executor, push.clientID)) ?? 0;
@@ -97,3 +103,5 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   res.status(200).json({});
 };
+
+export default push;
