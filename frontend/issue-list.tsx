@@ -1,38 +1,67 @@
 import React, { CSSProperties, useState } from "react";
 import IssueRow from "./issue-row";
-import { Issue, issueKey, IssueValue, Priority, Status } from "./issue";
+import {
+  getAllIssuesCount,
+  getBacklogIssues,
+  Issue,
+  issueKey,
+  IssueValue,
+  Priority,
+  Status,
+} from "./issue";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
-import { getIssues } from "./issue";
+import { getIssues, getActiveIssues } from "./issue";
 import { useSubscribe } from "replicache-react";
 import type { Replicache } from "replicache";
 import type { M } from "./mutators";
 import { sortedIndexBy } from "lodash";
 
 interface Props {
-  //issues: Issue[];
   onUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
   rep: Replicache<M>;
+  set: "all" | "active" | "backlog";
 }
-const ISSUES_WINDOW_SIZE = 200;
+const ISSUES_WINDOW_SIZE = 100;
 
-const IssueList = ({ onUpdateIssue, rep }: Props) => {
+type IndexedStartKey = [secondary: string, primary: string];
+type KeyIndexHistoryEntry = { key: IndexedStartKey; index: number };
+const IssueList = ({ onUpdateIssue, rep, set }: Props) => {
   const [keyIndexHistory, setKeyIndexHistory] = useState<
-    { key: string; index: number }[]
+    KeyIndexHistoryEntry[]
   >([]);
-  const [startKey, setStartKey] = useState("");
+  const [startKey, setStartKey] = useState<undefined | IndexedStartKey>(
+    undefined
+  );
   const [startKeyIndex, setStartKeyIndex] = useState(0);
-  const currIssues = useSubscribe(
+  const issuesWindow = useSubscribe(
     rep,
     (tx) => {
-      return getIssues(
-        tx,
-        startKey === "" ? undefined : startKey,
-        ISSUES_WINDOW_SIZE
-      );
+      switch (set) {
+        case "active":
+          return getActiveIssues(tx, startKey, ISSUES_WINDOW_SIZE);
+        case "backlog":
+          return getBacklogIssues(tx, startKey, ISSUES_WINDOW_SIZE);
+        default:
+          return getIssues(tx, startKey, ISSUES_WINDOW_SIZE);
+      }
     },
-    []
+    [],
+    [startKey, set]
   );
+
+  const getIndexedSecondaryKey = (issue: Issue) => {
+    switch (set) {
+      case "active":
+        return issue.indexActiveReverseModified;
+      case "backlog":
+        return issue.indexBacklogReverseModified;
+      default:
+        return issue.indexReverseModified;
+    }
+  };
+
+  const issuesCount = useSubscribe(rep, getAllIssuesCount, 0);
   const handleItemsRendered = ({
     overscanStartIndex,
     overscanStopIndex,
@@ -44,28 +73,36 @@ const IssueList = ({ onUpdateIssue, rep }: Props) => {
     visibleStartIndex: number;
     visibleStopIndex: number;
   }) => {
-    if (currIssues.length === 0) {
+    if (issuesWindow.length === 0) {
       return;
     }
-    console.log(
+    console.debug(
       "startKey",
       startKey,
-      "\nstartKeyIndex",
+      "startKeyIndex",
       startKeyIndex,
-      "\nvisibleStartIndex",
+      "visibleStartIndex",
       visibleStartIndex,
-      "\nvisibleStopIndex",
+      "visibleStopIndex",
       visibleStopIndex,
-      "\noverscanStartIndex",
+      "overscanStartIndex",
       overscanStartIndex,
-      "\noverscanStopIndex",
+      "overscanStopIndex",
       overscanStopIndex,
-      "\n",
-      currIssues.length
+      "",
+      issuesWindow.length
     );
-    if (visibleStopIndex + 10 >= startKeyIndex + currIssues.length) {
-      const historyEntry = {
-        key: issueKey(currIssues[0].id),
+    if (visibleStartIndex === 0) {
+      setStartKey(undefined);
+      setStartKeyIndex(0);
+      return;
+    }
+    if (visibleStopIndex + 10 >= startKeyIndex + issuesWindow.length) {
+      const historyEntry: KeyIndexHistoryEntry = {
+        key: [
+          getIndexedSecondaryKey(issuesWindow[0]),
+          issueKey(issuesWindow[0].id),
+        ],
         index: startKeyIndex,
       };
       const newKeyIndexHistory = [...keyIndexHistory];
@@ -75,27 +112,31 @@ const IssueList = ({ onUpdateIssue, rep }: Props) => {
         historyEntry
       );
       setKeyIndexHistory(newKeyIndexHistory);
-      console.log("shifting forwards");
-      setStartKey(issueKey(currIssues[ISSUES_WINDOW_SIZE / 2].id));
+      console.log("SHIFTING forwards");
+      const newStartIssue =
+        issuesWindow[Math.min(ISSUES_WINDOW_SIZE / 2, issuesWindow.length - 1)];
+      setStartKey([
+        getIndexedSecondaryKey(issuesWindow[0]),
+        issueKey(newStartIssue.id),
+      ]);
       setStartKeyIndex(startKeyIndex + ISSUES_WINDOW_SIZE / 2);
     } else if (visibleStartIndex - 10 < startKeyIndex) {
-      console.log("shifting backwards");
-      for (let i = keyIndexHistory.length - 1; i >= 0; i--) {
+      console.log("SHIFTING backwards");
+      let shifted = false;
+      for (let i = keyIndexHistory.length - 1; i >= 0 && !shifted; i--) {
         if (keyIndexHistory[i].index <= overscanStartIndex) {
           setStartKey(keyIndexHistory[i].key);
           setStartKeyIndex(keyIndexHistory[i].index);
-          break;
+          shifted = true;
         }
+      }
+      if (!shifted) {
+        console.log("COULD NOT SHIFT BACKWARDS RESETTING");
+        setStartKey(undefined);
+        setStartKeyIndex(0);
       }
     }
   };
-
-  // // sort issues by id
-  // const issues = currIssues.sort((a, b) => {
-  //   const aModified = a.modified;
-  //   const bModified = b.modified;
-  //   return aModified - bModified;
-  // });
 
   const handleChangePriority = (issue: Issue, priority: Priority) => {
     onUpdateIssue(issue.id, { priority });
@@ -106,13 +147,13 @@ const IssueList = ({ onUpdateIssue, rep }: Props) => {
   };
 
   const Row = ({ index, style }: { index: number; style: CSSProperties }) =>
-    index < startKeyIndex || index >= startKeyIndex + currIssues.length ? (
+    index < startKeyIndex || index >= startKeyIndex + issuesWindow.length ? (
       <div style={style}></div>
     ) : (
       <div style={style}>
         <IssueRow
-          issue={currIssues[index - startKeyIndex]}
-          key={currIssues[index - startKeyIndex].id}
+          issue={issuesWindow[index - startKeyIndex]}
+          key={issuesWindow[index - startKeyIndex].id}
           onChangePriority={handleChangePriority}
           onChangeStatus={handleChangeStatus}
         />
@@ -124,9 +165,7 @@ const IssueList = ({ onUpdateIssue, rep }: Props) => {
         {({ height, width }) => (
           <FixedSizeList
             height={height}
-            // Need to maintain an issue count in
-            // replicache state
-            itemCount={10000}
+            itemCount={issuesCount}
             itemSize={43}
             overscanCount={10}
             width={width}

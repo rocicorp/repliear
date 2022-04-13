@@ -2,7 +2,7 @@ import type { JSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
 import { ReplicacheTransaction } from "./replicache-transaction";
-import { Issue, putIssue } from "../frontend/issue";
+import { IssueWithoutIndexFields, putIssue } from "../frontend/issue";
 import { flatten } from "lodash";
 
 export async function createDatabase(executor: Executor) {
@@ -64,12 +64,12 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (version)`);
 }
 
-export const SAMPLE_SPACE_ID = "sampleSpaceID";
+export const SAMPLE_SPACE_ID = "sampleSpaceID-2";
 
 export async function initSpace(
   executor: Executor,
   spaceID: string,
-  getSampleIssues: () => Promise<Issue[]>
+  getSampleIssues: () => Promise<IssueWithoutIndexFields[]>
 ) {
   const { rows } = await executor(`select version from space where id = $1`, [
     spaceID,
@@ -102,7 +102,7 @@ export async function initSpace(
     );
     const start = Date.now();
     for (const issue of await getSampleIssues()) {
-      await putIssue(tx, issue);
+      await putIssue(tx, issue, false);
     }
     await tx.flush();
     console.log("Creating template space took " + (Date.now() - start) + "ms");
