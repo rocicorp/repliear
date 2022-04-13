@@ -214,7 +214,9 @@ test("initSpace", async () => {
   const testSpaceID = "initSpace-Space1";
   await withExecutor(async (executor) => {
     expect(await getCookie(executor, testSpaceID)).undefined;
-    await initSpace(executor, "initSpace-Space1", SampleIssues);
+    await initSpace(executor, "initSpace-Space1", () =>
+      Promise.resolve(SampleIssues)
+    );
     expect(await getCookie(executor, testSpaceID)).eq(1);
     expect((await getChangedEntries(executor, testSpaceID, 0)).length).eq(
       SampleIssues.length
