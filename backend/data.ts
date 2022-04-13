@@ -164,6 +164,9 @@ export async function putEntries(
   entries: [key: string, value: JSONValue][],
   version: number
 ): Promise<void> {
+  if (entries.length === 0) {
+    return;
+  }
   const valuesSql = Array.from(
     { length: entries.length },
     (_, i) => `($1, $${i * 2 + 3}, $${i * 2 + 4}, false, $2, now())`
@@ -172,6 +175,8 @@ export async function putEntries(
     `
     insert into entry (spaceid, key, value, deleted, version, lastmodified)
     values ${valuesSql}
+    on conflict (spaceid, key) do update set
+      value = excluded.value, deleted = false, version = excluded.version, lastmodified = now()
     `,
     [
       spaceID,
