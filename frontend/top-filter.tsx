@@ -1,10 +1,10 @@
 import MenuIcon from "./assets/icons/menu.svg";
-import React from "react";
+import React, { useState } from "react";
 import SortOutlinedIcon from "@mui/icons-material/SortOutlined";
 //import type { Issue } from "./issue";
 
-// import IssueFilterModal from './IssueFilterModal';
-// import ViewOptionMenu from './ViewOptionMenu';
+import IssueFilterModal from "./issue-filter-modal";
+import ViewOptionMenu from "./view-option-menu";
 
 interface Props {
   title: string;
@@ -13,10 +13,8 @@ interface Props {
 }
 
 const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
-  // const [filterVisible, setFilterVisible] = useState(false);
-  // const [viewOptionVisible, setViewOptionVisible] = useState(false);
-
-  // todo: temporary issues
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [viewOptionVisible, setViewOptionVisible] = useState(false);
 
   return (
     <>
@@ -36,7 +34,7 @@ const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
           <span>{issuesCount}</span>
           <button
             className="px-1 py-0.5 ml-3 border border-gray-3 border-dashed rounded text-white hover:text-gray-2 focus:outline-none"
-            // onClick={() => setFilterVisible(!filterVisible)}
+            onClick={() => setFilterVisible(!filterVisible)}
           >
             + Filter
           </button>
@@ -46,14 +44,20 @@ const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
         <div className="flex items-center">
           <div
             className="p-2 rounded hover:bg-gray-400 cursor-pointer"
-            // onClick={() => setViewOptionVisible(true)}
+            onClick={() => setViewOptionVisible(true)}
           >
             <SortOutlinedIcon />
           </div>
         </div>
       </div>
-      {/* <ViewOptionMenu isOpen={viewOptionVisible} onDismiss={() => setViewOptionVisible(false)} />
-            <IssueFilterModal isOpen={filterVisible} onDismiss={() => setFilterVisible(false)} /> */}
+      <ViewOptionMenu
+        isOpen={viewOptionVisible}
+        onDismiss={() => setViewOptionVisible(false)}
+      />
+      <IssueFilterModal
+        isOpen={filterVisible}
+        onDismiss={() => setFilterVisible(false)}
+      />
     </>
   );
 };
