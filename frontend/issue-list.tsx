@@ -22,7 +22,7 @@ interface Props {
   rep: Replicache<M>;
   issueFilter: "all" | "active" | "backlog";
 }
-const ISSUES_WINDOW_SIZE = 100;
+const ISSUES_WINDOW_SIZE = 200;
 
 type KeyIndexHistoryEntry = { key: ScanOptionIndexedStartKey; index: number };
 const IssueList = ({ onUpdateIssue, rep, issueFilter }: Props) => {
