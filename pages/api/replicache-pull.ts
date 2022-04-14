@@ -51,14 +51,6 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
     patch: [],
   };
 
-  if (!requestCookie) {
-    resp.patch.push({
-      op: "put",
-      key: "initialized",
-      value: true,
-    });
-  }
-
   for (const [key, value, deleted] of entries) {
     if (deleted) {
       resp.patch.push({
