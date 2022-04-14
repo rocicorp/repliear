@@ -63,18 +63,18 @@ export default function IssueModal({
       {/* header */}
       <div className="flex items-center justify-between flex-shrink-0 px-4">
         <div className="flex items-center">
-          <span className="inline-flex items-center p-1 text-gray-400 bg-gray-100 rounded">
+          <span className="inline-flex items-center p-1 text-gray-400 bg-gray-2 rounded">
             <GitIssueIcon className="w-3 mr-1" />
             <span>GIT</span>
           </span>
           <span className="ml-2 font-normal text-gray-700">› New Issue</span>
         </div>
         <div className="flex items-center">
-          <div className="inline-flex items-center justify-center text-gray-500 rounded h-7 w-7 hover:bg-gray-100 hover:text-gray-700">
+          <div className="inline-flex items-center justify-center text-gray-500 rounded h-7 w-7 hover:bg-gray-2 hover:text-gray-700">
             <ZoomIcon className="w-3" />
           </div>
           <div
-            className="inline-flex items-center justify-center ml-2 text-gray-500 h-7 w-7 hover:bg-gray-100 rouned hover:text-gray-700"
+            className="inline-flex items-center justify-center ml-2 text-gray-500 h-7 w-7 hover:bg-gray-2 rouned hover:text-gray-700"
             onClick={handleClickCloseBtn}
           >
             <CloseIcon className="w-4" />
@@ -111,7 +111,7 @@ export default function IssueModal({
           labelVisible={true}
           priority={priority}
         />
-        <button className="inline-flex items-center h-6 px-2 ml-2 text-gray-500 bg-gray-200 border-none rounded focus:outline-none hover:bg-gray-100 hover:text-gray-700">
+        <button className="inline-flex items-center h-6 px-2 ml-2 text-gray-500 bg-gray-2 border-none rounded focus:outline-none hover:bg-gray-2 hover:text-gray-1">
           <OwnerIcon className="w-3.5 h-3.5 ml-2 mr-0.5" />
           <span>Assignee</span>
         </button>

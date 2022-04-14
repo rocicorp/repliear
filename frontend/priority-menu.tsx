@@ -59,7 +59,7 @@ const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
     return (
       <div
         key={idx}
-        className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
+        className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-2"
         onClick={() => {
           onSelect(priority);
           setPriorityDropDownVisible(false);
@@ -75,7 +75,7 @@ const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
       <button
         className={
           labelVisible
-            ? `inline-flex items-center h-6 px-2 text-gray-500 bg-gray-200 border-none rounded focus:outline-none hover:bg-gray-100 hover:text-gray-700`
+            ? `inline-flex items-center h-6 px-2 text-gray-500 bg-gray-2 border-none rounded focus:outline-none hover:bg-gray-2 hover:text-gray-1`
             : ""
         }
         ref={setPriorityRef}
