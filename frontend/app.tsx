@@ -86,7 +86,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           <IssueList
             rep={rep}
             onUpdateIssue={handleUpdateIssue}
-            set={issueFilter}
+            issueFilter={issueFilter}
           />
         </div>
       </div>

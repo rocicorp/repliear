@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState } from "react";
+import React, { CSSProperties, useEffect, useRef, useState } from "react";
 import IssueRow from "./issue-row";
 import {
   getAllIssuesCount,
@@ -13,31 +13,30 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 import { getIssues, getActiveIssues } from "./issue";
 import { useSubscribe } from "replicache-react";
-import type { Replicache } from "replicache";
+import type { Replicache, ScanOptionIndexedStartKey } from "replicache";
 import type { M } from "./mutators";
 import { sortedIndexBy } from "lodash";
 
 interface Props {
   onUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
   rep: Replicache<M>;
-  set: "all" | "active" | "backlog";
+  issueFilter: "all" | "active" | "backlog";
 }
 const ISSUES_WINDOW_SIZE = 100;
 
-type IndexedStartKey = [secondary: string, primary: string];
-type KeyIndexHistoryEntry = { key: IndexedStartKey; index: number };
-const IssueList = ({ onUpdateIssue, rep, set }: Props) => {
+type KeyIndexHistoryEntry = { key: ScanOptionIndexedStartKey; index: number };
+const IssueList = ({ onUpdateIssue, rep, issueFilter }: Props) => {
   const [keyIndexHistory, setKeyIndexHistory] = useState<
     KeyIndexHistoryEntry[]
   >([]);
-  const [startKey, setStartKey] = useState<undefined | IndexedStartKey>(
-    undefined
-  );
+  const [startKey, setStartKey] = useState<
+    undefined | ScanOptionIndexedStartKey
+  >(undefined);
   const [startKeyIndex, setStartKeyIndex] = useState(0);
   const issuesWindow = useSubscribe(
     rep,
     (tx) => {
-      switch (set) {
+      switch (issueFilter) {
         case "active":
           return getActiveIssues(tx, startKey, ISSUES_WINDOW_SIZE);
         case "backlog":
@@ -47,15 +46,25 @@ const IssueList = ({ onUpdateIssue, rep, set }: Props) => {
       }
     },
     [],
-    [startKey, set]
+    [startKey, issueFilter]
   );
+  const fixedSizeListRef = useRef<FixedSizeList>(null);
+  useEffect(() => {
+    setKeyIndexHistory([]);
+    setStartKey(undefined);
+    setStartKeyIndex(0);
+    console.log("fixedSizeListRef", fixedSizeListRef.current);
+    if (fixedSizeListRef.current) {
+      fixedSizeListRef.current.scrollTo(0);
+    }
+  }, [issueFilter]);
 
-  const getIndexedSecondaryKey = (issue: Issue) => {
-    switch (set) {
+  const getIndexedStartKey = (issue: Issue): ScanOptionIndexedStartKey => {
+    switch (issueFilter) {
       case "active":
-        return issue.indexActiveReverseModified;
+        return [issue.indexActiveReverseModified, issueKey(issue.id)];
       case "backlog":
-        return issue.indexBacklogReverseModified;
+        return [(issue.indexActiveReverseModified, issueKey(issue.id))];
       default:
         return issue.indexReverseModified;
     }
@@ -99,10 +108,7 @@ const IssueList = ({ onUpdateIssue, rep, set }: Props) => {
     }
     if (visibleStopIndex + 10 >= startKeyIndex + issuesWindow.length) {
       const historyEntry: KeyIndexHistoryEntry = {
-        key: [
-          getIndexedSecondaryKey(issuesWindow[0]),
-          issueKey(issuesWindow[0].id),
-        ],
+        key: getIndexedStartKey(issuesWindow[0]),
         index: startKeyIndex,
       };
       const newKeyIndexHistory = [...keyIndexHistory];
@@ -113,13 +119,10 @@ const IssueList = ({ onUpdateIssue, rep, set }: Props) => {
       );
       setKeyIndexHistory(newKeyIndexHistory);
       console.log("SHIFTING forwards");
-      const newStartIssue =
-        issuesWindow[Math.min(ISSUES_WINDOW_SIZE / 2, issuesWindow.length - 1)];
-      setStartKey([
-        getIndexedSecondaryKey(issuesWindow[0]),
-        issueKey(newStartIssue.id),
-      ]);
-      setStartKeyIndex(startKeyIndex + ISSUES_WINDOW_SIZE / 2);
+      const offset = Math.min(ISSUES_WINDOW_SIZE / 2, issuesWindow.length - 1);
+      const newStartIssue = issuesWindow[offset];
+      setStartKey(getIndexedStartKey(newStartIssue));
+      setStartKeyIndex(startKeyIndex + offset);
     } else if (visibleStartIndex - 10 < startKeyIndex) {
       console.log("SHIFTING backwards");
       let shifted = false;
@@ -164,6 +167,7 @@ const IssueList = ({ onUpdateIssue, rep, set }: Props) => {
       <AutoSizer>
         {({ height, width }) => (
           <FixedSizeList
+            ref={fixedSizeListRef}
             height={height}
             itemCount={issuesCount}
             itemSize={43}

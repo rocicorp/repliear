@@ -96,9 +96,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             </div>
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-450">
               <span className="w-3 h-3 mr-2"></span>
-              <Link href="/board">
-                <span>Board</span>
-              </Link>
+              <span>Board</span>
             </div>
           </ItemGroup>
 
