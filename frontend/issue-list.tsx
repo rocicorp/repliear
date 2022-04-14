@@ -53,7 +53,6 @@ const IssueList = ({ onUpdateIssue, rep, issueFilter }: Props) => {
     setKeyIndexHistory([]);
     setStartKey(undefined);
     setStartKeyIndex(0);
-    console.log("fixedSizeListRef", fixedSizeListRef.current);
     if (fixedSizeListRef.current) {
       fixedSizeListRef.current.scrollTo(0);
     }
@@ -73,7 +72,7 @@ const IssueList = ({ onUpdateIssue, rep, issueFilter }: Props) => {
   const issuesCount = useSubscribe(rep, getAllIssuesCount, 0);
   const handleItemsRendered = ({
     overscanStartIndex,
-    overscanStopIndex,
+    //overscanStopIndex,
     visibleStartIndex,
     visibleStopIndex,
   }: {
@@ -85,22 +84,22 @@ const IssueList = ({ onUpdateIssue, rep, issueFilter }: Props) => {
     if (issuesWindow.length === 0) {
       return;
     }
-    console.debug(
-      "startKey",
-      startKey,
-      "startKeyIndex",
-      startKeyIndex,
-      "visibleStartIndex",
-      visibleStartIndex,
-      "visibleStopIndex",
-      visibleStopIndex,
-      "overscanStartIndex",
-      overscanStartIndex,
-      "overscanStopIndex",
-      overscanStopIndex,
-      "",
-      issuesWindow.length
-    );
+    // console.debug(
+    //   "startKey",
+    //   startKey,
+    //   "startKeyIndex",
+    //   startKeyIndex,
+    //   "visibleStartIndex",
+    //   visibleStartIndex,
+    //   "visibleStopIndex",
+    //   visibleStopIndex,
+    //   "overscanStartIndex",
+    //   overscanStartIndex,
+    //   "overscanStopIndex",
+    //   overscanStopIndex,
+    //   "",
+    //   issuesWindow.length
+    // );
     if (visibleStartIndex === 0) {
       setStartKey(undefined);
       setStartKeyIndex(0);
