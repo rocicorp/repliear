@@ -9,6 +9,7 @@ import classnames from "classnames";
 import SearchBox from "./searchbox";
 import IssueModal from "./issue-modal";
 import type { Issue } from "./issue";
+import ReactLogo from "./assets/images/logo.svg";
 interface Props {
   // Show menu (for small screen only)
   menuVisible: boolean;
@@ -25,7 +26,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
     {
       /* eslint-disable @typescript-eslint/naming-convention */
       "-translate-x-full ease-out shadow-none": !menuVisible,
-      "translate-x-0 ease-in shadow-xl": menuVisible,
+      "translate-x-0 ease-in shadow-x z-50": menuVisible,
       /* eslint-enable @typescript-eslint/naming-convention */
     }
   );
@@ -50,10 +51,10 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <div className="flex items-center justify-between">
             {/* Project selection */}
             <div className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-100">
-              <div className="flex text-sm items-center justify-center rounded-sm w-4.5 h-4.5 text-white bg-yellow-500 mr-2.5">
-                G
+              <div className="w-8 text-white">
+                <ReactLogo />
               </div>
-              <div className="text-sm font-medium">github</div>
+              <div className="text-sm font-medium">React</div>
             </div>
           </div>
 

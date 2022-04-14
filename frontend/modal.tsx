@@ -33,7 +33,7 @@ function Modal({
   const outerRef = useRef(null);
 
   const wrapperClasses = classnames(
-    "fixed flex flex-col items-center inset-0 z-50",
+    "fixed flex flex-col items-center inset-0 z-100",
     {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       "justify-center": center,

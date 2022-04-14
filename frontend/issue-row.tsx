@@ -49,7 +49,7 @@ export default function IssueRow({
         {issue.title.substr(0, 3000) || ""}
       </div>
       <div className="flex flex-grow ml-2"></div>
-      <div className="flex-shrink-0 hidden w-11 ml-2 mr-3 font-normal sm:block">
+      <div className="flex-shrink-0 hidden w-12 ml-2 mr-3 font-normal sm:block">
         {formatDate(new Date(issue.modified))}
       </div>
     </div>
