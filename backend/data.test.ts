@@ -1,5 +1,10 @@
 import { expect } from "chai";
-import { Issue, Priority, Status } from "../frontend/issue";
+import {
+  Issue,
+  IssueWithoutIndexFields,
+  Priority,
+  Status,
+} from "../frontend/issue";
 import { setup, teardown, test } from "mocha";
 import type { JSONValue } from "replicache";
 import {
@@ -14,7 +19,7 @@ import {
 } from "./data";
 import { transact, withExecutor } from "./pg";
 
-const i1: Issue = {
+const i1: IssueWithoutIndexFields = {
   priority: Priority.HIGH,
   id: "1",
   title: "Issue 1",
@@ -23,7 +28,7 @@ const i1: Issue = {
   modified: 0,
 };
 
-const i2: Issue = {
+const i2: IssueWithoutIndexFields = {
   priority: Priority.MEDIUM,
   id: "2",
   title: "Issue 2",
@@ -32,7 +37,7 @@ const i2: Issue = {
   modified: 0,
 };
 
-const i3: Issue = {
+const i3: IssueWithoutIndexFields = {
   priority: Priority.LOW,
   id: "3",
   title: "Issue 3",
@@ -41,7 +46,7 @@ const i3: Issue = {
   modified: 0,
 };
 
-export const SampleIssues: Issue[] = [i1, i2, i3];
+export const SampleIssues: IssueWithoutIndexFields[] = [i1, i2, i3];
 
 setup(async () => {
   // TODO: This is a very expensive way to unit test :).
