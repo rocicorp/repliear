@@ -12,7 +12,7 @@ export default function Toggle({ className }: Props) {
     "absolute h-3.5 w-3.5 overflow-hidden border-2 transition duration-200 ease-linear rounded-full cursor-pointer bg-white",
     {
       /* eslint-disable @typescript-eslint/naming-convention */
-      "left-0 border-gray-300": !check,
+      "left-0 border-gray-3": !check,
       "right-0 border-indigo-600": check,
       /* eslint-enable @typescript-eslint/naming-convention */
     }

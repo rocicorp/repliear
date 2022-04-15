@@ -19,16 +19,13 @@ function SearchBox({ placeholder = "Search", onChange, className }: Props) {
         onChange={onChange}
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
-        className="w-full pl-8 pr-6 text-sm font-medium placeholder-gray-700 border border-transparent rounded h-7 ring-0 focus:outline-none focus:placeholder-gray-400 hover:border-gray-100 focus:border-gray-100"
+        className="w-full pl-8 pr-6 text-sm font-medium placeholder-white text-white bg-gray-450 border-gray-400 border-transparent rounded h-7 ring-0 focus:outline-none"
       />
       <SearchIcon
-        className={classnames(
-          "absolute w-3.5 h-3.5 text-gray-500 left-2 top-2",
-          {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            "text-blue-700": focus,
-          }
-        )}
+        className={classnames("absolute w-3.5 h-3.5 text-white left-2 top-2", {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          "text-gray-100": focus,
+        })}
       />
     </div>
   );

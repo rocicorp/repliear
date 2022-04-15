@@ -4,7 +4,7 @@
 
 body {
   font-size: 12px;
-  @apply text-gray-600 font-medium;
+  @apply font-medium text-white bg-gray-500;
 }
 
 @font-face {

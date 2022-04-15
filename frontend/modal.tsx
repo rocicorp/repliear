@@ -40,7 +40,7 @@ function Modal({
     }
   );
   const modalClasses = classnames(
-    "flex flex-col items-center transform bg-white modal shadow-large-modal rounded-xl",
+    "flex flex-col items-center transform bg-gray-450 modal shadow-large-modal rounded-xl",
     {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       "mt-20 mb-2 ": !center,
@@ -58,7 +58,7 @@ function Modal({
   useLockBodyScroll();
 
   const modal = (
-    <div ref={outerRef} onClick={handleClick}>
+    <div ref={outerRef} onMouseDown={handleClick}>
       <div className={wrapperClasses} style={{ display: isOpen ? "" : "none" }}>
         <div ref={ref} className={modalClasses}>
           {title && (

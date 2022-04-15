@@ -1,4 +1,5 @@
 module.exports = {
+  darkMode: "media",
   content: ["./pages/**/*.{js,ts,jsx,tsx}", "./frontend/**/*.{js,ts,jsx,tsx}"],
   theme: {
     screens: {
@@ -17,9 +18,26 @@ module.exports = {
       "2xl": "1536px",
       // => @media (min-width: 1536px) { ... }
     },
-    // color: {
-    //   // gray: colors.trueGray,
-    // },
+    colors: {
+      white: "#f7f8f8",
+      gray: {
+        DEFAULT: "#1F2023",
+        1: "#425563",
+        2: "#f3f4f6",
+        3: "#46484E",
+        50: "#757984",
+        100: "#6C6F7A",
+        200: "#585B64",
+        300: "#45484E",
+        400: "#323439",
+        450: "#2d2f36",
+        500: "#1F2023",
+        600: "#050505",
+        700: "#000000",
+        800: "#000000",
+        900: "#000000",
+      },
+    },
     fontFamily: {
       sans: [
         "Inter\\ UI",
@@ -73,6 +91,7 @@ module.exports = {
       },
       zIndex: {
         100: 100,
+        50: 50,
       },
     },
   },

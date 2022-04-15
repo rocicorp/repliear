@@ -63,18 +63,18 @@ export default function IssueModal({
       {/* header */}
       <div className="flex items-center justify-between flex-shrink-0 px-4">
         <div className="flex items-center">
-          <span className="inline-flex items-center p-1 text-gray-400 bg-gray-100 rounded">
+          <span className="inline-flex items-center p-1 text-gray-400 bg-gray-2 rounded">
             <GitIssueIcon className="w-3 mr-1" />
             <span>GIT</span>
           </span>
-          <span className="ml-2 font-normal text-gray-700">› New Issue</span>
+          <span className="ml-2 font-normal text-white">› New Issue</span>
         </div>
         <div className="flex items-center">
-          <div className="inline-flex items-center justify-center text-gray-500 rounded h-7 w-7 hover:bg-gray-100 hover:text-gray-700">
+          <div className="inline-flex items-center justify-center rounded h-7 w-7 hover:bg-gray-1 hover-text-gray-1 text-white">
             <ZoomIcon className="w-3" />
           </div>
           <div
-            className="inline-flex items-center justify-center ml-2 text-gray-500 h-7 w-7 hover:bg-gray-100 rouned hover:text-gray-700"
+            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-1 hover-text-gray-1 text-white"
             onClick={handleClickCloseBtn}
           >
             <CloseIcon className="w-4" />
@@ -86,7 +86,7 @@ export default function IssueModal({
         <div className="flex items-center w-full mt-1.5 px-4">
           <StatusMenu onSelect={setStatus} status={status} />
           <input
-            className="w-full ml-1.5 text-lg font-semibold placeholder-gray-400 border-none h-7 focus:outline-none"
+            className="w-full ml-1.5 text-lg font-semibold placeholder-white  border-none h-7 focus:outline-none bg-gray-450 text-white"
             placeholder="Issue title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -98,7 +98,7 @@ export default function IssueModal({
           <textarea
             rows={5}
             onBlur={(e) => setDescription(e.target.value)}
-            className="w-full mt-4 ml-5 font-normal border-none appearance-none min-h-12 text-md focus:outline-none"
+            className="w-full mt-4 ml-5 font-normal border-none appearance-none min-h-12 text-md focus:outline-none placeholder-white bg-gray-450 text-white"
             placeholder="Add description..."
           />
         </div>
@@ -111,7 +111,7 @@ export default function IssueModal({
           labelVisible={true}
           priority={priority}
         />
-        <button className="inline-flex items-center h-6 px-2 ml-2 text-gray-500 bg-gray-200 border-none rounded focus:outline-none hover:bg-gray-100 hover:text-gray-700">
+        <button className="inline-flex items-center h-6 px-2 ml-2 text-gray-500 bg-gray-2 border-none rounded focus:outline-none hover:bg-gray-2 hover:text-gray-1">
           <OwnerIcon className="w-3.5 h-3.5 ml-2 mr-0.5" />
           <span>Assignee</span>
         </button>
@@ -126,7 +126,7 @@ export default function IssueModal({
           <Toggle />
           <span className="ml-2 font-normal">Create more</span>
           <button
-            className="px-3 ml-2 text-white bg-indigo-600 rounded hover:bg-indigo-700 h-7 focus:outline-none"
+            className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-500 text-white"
             onClick={handleSubmit}
           >
             Save Issue
