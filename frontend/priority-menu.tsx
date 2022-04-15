@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { RefObject, useRef, useState } from "react";
 import { usePopper } from "react-popper";
 import PriorityIcon from "./priority-icon";
 import HighPriorityIcon from "./assets/icons/signal-strong.svg";
@@ -7,6 +7,7 @@ import MediumPriorityIcon from "./assets/icons/signal-medium.svg";
 import NoPriorityIcon from "./assets/icons/dots.svg";
 import UrgentPriorityIcon from "./assets/icons/rounded-claim.svg";
 import { Priority, PriorityEnum } from "./issue";
+import { useClickOutside } from "./hooks/useClickOutside";
 
 interface Props {
   labelVisible: boolean;
@@ -20,6 +21,7 @@ const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
   );
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [priorityDropDownVisible, setPriorityDropDownVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
 
   const { styles, attributes, update } = usePopper(priorityRef, popperRef, {
     placement: "bottom-start",
@@ -55,6 +57,12 @@ const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
     [LowPriorityIcon, "Low", Priority.LOW],
   ];
 
+  useClickOutside(ref, () => {
+    if (priorityDropDownVisible) {
+      setPriorityDropDownVisible(false);
+    }
+  });
+
   const options = statusOpts.map(([Icon, label, priority], idx) => {
     return (
       <div
@@ -71,7 +79,7 @@ const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
   });
 
   return (
-    <>
+    <div ref={ref}>
       <button
         className={
           labelVisible
@@ -95,7 +103,7 @@ const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
       >
         <div style={styles.offset}>{options}</div>
       </div>
-    </>
+    </div>
   );
 };
 

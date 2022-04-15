@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { RefObject, useRef, useState } from "react";
 import { usePopper } from "react-popper";
 import StatusIcon from "./status-icon";
 import CancelIcon from "./assets/icons/cancel.svg";
@@ -7,6 +7,7 @@ import TodoIcon from "./assets/icons/circle.svg";
 import DoneIcon from "./assets/icons/done.svg";
 import InProgressIcon from "./assets/icons/half-circle.svg";
 import { Status } from "./issue";
+import { useClickOutside } from "./hooks/useClickOutside";
 
 interface Props {
   onSelect: (status: Status) => void;
@@ -22,10 +23,18 @@ const StatusMenu = ({ onSelect, status }: Props) => {
     placement: "bottom-start",
   });
 
+  const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
+
   const handleDropdownClick = () => {
     update && update();
     setStatusDropDownVisible(!statusDropDownVisible);
   };
+
+  useClickOutside(ref, () => {
+    if (statusDropDownVisible) {
+      setStatusDropDownVisible(false);
+    }
+  });
 
   const statuses = [
     [BacklogIcon, Status.BACKLOG, "Backlog"],
@@ -51,7 +60,7 @@ const StatusMenu = ({ onSelect, status }: Props) => {
   });
 
   return (
-    <>
+    <div ref={ref}>
       <button
         className="flex items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
         ref={setStatusRef}
@@ -70,7 +79,7 @@ const StatusMenu = ({ onSelect, status }: Props) => {
       >
         <div style={styles.offset}>{options}</div>
       </div>
-    </>
+    </div>
   );
 };
 
