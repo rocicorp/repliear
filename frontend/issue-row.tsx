@@ -28,12 +28,6 @@ export default function IssueRow({
       className="inline-flex items-center flex-grow flex-shrink w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-400 hover:bg-gray-400 hover:bg-opacity-40 h-11 text-white border-y-1"
       id={issue.id}
     >
-      <div className="flex-shrink-0 hidden ml-2 sm:block">
-        <input
-          type="checkbox"
-          className="rounded-sm appearance-none form-checkbox focus:ring-transparent focus:outline-none form-stick checked:bg-indigo-600 checked:border-transparent border border-gray-3 md:border-transparent hover:border-gray-600 w-3.5 h-3.5"
-        />
-      </div>
       <div className="flex-shrink-0 ml-2">
         <PriorityMenu
           labelVisible={false}
