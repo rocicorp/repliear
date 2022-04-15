@@ -22,7 +22,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const [issueModalVisible, setIssueModalVisible] = useState(false);
 
   const classes = classnames(
-    "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 bg-white flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-1 border-r border-gray-2 lg:shadow-none justify-items-start dark:bg-gray-500 dark:text-white dark:border-gray-400 dark:text-white dark:bg-opacity-25 dark:bg-opacity-75",
+    "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-1 border-r border-gray-2 lg:shadow-none justify-items-start dark:bg-gray-500 dark:text-white dark:border-gray-400 dark:text-white dark:bg-opacity-25 dark:bg-opacity-75",
     {
       /* eslint-disable @typescript-eslint/naming-convention */
       "-translate-x-full ease-out shadow-none": !menuVisible,
@@ -50,7 +50,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
         <div className="flex flex-col flex-grow-0 flex-shrink-0 px-5 py-3">
           <div className="flex items-center justify-between">
             {/* Project selection */}
-            <div className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-2">
+            <div className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-2 dark:hover:bg-gray-400">
               <div className="w-8 text-white">
                 <ReactLogo />
               </div>

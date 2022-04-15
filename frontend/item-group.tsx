@@ -14,7 +14,7 @@ function ItemGroup({ title, children }: Props) {
   return (
     <div className="flex flex-col w-full text-sm">
       <div
-        className="px-2 relative w-full mt-0.5 h-7 flex items-center rounded hover:bg-gray-2 cursor-pointer"
+        className="px-2 relative w-full mt-0.5 h-7 flex items-center rounded hover:bg-gray-2 cursor-pointer dark:hover:bg-gray-400"
         onClick={() => setItemsVisible(!itemsVisible)}
       >
         <Icon className="w-3 h-3 mr-2 -ml-1" />

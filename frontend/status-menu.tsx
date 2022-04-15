@@ -39,7 +39,7 @@ const StatusMenu = ({ onSelect, status }: Props) => {
     return (
       <div
         key={idx}
-        className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-2"
+        className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
         onClick={() => {
           onSelect(status);
           setStatusDropDownVisible(false);
@@ -53,7 +53,7 @@ const StatusMenu = ({ onSelect, status }: Props) => {
   return (
     <>
       <button
-        className="flex items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-2"
+        className="flex items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
         ref={setStatusRef}
         onClick={handleDropdownClick}
       >

@@ -67,14 +67,16 @@ export default function IssueModal({
             <GitIssueIcon className="w-3 mr-1" />
             <span>GIT</span>
           </span>
-          <span className="ml-2 font-normal text-gray-700">› New Issue</span>
+          <span className="ml-2 font-normal text-gray-700 dark:text-white">
+            › New Issue
+          </span>
         </div>
         <div className="flex items-center">
-          <div className="inline-flex items-center justify-center text-gray-500 rounded h-7 w-7 hover:bg-gray-2 hover:text-gray-700">
+          <div className="inline-flex items-center justify-center text-gray-500 rounded h-7 w-7 hover:bg-gray-2 hover:text-gray-700 dark:hover:bg-gray-1 dark:hover-text-gray-1 dark:text-white">
             <ZoomIcon className="w-3" />
           </div>
           <div
-            className="inline-flex items-center justify-center ml-2 text-gray-500 h-7 w-7 hover:bg-gray-2 rouned hover:text-gray-700"
+            className="inline-flex items-center justify-center ml-2 text-gray-500 h-7 w-7 hover:bg-gray-2 rounded hover:text-gray-700 dark:hover:bg-gray-1 dark:hover-text-gray-1 dark:text-white"
             onClick={handleClickCloseBtn}
           >
             <CloseIcon className="w-4" />
@@ -86,7 +88,7 @@ export default function IssueModal({
         <div className="flex items-center w-full mt-1.5 px-4">
           <StatusMenu onSelect={setStatus} status={status} />
           <input
-            className="w-full ml-1.5 text-lg font-semibold placeholder-gray-400 border-none h-7 focus:outline-none"
+            className="w-full ml-1.5 text-lg font-semibold dark:placeholder-white placeholder-gray-400 bg-white border-none h-7 focus:outline-none dark:bg-gray-450 dark:text-white"
             placeholder="Issue title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -98,7 +100,7 @@ export default function IssueModal({
           <textarea
             rows={5}
             onBlur={(e) => setDescription(e.target.value)}
-            className="w-full mt-4 ml-5 font-normal border-none appearance-none min-h-12 text-md focus:outline-none"
+            className="w-full mt-4 ml-5 font-normal border-none appearance-none min-h-12 text-md bg-white focus:outline-none dark:placeholder-white dark:bg-gray-450 dark:text-white"
             placeholder="Add description..."
           />
         </div>
@@ -126,7 +128,7 @@ export default function IssueModal({
           <Toggle />
           <span className="ml-2 font-normal">Create more</span>
           <button
-            className="px-3 ml-2 text-white bg-indigo-600 rounded hover:bg-indigo-700 h-7 focus:outline-none"
+            className="px-3 ml-2 text-white bg-indigo-600 rounded hover:bg-indigo-700 h-7 focus:outline-none dark:bg-gray-500 dark:text-white text-gray-2 bg-gray-1"
             onClick={handleSubmit}
           >
             Save Issue
