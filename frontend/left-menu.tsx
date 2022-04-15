@@ -22,7 +22,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const [issueModalVisible, setIssueModalVisible] = useState(false);
 
   const classes = classnames(
-    "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-1 border-r border-gray-2 lg:shadow-none justify-items-start dark:bg-gray-500 dark:text-white dark:border-gray-400 dark:text-white dark:bg-opacity-25 dark:bg-opacity-75",
+    "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm text-gray-1 border-r border-gray-2 lg:shadow-none justify-items-start dark:bg-gray-500 dark:text-white dark:border-gray-400 dark:text-white dark:bg-opacity-1 bg-purewhite",
     {
       /* eslint-disable @typescript-eslint/naming-convention */
       "-translate-x-full ease-out shadow-none": !menuVisible,
@@ -43,7 +43,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           className="flex-shrink-0 px-5 ml-2 lg:hidden h-14 focus:outline-none"
           onClick={onCloseMenu}
         >
-          <MenuIcon className="w-3.5 text-gray-500 hover:text-gray-800" />
+          <MenuIcon className="w-3.5 text-gray-500  dark:text-gray-2 dark:hover:text-gray-1 hover:text-gray-800" />
         </button>
 
         {/* Top menu*/}
