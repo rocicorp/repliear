@@ -1,10 +1,5 @@
 import { expect } from "chai";
-import {
-  Issue,
-  IssueWithoutIndexFields,
-  Priority,
-  Status,
-} from "../frontend/issue";
+import { IssueWithoutIndexFields, Priority, Status } from "../frontend/issue";
 import { setup, teardown, test } from "mocha";
 import type { JSONValue } from "replicache";
 import {
@@ -321,16 +316,15 @@ test("initSpace", async () => {
       Promise.resolve(SampleIssues)
     );
     expect(await getCookie(executor, testSpaceID1)).eq(1);
-    expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(
-      SampleIssues.length
-    );
+    // 3 issues and 2 counts (count/all and count/active)
+    expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(5);
     expect(await getCookie(executor, testSpaceID2)).undefined;
     await initSpace(executor, testSpaceID2, () => {
       throw new Error("unexpected call to getSampleIssues on subsequent calls");
     });
     expect(await getCookie(executor, testSpaceID2)).eq(1);
-    expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(
-      SampleIssues.length
-    );
+
+    // 3 issues and 2 counts (count/all and count/active)
+    expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(5);
   });
 });
