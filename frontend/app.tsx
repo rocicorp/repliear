@@ -14,6 +14,8 @@ import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 import { useSubscribe } from "replicache-react";
 import { useQueryState } from "next-usequerystate";
+// import IssueList from "./issue-list";
+import IssueBoard from "./issue-board";
 
 type IssueFilter = "all" | "active" | "backlog";
 
@@ -83,11 +85,12 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             title={getTitleForIssueFilter(issueFilter)}
             issuesCount={issuesCount}
           />
-          <IssueList
+          {/* <IssueList
             rep={rep}
             onUpdateIssue={handleUpdateIssue}
             issueFilter={issueFilter}
-          />
+          /> */}
+          <IssueBoard issues={issues} onUpdateIssue={handleUpdateIssue} />
         </div>
       </div>
     </div>

@@ -298,6 +298,8 @@ export const getIssueByType = (allIssues: Issue[]): IssuesByStatusType => {
     [Status.DONE]: [],
     [Status.CANCELED]: [],
   };
-  const result = { ...issuesBySType, ...defaultIssueByType };
+  const result = { ...defaultIssueByType, ...issuesBySType };
+  console.log("result", result);
+
   return result;
 };
