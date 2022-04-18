@@ -8,18 +8,22 @@ import { useClickOutside } from "./hooks/useClickOutside";
 import classnames from "classnames";
 import SearchBox from "./searchbox";
 import IssueModal from "./issue-modal";
-import type { Issue } from "./issue";
 import ReactLogo from "./assets/images/logo.svg";
+import type { IssueWithoutIndexFields } from "./issue";
+import { useRouter } from "next/router";
+
 interface Props {
   // Show menu (for small screen only)
   menuVisible: boolean;
   onCloseMenu?: () => void;
-  onCreateIssue: (i: Issue) => void;
+  onCreateIssue: (i: IssueWithoutIndexFields) => void;
 }
 
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
+  const router = useRouter();
+  const { id } = router.query;
 
   const classes = classnames(
     "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm border-r lg:shadow-none justify-items-start bg-gray-500 border-gray-400 text-white bg-opacity-1",
@@ -51,12 +55,14 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
         <div className="flex flex-col flex-grow-0 flex-shrink-0 px-5 py-3">
           <div className="flex items-center justify-between">
             {/* Project selection */}
-            <div className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-400">
-              <div className="w-8 text-white">
-                <ReactLogo />
+            <Link href={`/d/${id}`}>
+              <div className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-400">
+                <div className="w-8 text-white">
+                  <ReactLogo />
+                </div>
+                <div className="text-sm font-medium">React</div>
               </div>
-              <div className="text-sm font-medium">React</div>
-            </div>
+            </Link>
           </div>
 
           {/* Create issue btn */}
@@ -78,21 +84,19 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <ItemGroup title="Issues">
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-450">
               <span className="w-3 h-3 mr-2"></span>
-              <Link href="/">
+              <Link href={`/d/${id}?issueFilter=active`}>
                 <span>Active</span>
               </Link>
             </div>
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-450">
               <span className="w-3 h-3 mr-2"></span>
-              <Link href="/">
+              <Link href={`/d/${id}?issueFilter=backlog`}>
                 <span>Backlog</span>
               </Link>
             </div>
             <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-450">
               <span className="w-3 h-3 mr-2"></span>
-              <Link href="/board">
-                <span>Board</span>
-              </Link>
+              <span>Board</span>
             </div>
           </ItemGroup>
 

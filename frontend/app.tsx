@@ -1,18 +1,68 @@
 import React from "react";
 import type { Replicache } from "replicache";
-import { useSubscribe } from "replicache-react";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
-import { getAllIssues, Issue, IssueValue } from "./issue";
+import {
+  getActiveIssuesCount,
+  getAllIssuesCount,
+  getBacklogIssuesCount,
+  IssueValue,
+  IssueWithoutIndexFields,
+} from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
+import { useSubscribe } from "replicache-react";
+import { useQueryState } from "next-usequerystate";
+
+type IssueFilter = "all" | "active" | "backlog";
+
+function getIssueFilter(issueFilterQueryParam: string | null): IssueFilter {
+  switch ((issueFilterQueryParam || "all").toLowerCase()) {
+    case "active":
+      return "active";
+    case "backlog":
+      return "backlog";
+    default:
+      return "all";
+  }
+}
+
+function getTitleForIssueFilter(issueFilter: IssueFilter) {
+  switch (issueFilter) {
+    case "active":
+      return "Active issues";
+    case "backlog":
+      return "Backlog issues";
+    default:
+      return "All issues";
+  }
+}
+
+function getCountFetcherForIssueFilter(issueFilter: IssueFilter) {
+  switch (issueFilter) {
+    case "active":
+      return getActiveIssuesCount;
+    case "backlog":
+      return getBacklogIssuesCount;
+    default:
+      return getAllIssuesCount;
+  }
+}
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
+  const [issueFilterQueryParam] = useQueryState("issueFilter");
+  const issueFilter = getIssueFilter(issueFilterQueryParam);
   const [menuVisible, setMenuVisible] = useState(false);
-  const issues = useSubscribe(rep, getAllIssues, []);
+  const issuesCount = useSubscribe(
+    rep,
+    getCountFetcherForIssueFilter(issueFilter),
+    0,
+    [issueFilter]
+  );
 
-  const handleCreateIssue = (issue: Issue) => rep.mutate.putIssue(issue);
+  const handleCreateIssue = (issue: IssueWithoutIndexFields) =>
+    rep.mutate.putIssue(issue);
   const handleUpdateIssue = (id: string, changes: Partial<IssueValue>) =>
     rep.mutate.updateIssue({
       id,
@@ -30,10 +80,14 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
         <div className="flex flex-col flex-grow">
           <TopFilter
             onToggleMenu={() => setMenuVisible(!menuVisible)}
-            title="All issues"
-            issues={issues}
+            title={getTitleForIssueFilter(issueFilter)}
+            issuesCount={issuesCount}
           />
-          <IssueList issues={issues} onUpdateIssue={handleUpdateIssue} />
+          <IssueList
+            rep={rep}
+            onUpdateIssue={handleUpdateIssue}
+            issueFilter={issueFilter}
+          />
         </div>
       </div>
     </div>

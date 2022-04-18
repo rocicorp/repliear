@@ -3,6 +3,11 @@ import { Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
 import { createClient } from "@supabase/supabase-js";
+import {
+  getIssuesByActiveReverseModifiedIndexDefinition,
+  getIssuesByBacklogReverseModifiedIndexDefinition,
+  getIssuesByReverseModifiedIndexDefinition,
+} from "frontend/issue";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
@@ -36,6 +41,9 @@ export default function Home() {
         })
         .subscribe();
 
+      await r.createIndex(getIssuesByReverseModifiedIndexDefinition());
+      await r.createIndex(getIssuesByActiveReverseModifiedIndexDefinition());
+      await r.createIndex(getIssuesByBacklogReverseModifiedIndexDefinition());
       setRep(r);
     })();
   }, []);

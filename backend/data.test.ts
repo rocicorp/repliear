@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Issue, Priority, Status } from "../frontend/issue";
+import { IssueWithoutIndexFields, Priority, Status } from "../frontend/issue";
 import { setup, teardown, test } from "mocha";
 import type { JSONValue } from "replicache";
 import {
@@ -14,7 +14,7 @@ import {
 } from "./data";
 import { transact, withExecutor } from "./pg";
 
-const i1: Issue = {
+const i1: IssueWithoutIndexFields = {
   priority: Priority.HIGH,
   id: "1",
   title: "Issue 1",
@@ -23,7 +23,7 @@ const i1: Issue = {
   modified: 0,
 };
 
-const i2: Issue = {
+const i2: IssueWithoutIndexFields = {
   priority: Priority.MEDIUM,
   id: "2",
   title: "Issue 2",
@@ -32,7 +32,7 @@ const i2: Issue = {
   modified: 0,
 };
 
-const i3: Issue = {
+const i3: IssueWithoutIndexFields = {
   priority: Priority.LOW,
   id: "3",
   title: "Issue 3",
@@ -41,7 +41,7 @@ const i3: Issue = {
   modified: 0,
 };
 
-export const SampleIssues: Issue[] = [i1, i2, i3];
+export const SampleIssues: IssueWithoutIndexFields[] = [i1, i2, i3];
 
 setup(async () => {
   // TODO: This is a very expensive way to unit test :).
@@ -316,16 +316,15 @@ test("initSpace", async () => {
       Promise.resolve(SampleIssues)
     );
     expect(await getCookie(executor, testSpaceID1)).eq(1);
-    expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(
-      SampleIssues.length
-    );
+    // 3 issues and 2 counts (count/all and count/active)
+    expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(5);
     expect(await getCookie(executor, testSpaceID2)).undefined;
     await initSpace(executor, testSpaceID2, () => {
       throw new Error("unexpected call to getSampleIssues on subsequent calls");
     });
     expect(await getCookie(executor, testSpaceID2)).eq(1);
-    expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(
-      SampleIssues.length
-    );
+
+    // 3 issues and 2 counts (count/all and count/active)
+    expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(5);
   });
 });

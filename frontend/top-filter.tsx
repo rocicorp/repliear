@@ -1,7 +1,7 @@
 import MenuIcon from "./assets/icons/menu.svg";
 import React from "react";
 import SortOutlinedIcon from "@mui/icons-material/SortOutlined";
-import type { Issue } from "./issue";
+//import type { Issue } from "./issue";
 
 // import IssueFilterModal from './IssueFilterModal';
 // import ViewOptionMenu from './ViewOptionMenu';
@@ -9,10 +9,10 @@ import type { Issue } from "./issue";
 interface Props {
   title: string;
   onToggleMenu?: () => void;
-  issues: Issue[];
+  issuesCount: number;
 }
 
-const TopFilter = ({ title, onToggleMenu, issues }: Props) => {
+const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
   // const [filterVisible, setFilterVisible] = useState(false);
   // const [viewOptionVisible, setViewOptionVisible] = useState(false);
 
@@ -33,7 +33,7 @@ const TopFilter = ({ title, onToggleMenu, issues }: Props) => {
           <div className="p-1 font-semibold cursor-default hover:bg-gray-450">
             {title}
           </div>
-          <span>{issues.length}</span>
+          <span>{issuesCount}</span>
           <button
             className="px-1 py-0.5 ml-3 border border-gray-3 border-dashed rounded text-white hover:text-gray-2 focus:outline-none"
             // onClick={() => setFilterVisible(!filterVisible)}

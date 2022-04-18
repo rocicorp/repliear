@@ -1,4 +1,9 @@
-import type { ReadTransaction, WriteTransaction } from "replicache";
+import type {
+  CreateIndexDefinition,
+  ReadTransaction,
+  ScanOptionIndexedStartKey,
+  WriteTransaction,
+} from "replicache";
 import { z } from "zod";
 import groupBy from "lodash/groupBy";
 
@@ -38,13 +43,19 @@ export const issueSchema = z.object({
   title: z.string(),
   priority: priorityEnumSchema,
   status: statusEnumSchema,
+  // milliseconds elapsed since January 1, 1970 00:00:00 UTC as base 10 string
   modified: z.number(),
   description: z.string(),
+  indexReverseModified: z.string(),
+  indexActiveReverseModified: z.string(),
+  indexBacklogReverseModified: z.string(),
 });
 
 export type Issue = z.TypeOf<typeof issueSchema>;
 export type IssueValue = z.TypeOf<typeof issueValueSchema>;
-export const issueValueSchema = issueSchema.omit({ id: true });
+export const issueValueSchema = issueSchema.omit({
+  id: true,
+});
 
 export async function getIssue(
   tx: ReadTransaction,
@@ -60,30 +71,214 @@ export async function getIssue(
   };
 }
 
+const ALL_ISSUES_COUNT_KEY = "count/all";
+const ACTIVE_ISSUES_COUNT_KEY = "count/active";
+const BACKLOG_ISSUES_COUNT_KEY = "count/backlog";
+
+export type IssueWithoutIndexFields = Omit<
+  Issue,
+  | "indexReverseModified"
+  | "indexActiveReverseModified"
+  | "indexBacklogReverseModified"
+>;
+
+export function addIndexFields(
+  issueWithoutIndexFields: IssueWithoutIndexFields
+): Issue {
+  const { modified, status } = issueWithoutIndexFields;
+  const reverseModified = (Number.MAX_SAFE_INTEGER - modified)
+    .toString()
+    .padStart(16, "0");
+  return {
+    ...issueWithoutIndexFields,
+    indexReverseModified: reverseModified,
+    indexActiveReverseModified: `${
+      isActiveStatus(status) ? 1 : 0
+    }-${reverseModified}`,
+    indexBacklogReverseModified: `${
+      isBacklogStatus(status) ? 1 : 0
+    }-${reverseModified}`,
+  };
+}
+
 export async function putIssue(
   tx: WriteTransaction,
-  issue: Issue
+  issue: IssueWithoutIndexFields,
+  checkForExisting = true
 ): Promise<void> {
-  await tx.put(issueKey(issue.id), issue);
+  const existingIssue = checkForExisting
+    ? await getIssue(tx, issue.id)
+    : undefined;
+  if (existingIssue === undefined) {
+    await tx.put(ALL_ISSUES_COUNT_KEY, (await getAllIssuesCount(tx)) + 1);
+    if (isActiveStatus(issue.status)) {
+      await tx.put(
+        ACTIVE_ISSUES_COUNT_KEY,
+        (await getActiveIssuesCount(tx)) + 1
+      );
+    }
+    if (isBacklogStatus(issue.status)) {
+      await tx.put(
+        BACKLOG_ISSUES_COUNT_KEY,
+        (await getBacklogIssuesCount(tx)) + 1
+      );
+    }
+  } else {
+    if (isActiveStatus(issue.status) && !isActiveStatus(existingIssue.status)) {
+      await tx.put(
+        ACTIVE_ISSUES_COUNT_KEY,
+        (await getActiveIssuesCount(tx)) + 1
+      );
+    } else if (
+      !isActiveStatus(issue.status) &&
+      isActiveStatus(existingIssue.status)
+    ) {
+      await tx.put(
+        ACTIVE_ISSUES_COUNT_KEY,
+        (await getActiveIssuesCount(tx)) - 1
+      );
+    }
+    if (
+      isBacklogStatus(issue.status) &&
+      !isBacklogStatus(existingIssue.status)
+    ) {
+      await tx.put(
+        BACKLOG_ISSUES_COUNT_KEY,
+        (await getBacklogIssuesCount(tx)) + 1
+      );
+    } else if (
+      !isBacklogStatus(issue.status) &&
+      isBacklogStatus(existingIssue.status)
+    ) {
+      await tx.put(
+        BACKLOG_ISSUES_COUNT_KEY,
+        (await getBacklogIssuesCount(tx)) - 1
+      );
+    }
+  }
+  await tx.put(issueKey(issue.id), addIndexFields(issue));
+}
+
+export function isActiveStatus(status: Status): boolean {
+  return status === Status.TODO || status === Status.IN_PROGRESS;
+}
+
+export function isBacklogStatus(status: Status): boolean {
+  return status === Status.BACKLOG;
+}
+
+export async function getAllIssuesCount(tx: ReadTransaction): Promise<number> {
+  return ((await tx.get(ALL_ISSUES_COUNT_KEY)) as number | undefined) ?? 0;
+}
+
+export async function getActiveIssuesCount(
+  tx: ReadTransaction
+): Promise<number> {
+  return ((await tx.get(ACTIVE_ISSUES_COUNT_KEY)) as number | undefined) ?? 0;
+}
+
+export async function getBacklogIssuesCount(
+  tx: ReadTransaction
+): Promise<number> {
+  return ((await tx.get(BACKLOG_ISSUES_COUNT_KEY)) as number | undefined) ?? 0;
 }
 
 export async function getAllIssues(tx: ReadTransaction) {
   return getIssues(tx);
 }
 
-export async function getIssues(
+const ISSUES_BY_REVERSE_MODIFIED_INDEX_NAME = "issuesByReverseModified";
+export function getIssuesByReverseModifiedIndexDefinition(): CreateIndexDefinition {
+  return {
+    name: ISSUES_BY_REVERSE_MODIFIED_INDEX_NAME,
+    prefix: issuePrefix,
+    jsonPointer: "/indexReverseModified",
+  };
+}
+
+async function getIssuesByIndex(
   tx: ReadTransaction,
+  indexName: string,
+  prefix?: string,
+  startKey?: ScanOptionIndexedStartKey,
   limit?: number
 ): Promise<Issue[]> {
   const entries = await tx
-    .scan({ prefix: issuePrefix, limit })
+    .scan({
+      indexName,
+      prefix,
+      start: startKey ? { key: startKey } : undefined,
+      limit,
+    })
     .entries()
     .toArray();
-  const issues = entries.map(([key, val]) => ({
-    id: issueID(key),
+  const issues = entries.map(([[_, issueKey], val]) => ({
+    id: issueID(issueKey),
     ...issueValueSchema.parse(val),
   }));
   return issues;
+}
+
+export async function getIssues(
+  tx: ReadTransaction,
+  startKey?: ScanOptionIndexedStartKey,
+  limit?: number
+): Promise<Issue[]> {
+  return getIssuesByIndex(
+    tx,
+    ISSUES_BY_REVERSE_MODIFIED_INDEX_NAME,
+    undefined,
+    startKey,
+    limit
+  );
+}
+
+const ISSUES_BY_ACTIVE_REVERSE_MODIFIED_INDEX_NAME =
+  "issuesByActiveReverseModified";
+export function getIssuesByActiveReverseModifiedIndexDefinition(): CreateIndexDefinition {
+  return {
+    name: ISSUES_BY_ACTIVE_REVERSE_MODIFIED_INDEX_NAME,
+    prefix: issuePrefix,
+    jsonPointer: "/indexActiveReverseModified",
+  };
+}
+
+export async function getActiveIssues(
+  tx: ReadTransaction,
+  startKey?: ScanOptionIndexedStartKey,
+  limit?: number
+): Promise<Issue[]> {
+  return getIssuesByIndex(
+    tx,
+    ISSUES_BY_ACTIVE_REVERSE_MODIFIED_INDEX_NAME,
+    "1-",
+    startKey,
+    limit
+  );
+}
+
+const ISSUES_BY_BACKLOG_REVERSE_MODIFIED_INDEX_NAME =
+  "issuesByBacklogReverseModified";
+export function getIssuesByBacklogReverseModifiedIndexDefinition(): CreateIndexDefinition {
+  return {
+    name: ISSUES_BY_BACKLOG_REVERSE_MODIFIED_INDEX_NAME,
+    prefix: issuePrefix,
+    jsonPointer: "/indexBacklogReverseModified",
+  };
+}
+
+export async function getBacklogIssues(
+  tx: ReadTransaction,
+  startKey?: ScanOptionIndexedStartKey,
+  limit?: number
+): Promise<Issue[]> {
+  return getIssuesByIndex(
+    tx,
+    ISSUES_BY_BACKLOG_REVERSE_MODIFIED_INDEX_NAME,
+    "1-",
+    startKey,
+    limit
+  );
 }
 
 export type IssuesByStatusType = {
