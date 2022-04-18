@@ -56,7 +56,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <div className="flex items-center justify-between">
             {/* Project selection */}
             <Link href={`/d/${id}`}>
-              <div className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-100">
+              <div className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-400">
                 <div className="w-8 text-white">
                   <ReactLogo />
                 </div>
