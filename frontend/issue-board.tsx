@@ -1,20 +1,48 @@
-import React from "react";
+import React, { useState } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
-import { getIssueByType, Issue, IssueValue, Status } from "./issue";
+import {
+  getActiveIssues,
+  getBacklogIssues,
+  getIssueByType,
+  Status,
+  getIssues,
+} from "./issue";
 import IssueCol from "./issue-col";
+import type { Replicache, ScanOptionIndexedStartKey } from "replicache";
+import { useSubscribe } from "replicache-react";
+import type { M } from "./mutators";
 
 interface Props {
-  issues: Issue[];
-  onUpdateIssue?: (id: string, changes: Partial<IssueValue>) => void;
+  rep: Replicache<M>;
+  issueFilter: "all" | "active" | "backlog";
+  // todo: implement this later
+  //onUpdateIssue?: (id: string, changes: Partial<IssueValue>) => void;
 }
+const ISSUES_WINDOW_SIZE = 200;
 
-export default function IssueBoard({ issues }: Props) {
-  const issuesByType = getIssueByType(issues);
+export default function IssueBoard({ rep, issueFilter }: Props) {
+  const [startKey] = useState<undefined | ScanOptionIndexedStartKey>(undefined);
+  const issuesWindow = useSubscribe(
+    rep,
+    (tx) => {
+      switch (issueFilter) {
+        case "active":
+          return getActiveIssues(tx, startKey, ISSUES_WINDOW_SIZE);
+        case "backlog":
+          return getBacklogIssues(tx, startKey, ISSUES_WINDOW_SIZE);
+        default:
+          return getIssues(tx, startKey, ISSUES_WINDOW_SIZE);
+      }
+    },
+    [],
+    [startKey, issueFilter]
+  );
+
+  const issuesByType = getIssueByType(issuesWindow);
 
   const onDragEnd = ({ source, destination }: DropResult) => {
     if (!source || !destination) return;
-    //onUpdateIssue(source.droppableId, { status: destination.index });
   };
 
   return (

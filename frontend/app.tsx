@@ -14,7 +14,6 @@ import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 import { useSubscribe } from "replicache-react";
 import { useQueryState } from "next-usequerystate";
-// import IssueList from "./issue-list";
 import IssueBoard from "./issue-board";
 
 type IssueFilter = "all" | "active" | "backlog";
@@ -54,6 +53,7 @@ function getCountFetcherForIssueFilter(issueFilter: IssueFilter) {
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [issueFilterQueryParam] = useQueryState("issueFilter");
+  const [layoutViewParam] = useQueryState("view");
   const issueFilter = getIssueFilter(issueFilterQueryParam);
   const [menuVisible, setMenuVisible] = useState(false);
   const issuesCount = useSubscribe(
@@ -85,12 +85,15 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             title={getTitleForIssueFilter(issueFilter)}
             issuesCount={issuesCount}
           />
-          {/* <IssueList
-            rep={rep}
-            onUpdateIssue={handleUpdateIssue}
-            issueFilter={issueFilter}
-          /> */}
-          <IssueBoard issues={issues} onUpdateIssue={handleUpdateIssue} />
+          {layoutViewParam === "board" ? (
+            <IssueBoard rep={rep} issueFilter={issueFilter} />
+          ) : (
+            <IssueList
+              rep={rep}
+              onUpdateIssue={handleUpdateIssue}
+              issueFilter={issueFilter}
+            />
+          )}
         </div>
       </div>
     </div>
