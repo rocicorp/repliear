@@ -1,9 +1,10 @@
 import StatusIcon from "./status-icon";
-import React, { memo } from "react";
+import React, { CSSProperties, forwardRef, memo } from "react";
 import { Droppable, DroppableProvided } from "react-beautiful-dnd";
 import type { Issue, Status } from "./issue";
 import IssueItem from "./issue-item";
 import { FixedSizeList } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
 
 interface Props {
   status: Status;
@@ -14,14 +15,37 @@ interface Props {
 interface RowProps {
   index: number;
   data: Array<Issue>;
+  style: CSSProperties;
 }
 
 function IssueCol({ title, status, issues }: Props) {
   const statusIcon = <StatusIcon status={status} />;
 
-  const Row = ({ data: items, index }: RowProps) => (
-    <IssueItem issue={items[index]} index={index} key={index} />
+  const Row = ({ data: items, index, style }: RowProps) => (
+    <div
+      style={{
+        ...style,
+        top: `${parseFloat(style.top as string) + 10}px`,
+      }}
+    >
+      <IssueItem issue={items[index]} index={index} key={index} />
+    </div>
   );
+
+  const innerElementType = forwardRef<
+    HTMLDivElement,
+    React.HTMLProps<HTMLDivElement>
+  >(({ style, ...rest }, ref) => (
+    <div
+      ref={ref}
+      style={{
+        ...style,
+        height: `${parseFloat((style?.height as string) || "0") + 100 * 2}px`,
+      }}
+      {...rest}
+    />
+  ));
+  innerElementType.displayName = "innerElementType";
 
   return (
     <Droppable droppableId={status.toString()} key={status} type="category">
@@ -48,17 +72,25 @@ function IssueCol({ title, status, issues }: Props) {
             </div>
 
             {/* list of issues */}
-            <div className="flex flex-col flex-1 w-full overflow-y-auto border-gray-400 pt-0.5 border-r-2">
-              <FixedSizeList
-                height={800}
-                itemCount={issues.length}
-                itemSize={80}
-                width={"ltr"}
-                outerRef={provided.innerRef}
-                itemData={issues}
-              >
-                {Row}
-              </FixedSizeList>
+            <div className="flex flex-col flex-1">
+              <AutoSizer>
+                {({ height, width }) => {
+                  return (
+                    <FixedSizeList
+                      height={height}
+                      itemCount={issues.length}
+                      itemSize={120}
+                      width={width}
+                      outerRef={provided.innerRef}
+                      innerElementType={innerElementType}
+                      itemData={issues}
+                    >
+                      {Row}
+                    </FixedSizeList>
+                  );
+                }}
+              </AutoSizer>
+
               {provided.placeholder}
             </div>
           </div>

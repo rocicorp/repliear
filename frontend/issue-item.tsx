@@ -23,14 +23,21 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
     <Draggable draggableId={issue.id || "id"} index={index} key={issue.id}>
       {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => {
         const isDragging = snapshot.isDragging && !snapshot.isDropAnimating;
+        console.log("isDragging", isDragging);
         return (
           <div
+            style={{
+              ...provided.draggableProps.style,
+            }}
             ref={provided.innerRef}
             className={classNames(
-              "cursor-default flex flex-col w-11/12 px-4 py-3 mb-2 bg-gray-400 text-white rounded focus:outline-none",
+              "cursor-default flex flex-col w-11/12 px-4 py-3 mb-2 text-white rounded focus:outline-none",
               {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
+                /* eslint-disable @typescript-eslint/naming-convention */
                 "shadow-modal": isDragging,
+                "bg-gray-300": isDragging,
+                "bg-gray-400": !isDragging,
+                /* eslint-enable @typescript-eslint/naming-convention */
               }
             )}
             {...provided.draggableProps}
@@ -41,7 +48,7 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
                 <span className="text-xs font-normal uppercase">
                   {issue.id}
                 </span>
-                <span className="mt-1 text-sm font-medium text-gray-2 line-clamp-2 overflow-ellipsis">
+                <span className="mt-1 text-sm font-medium text-gray-2 line-clamp-2 overflow-ellipsis h-10">
                   {issue.title}
                 </span>
               </div>
