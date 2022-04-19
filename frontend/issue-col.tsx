@@ -11,10 +11,10 @@ interface Props {
 }
 
 function IssueCol({ title, status, issues }: Props) {
-  let statusIcon = <StatusIcon status={status} />;
+  const statusIcon = <StatusIcon status={status} />;
 
-  let issueItems = (issues || []).map((issue, idx) => (
-    <IssueItem issue={issue} index={idx} />
+  const issueItems = (issues || []).map((issue, idx) => (
+    <IssueItem issue={issue} index={idx} key={idx} />
   ));
 
   return (

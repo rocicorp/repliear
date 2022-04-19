@@ -22,13 +22,14 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
   return (
     <Draggable draggableId={issue.id || "id"} index={index} key={issue.id}>
       {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => {
-        let isDragging = snapshot.isDragging && !snapshot.isDropAnimating;
+        const isDragging = snapshot.isDragging && !snapshot.isDropAnimating;
         return (
           <div
             ref={provided.innerRef}
             className={classNames(
               "cursor-default flex flex-col w-full px-4 py-3 mb-2 bg-white rounded focus:outline-none",
               {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 "shadow-modal": isDragging,
               }
             )}
