@@ -11,6 +11,7 @@ import IssueModal from "./issue-modal";
 import ReactLogo from "./assets/images/logo.svg";
 import type { IssueWithoutIndexFields } from "./issue";
 import { useRouter } from "next/router";
+import { useQueryState } from "next-usequerystate";
 
 interface Props {
   // Show menu (for small screen only)
@@ -20,6 +21,8 @@ interface Props {
 }
 
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
+  const [, setLayoutViewParam] = useQueryState("view");
+
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
   const router = useRouter();
@@ -94,7 +97,10 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
                 <span>Backlog</span>
               </Link>
             </div>
-            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-450">
+            <div
+              className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-450"
+              onClick={() => setLayoutViewParam("board")}
+            >
               <span className="w-3 h-3 mr-2"></span>
               <span>Board</span>
             </div>
