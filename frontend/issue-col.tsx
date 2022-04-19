@@ -3,19 +3,25 @@ import React, { memo } from "react";
 import { Droppable, DroppableProvided } from "react-beautiful-dnd";
 import type { Issue, Status } from "./issue";
 import IssueItem from "./issue-item";
+import { FixedSizeList } from "react-window";
 
 interface Props {
   status: Status;
   title: string;
-  issues: Array<Issue> | undefined;
+  issues: Array<Issue>;
+}
+
+interface RowProps {
+  index: number;
+  data: Array<Issue>;
 }
 
 function IssueCol({ title, status, issues }: Props) {
   const statusIcon = <StatusIcon status={status} />;
 
-  const issueItems = (issues || []).map((issue, idx) => (
-    <IssueItem issue={issue} index={idx} key={idx} />
-  ));
+  const Row = ({ data: items, index }: RowProps) => (
+    <IssueItem issue={items[index]} index={index} key={index} />
+  );
 
   return (
     <Droppable droppableId={status.toString()} key={status} type="category">
@@ -43,7 +49,16 @@ function IssueCol({ title, status, issues }: Props) {
 
             {/* list of issues */}
             <div className="flex flex-col flex-1 w-full overflow-y-auto border-gray-400 pt-0.5 border-r-2">
-              {issueItems}
+              <FixedSizeList
+                height={800}
+                itemCount={issues.length}
+                itemSize={80}
+                width={"ltr"}
+                outerRef={provided.innerRef}
+                itemData={issues}
+              >
+                {Row}
+              </FixedSizeList>
               {provided.placeholder}
             </div>
           </div>

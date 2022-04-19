@@ -27,7 +27,7 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
           <div
             ref={provided.innerRef}
             className={classNames(
-              "cursor-default flex flex-col w-full px-4 py-3 mb-2 bg-white rounded focus:outline-none",
+              "cursor-default flex flex-col w-11/12 px-4 py-3 mb-2 bg-gray-400 text-white rounded focus:outline-none",
               {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 "shadow-modal": isDragging,
@@ -38,10 +38,10 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
           >
             <div className="flex justify-between w-full cursor-default">
               <div className="flex flex-col">
-                <span className="text-xs font-normal text-gray-500 uppercase">
+                <span className="text-xs font-normal uppercase">
                   {issue.id}
                 </span>
-                <span className="mt-1 text-sm font-medium text-gray-700 line-clamp-2 overflow-ellipsis">
+                <span className="mt-1 text-sm font-medium text-gray-2 line-clamp-2 overflow-ellipsis">
                   {issue.title}
                 </span>
               </div>
@@ -49,7 +49,7 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
             <div className="mt-2.5 flex items-center">
               <PriorityMenu
                 onSelect={handleChangePriority}
-                labelVisible={true}
+                labelVisible={false}
                 priority={issue.priority}
               />
             </div>
