@@ -6,6 +6,8 @@ declare module "*issues-react.js.gz" {
     state: "open" | "closed";
     // eslint-disable-next-line @typescript-eslint/naming-convention
     updated_at: string;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    created_at: string;
   }[];
   export default gitHubIssues;
 }

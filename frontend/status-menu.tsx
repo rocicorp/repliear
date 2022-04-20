@@ -14,6 +14,14 @@ interface Props {
   status: Status;
 }
 
+export const statuses = [
+  [BacklogIcon, Status.BACKLOG, "Backlog"],
+  [TodoIcon, Status.TODO, "Todo"],
+  [InProgressIcon, Status.IN_PROGRESS, "In Progress"],
+  [DoneIcon, Status.DONE, "Done"],
+  [CancelIcon, Status.CANCELED, "Canceled"],
+];
+
 const StatusMenu = ({ onSelect, status }: Props) => {
   const [statusRef, setStatusRef] = useState<HTMLButtonElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
@@ -35,14 +43,6 @@ const StatusMenu = ({ onSelect, status }: Props) => {
       setStatusDropDownVisible(false);
     }
   });
-
-  const statuses = [
-    [BacklogIcon, Status.BACKLOG, "Backlog"],
-    [TodoIcon, Status.TODO, "Todo"],
-    [InProgressIcon, Status.IN_PROGRESS, "In Progress"],
-    [DoneIcon, Status.DONE, "Done"],
-    [CancelIcon, Status.CANCELED, "Canceled"],
-  ];
 
   const options = statuses.map(([Icon, status, label], idx) => {
     return (

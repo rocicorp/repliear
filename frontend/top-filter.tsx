@@ -1,11 +1,11 @@
 import MenuIcon from "./assets/icons/menu.svg";
 import React, { useState } from "react";
-import SortOutlinedIcon from "@mui/icons-material/SortOutlined";
 //import type { Issue } from "./issue";
 
 import IssueFilterModal from "./issue-filter-modal";
-import ViewOptionMenu from "./view-option-menu";
-
+import SortOrderMenu from "./sort-order-menu";
+import { useQueryState } from "next-usequerystate";
+import FilterMenu from "./filter-menu";
 interface Props {
   title: string;
   onToggleMenu?: () => void;
@@ -14,7 +14,8 @@ interface Props {
 
 const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
   const [filterVisible, setFilterVisible] = useState(false);
-  const [viewOptionVisible, setViewOptionVisible] = useState(false);
+  const [, setOrderByParam] = useQueryState("orderBy");
+  const [, setFilterByParam] = useQueryState("filter");
 
   return (
     <>
@@ -32,28 +33,16 @@ const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
             {title}
           </div>
           <span>{issuesCount}</span>
-          <button
-            className="px-1 py-0.5 ml-3 border border-gray-3 border-dashed rounded text-white hover:text-gray-2 focus:outline-none"
-            onClick={() => setFilterVisible(!filterVisible)}
-          >
-            + Filter
-          </button>
+          <FilterMenu onSelect={(filter) => setFilterByParam(filter.toLocaleString())} />
         </div>
 
         {/* right section */}
         <div className="flex items-center">
-          <div
-            className="p-2 rounded hover:bg-gray-400 cursor-pointer"
-            onClick={() => setViewOptionVisible(true)}
-          >
-            <SortOutlinedIcon />
-          </div>
+          <SortOrderMenu
+            onSelect={(orderBy) => setOrderByParam(orderBy.toLocaleString())}
+          />
         </div>
       </div>
-      <ViewOptionMenu
-        isOpen={viewOptionVisible}
-        onDismiss={() => setViewOptionVisible(false)}
-      />
       <IssueFilterModal
         isOpen={filterVisible}
         onDismiss={() => setFilterVisible(false)}

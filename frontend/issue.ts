@@ -38,6 +38,22 @@ export enum Status {
 const statusEnumSchema = z.nativeEnum(Status);
 export type StatusEnum = z.infer<typeof statusEnumSchema>;
 
+export enum Order {
+  CREATED,
+  MODIFIED
+}
+
+const ordenEnumSchema = z.nativeEnum(Order);
+export type OrderEnum = z.infer<typeof ordenEnumSchema>;
+
+export enum Filter {
+  PRIORITY,
+  STATUS
+}
+
+const filterEnumSchema = z.nativeEnum(Filter);
+export type FilterEnum = z.infer<typeof filterEnumSchema>;
+
 export const issueSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -45,6 +61,7 @@ export const issueSchema = z.object({
   status: statusEnumSchema,
   // milliseconds elapsed since January 1, 1970 00:00:00 UTC as base 10 string
   modified: z.number(),
+  created: z.number(),
   description: z.string(),
   indexReverseModified: z.string(),
   indexActiveReverseModified: z.string(),
