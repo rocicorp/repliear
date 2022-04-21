@@ -1,4 +1,10 @@
-import type { JSONValue, ScanResult, WriteTransaction } from "replicache";
+import type {
+  JSONValue,
+  KeyTypeForScanOptions,
+  ScanOptions,
+  ScanResult,
+  WriteTransaction,
+} from "replicache";
 import { delEntries, getEntry, putEntries } from "./data";
 import type { Executor } from "./pg";
 
@@ -58,11 +64,11 @@ export class ReplicacheTransaction implements WriteTransaction {
   async isEmpty(): Promise<boolean> {
     throw new Error("not implemented");
   }
-  scan(): ScanResult<string> {
-    throw new Error("not implemented");
-  }
-  scanAll(): Promise<[string, JSONValue][]> {
-    throw new Error("not implemented");
+  scan(): ScanResult<string, JSONValue>;
+  scan<Options extends ScanOptions>(
+    _options?: Options
+  ): ScanResult<KeyTypeForScanOptions<Options>, JSONValue> {
+    throw new Error("Method not implemented.");
   }
 
   async flush(): Promise<void> {

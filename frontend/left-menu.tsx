@@ -9,7 +9,7 @@ import classnames from "classnames";
 import SearchBox from "./searchbox";
 import IssueModal from "./issue-modal";
 import ReactLogo from "./assets/images/logo.svg";
-import type { IssueWithoutIndexFields } from "./issue";
+import type { Issue } from "./issue";
 import { useRouter } from "next/router";
 import { useQueryState } from "next-usequerystate";
 
@@ -17,7 +17,7 @@ interface Props {
   // Show menu (for small screen only)
   menuVisible: boolean;
   onCloseMenu?: () => void;
-  onCreateIssue: (i: IssueWithoutIndexFields) => void;
+  onCreateIssue: (i: Issue) => void;
 }
 
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {

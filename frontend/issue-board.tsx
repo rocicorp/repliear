@@ -1,13 +1,7 @@
 import React, { useState } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
-import {
-  getActiveIssues,
-  getBacklogIssues,
-  getIssueByType,
-  Status,
-  getIssues,
-} from "./issue";
+import { getIssueByType, Status, getAllIssues } from "./issue";
 import IssueCol from "./issue-col";
 import type { Replicache, ScanOptionIndexedStartKey } from "replicache";
 import { useSubscribe } from "replicache-react";
@@ -19,7 +13,8 @@ interface Props {
   // todo: implement this later
   //onUpdateIssue?: (id: string, changes: Partial<IssueValue>) => void;
 }
-const ISSUES_WINDOW_SIZE = 200;
+//TODO(greg): fix this to use watch
+//const ISSUES_WINDOW_SIZE = 200;
 
 export default function IssueBoard({ rep, issueFilter }: Props) {
   const [startKey] = useState<undefined | ScanOptionIndexedStartKey>(undefined);
@@ -27,12 +22,8 @@ export default function IssueBoard({ rep, issueFilter }: Props) {
     rep,
     (tx) => {
       switch (issueFilter) {
-        case "active":
-          return getActiveIssues(tx, startKey, ISSUES_WINDOW_SIZE);
-        case "backlog":
-          return getBacklogIssues(tx, startKey, ISSUES_WINDOW_SIZE);
         default:
-          return getIssues(tx, startKey, ISSUES_WINDOW_SIZE);
+          return getAllIssues(tx);
       }
     },
     [],

@@ -6,7 +6,7 @@ import ZoomIcon from "./assets/icons/zoom.svg";
 import Modal from "./modal";
 import Toggle from "./toggle";
 import React, { useState } from "react";
-import { IssueWithoutIndexFields, Priority, Status } from "./issue";
+import { Issue, Priority, Status } from "./issue";
 import { nanoid } from "nanoid";
 
 import PriorityMenu from "./priority-menu";
@@ -17,7 +17,7 @@ import StatusMenu from "./status-menu";
 interface Props {
   isOpen: boolean;
   onDismiss?: () => void;
-  onCreateIssue: (i: IssueWithoutIndexFields) => void;
+  onCreateIssue: (i: Issue) => void;
 }
 
 export default function IssueModal({
