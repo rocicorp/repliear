@@ -8,7 +8,10 @@ import {
   issueFromKeyAndValue,
   issuePrefix,
   IssueValue,
+  Priority,
+  priorityEnumSchema,
   Status,
+  statusEnumSchema,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -17,34 +20,80 @@ import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
 import { sortBy, sortedIndexBy } from "lodash";
 
-type IssueFilter = "all" | "active" | "backlog";
+type IssueFilter = {
+  status?: Set<Status>;
+  priority?: Set<Priority>;
+};
 
-function getIssueFilter(issueFilterQueryParam: string | null): IssueFilter {
-  switch ((issueFilterQueryParam || "all").toLowerCase()) {
+function getIssueFilter(
+  view: string | null,
+  priorityFilter: string | null,
+  statusFilter: string | null
+): IssueFilter {
+  switch (view?.toLowerCase()) {
     case "active":
-      return "active";
+      return {
+        status: new Set([Status.IN_PROGRESS, Status.TODO]),
+      };
     case "backlog":
-      return "backlog";
-    default:
-      return "all";
+      return {
+        status: new Set([Status.IN_PROGRESS, Status.TODO]),
+      };
+    default: {
+      let status = undefined;
+      let priority = undefined;
+      if (statusFilter) {
+        status = new Set<Status>();
+        for (const s of statusFilter.split(",")) {
+          const parseResult = statusEnumSchema.safeParse(s);
+          if (parseResult.success) {
+            status.add(parseResult.data);
+          }
+        }
+        if (status.size === 0) {
+          status = undefined;
+        }
+      }
+      if (priorityFilter) {
+        priority = new Set<Priority>();
+        for (const p of priorityFilter.split(",")) {
+          const parseResult = priorityEnumSchema.safeParse(p);
+          if (parseResult.success) {
+            priority.add(parseResult.data);
+          }
+        }
+        if (priority.size === 0) {
+          priority = undefined;
+        }
+      }
+      return {
+        status,
+        priority,
+      };
+    }
   }
 }
 
-function getTitleForIssueFilter(issueFilter: IssueFilter) {
-  switch (issueFilter) {
+function getTitle(view: string | null) {
+  switch (view?.toLowerCase()) {
     case "active":
       return "Active issues";
     case "backlog":
       return "Backlog issues";
+    case "board":
+      return "Board";
     default:
       return "All issues";
   }
 }
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
-  const [issueFilterQueryParam] = useQueryState("issueFilter");
-  const [layoutViewParam] = useQueryState("view");
-  const issueFilter = getIssueFilter(issueFilterQueryParam);
+  const [view] = useQueryState("view");
+  const [priorityFilter] = useQueryState("priorityFilter");
+  const [statusFilter] = useQueryState("statusFilter");
+  // const [orderBy] = useQueryState("orderBy", {
+  //   defaultValue: "modified",
+  // });
   const [menuVisible, setMenuVisible] = useState(false);
 
   type State = {
@@ -68,20 +117,20 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           issueFilter: IssueFilter;
         }
   ): State {
-    console.log("reducer", action);
     const issueFilter =
       action.type === "setIssueFilter" ? action.issueFilter : state.issueFilter;
     function filter(issue: Issue): boolean {
-      switch (issueFilter) {
-        case "active":
-          return (
-            issue.status === Status.IN_PROGRESS || issue.status === Status.TODO
-          );
-        case "backlog":
-          return issue.status === Status.BACKLOG;
-        default:
-          return true;
+      if (issueFilter.status) {
+        if (!issueFilter.status.has(issue.status)) {
+          return false;
+        }
       }
+      if (issueFilter.priority) {
+        if (!issueFilter.priority.has(issue.priority)) {
+          return false;
+        }
+      }
+      return true;
     }
     function order(issue: Issue): string {
       return Number.MAX_SAFE_INTEGER - issue.modified + "-" + issue.id;
@@ -173,19 +222,17 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   const [state, dispatch] = useReducer(reducer, {
     allIssuesMap: new Map(),
     issuesView: [],
-    issueFilter: getIssueFilter(issueFilterQueryParam),
+    issueFilter: getIssueFilter(view, priorityFilter, statusFilter),
   });
   useEffect(() => {
     async function fetchIssues() {
       const allIssues = await rep.query((tx) => getAllIssuesMap(tx));
-      console.log(allIssues);
       dispatch({
         type: "init",
         allIssuesMap: allIssues,
       });
       rep.watch(
         (diff) => {
-          console.log("diff");
           dispatch({
             type: "diff",
             diff,
@@ -200,9 +247,9 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   useEffect(() => {
     dispatch({
       type: "setIssueFilter",
-      issueFilter: getIssueFilter(issueFilterQueryParam),
+      issueFilter: getIssueFilter(view, priorityFilter, statusFilter),
     });
-  }, [issueFilterQueryParam]);
+  }, [view, priorityFilter, statusFilter]);
 
   const handleCreateIssue = (issue: IssueValue) => rep.mutate.putIssue(issue);
   const handleUpdateIssue = (id: string, changes: Partial<IssueValue>) =>
@@ -222,15 +269,14 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
         <div className="flex flex-col flex-grow">
           <TopFilter
             onToggleMenu={() => setMenuVisible(!menuVisible)}
-            title={getTitleForIssueFilter(issueFilter)}
+            title={getTitle(view)}
             issuesCount={state.issuesView.length}
           />
-          {layoutViewParam === "board" ? (
-            <IssueBoard rep={rep} issueFilter={issueFilter} />
+          {view === "board" ? (
+            <IssueBoard rep={rep} />
           ) : (
             <IssueList
               issues={state.issuesView}
-              issueFilter={issueFilter}
               onUpdateIssue={handleUpdateIssue}
             />
           )}

@@ -9,25 +9,21 @@ import type { M } from "./mutators";
 
 interface Props {
   rep: Replicache<M>;
-  issueFilter: "all" | "active" | "backlog";
   // todo: implement this later
   //onUpdateIssue?: (id: string, changes: Partial<IssueValue>) => void;
 }
 //TODO(greg): fix this to use watch
 //const ISSUES_WINDOW_SIZE = 200;
 
-export default function IssueBoard({ rep, issueFilter }: Props) {
+export default function IssueBoard({ rep }: Props) {
   const [startKey] = useState<undefined | ScanOptionIndexedStartKey>(undefined);
   const issuesWindow = useSubscribe(
     rep,
     (tx) => {
-      switch (issueFilter) {
-        default:
-          return getAllIssues(tx);
-      }
+      return getAllIssues(tx);
     },
     [],
-    [startKey, issueFilter]
+    [startKey]
   );
 
   const issuesByType = getIssueByType(issuesWindow);

@@ -23,7 +23,7 @@ export enum Priority {
   URGENT = "URGENT",
 }
 
-const priorityEnumSchema = z.nativeEnum(Priority);
+export const priorityEnumSchema = z.nativeEnum(Priority);
 export type PriorityEnum = z.infer<typeof priorityEnumSchema>;
 
 export enum Status {
@@ -34,7 +34,7 @@ export enum Status {
   CANCELED = "CANCELED",
 }
 
-const statusEnumSchema = z.nativeEnum(Status);
+export const statusEnumSchema = z.nativeEnum(Status);
 export type StatusEnum = z.infer<typeof statusEnumSchema>;
 
 export enum Order {

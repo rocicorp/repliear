@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useRef } from "react";
+import React, { CSSProperties, useRef } from "react";
 import IssueRow from "./issue-row";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
@@ -7,15 +7,14 @@ import type { Issue, IssueValue, Priority, Status } from "./issue";
 interface Props {
   onUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
   issues: Issue[];
-  issueFilter: "all" | "active" | "backlog";
 }
-const IssueList = ({ onUpdateIssue, issues, issueFilter }: Props) => {
+const IssueList = ({ onUpdateIssue, issues }: Props) => {
   const fixedSizeListRef = useRef<FixedSizeList>(null);
-  useEffect(() => {
-    if (fixedSizeListRef.current) {
-      fixedSizeListRef.current.scrollTo(0);
-    }
-  }, [issueFilter]);
+  // useEffect(() => {
+  //   if (fixedSizeListRef.current) {
+  //     fixedSizeListRef.current.scrollTo(0);
+  //   }
+  // }, [issueFilter]);
 
   const handleChangePriority = (issue: Issue, priority: Priority) => {
     onUpdateIssue(issue.id, { priority });

@@ -22,7 +22,6 @@ interface Props {
 
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const [, setLayoutViewParam] = useQueryState("view");
-  const [, setIssueFilter] = useQueryState("issueFilter");
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
@@ -89,8 +88,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onClick={async () => {
-                await setLayoutViewParam(null);
-                await setIssueFilter("active");
+                await setLayoutViewParam("active");
               }}
             >
               <span className="h-3">Active</span>
@@ -99,8 +97,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onClick={async () => {
-                await setLayoutViewParam(null);
-                await setIssueFilter("backlog");
+                await setLayoutViewParam("backlog");
               }}
             >
               <span className="h-3">Backlog</span>
@@ -109,7 +106,6 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onClick={async () => {
                 await setLayoutViewParam("board");
-                await setIssueFilter(null);
               }}
             >
               <span className="h-3">Board</span>

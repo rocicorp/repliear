@@ -53,7 +53,6 @@ const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
     );
   });
 
-  console.log("order", order);
   return (
     <div ref={ref}>
       {order !== null && (
