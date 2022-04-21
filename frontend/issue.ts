@@ -1,5 +1,5 @@
 import type {
-  CreateIndexDefinition,
+  ReadonlyJSONValue,
   ReadTransaction,
   WriteTransaction,
 } from "replicache";
@@ -98,28 +98,44 @@ export function isBacklogStatus(status: Status): boolean {
   return status === Status.BACKLOG;
 }
 
-export async function getAllIssues(tx: ReadTransaction) {
+export function issueFromKeyAndValue(
+  key: string,
+  value: ReadonlyJSONValue
+): Issue {
+  return {
+    id: issueID(key),
+    ...issueValueSchema.parse(value),
+  };
+}
+
+export async function getAllIssuesMap(
+  tx: ReadTransaction
+): Promise<Map<string, Issue>> {
   const entries = await tx
     .scan({
       prefix: issuePrefix,
     })
     .entries()
     .toArray();
-  const issues = entries.map(([[_, issueKey], val]) => ({
-    id: issueID(issueKey),
-    ...issueValueSchema.parse(val),
-  }));
-  return issues;
+  return new Map(
+    entries.map(([issueKey, val]) => [
+      issueKey,
+      issueFromKeyAndValue(issueKey, val),
+    ])
+  );
 }
 
-const ISSUES_BY_ACTIVE_REVERSE_MODIFIED_INDEX_NAME =
-  "issuesByActiveReverseModified";
-export function getIssuesByActiveReverseModifiedIndexDefinition(): CreateIndexDefinition {
-  return {
-    name: ISSUES_BY_ACTIVE_REVERSE_MODIFIED_INDEX_NAME,
-    prefix: issuePrefix,
-    jsonPointer: "/indexActiveReverseModified",
-  };
+export async function getAllIssues(tx: ReadTransaction): Promise<Issue[]> {
+  const entries = await tx
+    .scan({
+      prefix: issuePrefix,
+    })
+    .entries()
+    .toArray();
+  const issues = entries.map(([issueKey, val]) =>
+    issueFromKeyAndValue(issueKey, val)
+  );
+  return issues as Issue[];
 }
 
 export type IssuesByStatusType = {

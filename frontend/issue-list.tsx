@@ -1,52 +1,21 @@
-import React, { CSSProperties, useEffect, useRef, useState } from "react";
+import React, { CSSProperties, useEffect, useRef } from "react";
 import IssueRow from "./issue-row";
-import { getAllIssues, Issue, IssueValue, Priority, Status } from "./issue";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
-import type { Replicache } from "replicache";
-import type { M } from "./mutators";
-import { sortBy } from "lodash";
-//import { sortedIndexBy } from "lodash";
+import type { Issue, IssueValue, Priority, Status } from "./issue";
 
 interface Props {
   onUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
-  rep: Replicache<M>;
+  issues: Issue[];
   issueFilter: "all" | "active" | "backlog";
 }
-const IssueList = ({ onUpdateIssue, rep, issueFilter }: Props) => {
+const IssueList = ({ onUpdateIssue, issues, issueFilter }: Props) => {
   const fixedSizeListRef = useRef<FixedSizeList>(null);
-  const [issues, setIssues] = useState<Issue[]>([]);
   useEffect(() => {
     if (fixedSizeListRef.current) {
       fixedSizeListRef.current.scrollTo(0);
     }
-    setIssues([]);
-    async function fetchIssues() {
-      const start = Date.now();
-      let issues = await rep.query((tx) => getAllIssues(tx));
-      console.log("loaded", Date.now() - start);
-      issues = issues.filter((issue) => {
-        switch (issueFilter) {
-          case "active":
-            return (
-              issue.status === Status.IN_PROGRESS ||
-              issue.status === Status.TODO
-            );
-          case "backlog":
-            return issue.status === Status.BACKLOG;
-          default:
-            return true;
-        }
-      });
-      console.log("filtered", Date.now() - start);
-      issues = sortBy(issues, (issue) =>
-        (Number.MAX_SAFE_INTEGER - issue.modified).toString().padStart(16, "0")
-      );
-      console.log("sorted", Date.now() - start);
-      setIssues(issues);
-    }
-    void fetchIssues();
-  }, [rep, issueFilter]);
+  }, [issueFilter]);
 
   const handleChangePriority = (issue: Issue, priority: Priority) => {
     onUpdateIssue(issue.id, { priority });
