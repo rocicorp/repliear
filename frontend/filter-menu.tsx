@@ -7,10 +7,11 @@ import TodoIcon from "./assets/icons/circle.svg";
 import { statusOpts } from "./priority-menu";
 import { statuses } from "./status-menu";
 interface Props {
-  onSelect: (filter: Status | Priority) => void;
+  onSelectStatus: (filter: Status) => void;
+  onSelectPriority: (filter: Priority) => void;
 }
 
-const FilterMenu = ({ onSelect }: Props) => {
+const FilterMenu = ({ onSelectStatus, onSelectPriority }: Props) => {
   const [filterRef, setFilterRef] = useState<HTMLButtonElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [filter, setFilter] = useState<Filter | null>(null);
@@ -49,7 +50,7 @@ const FilterMenu = ({ onSelect }: Props) => {
               key={idx}
               className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
               onClick={() => {
-                onSelect(priority as Priority);
+                onSelectPriority(priority as Priority);
                 setFilter(null);
                 setFilterDropDownVisible(false);
               }}
@@ -67,7 +68,7 @@ const FilterMenu = ({ onSelect }: Props) => {
               key={idx}
               className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
               onClick={() => {
-                onSelect(status as Status);
+                onSelectStatus(status as Status);
                 setFilter(null);
                 setFilterDropDownVisible(false);
               }}

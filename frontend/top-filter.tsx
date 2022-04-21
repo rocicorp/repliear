@@ -4,8 +4,10 @@ import React, { useState } from "react";
 
 import IssueFilterModal from "./issue-filter-modal";
 import SortOrderMenu from "./sort-order-menu";
-import { useQueryState } from "next-usequerystate";
+import { queryTypes, useQueryState } from "next-usequerystate";
 import FilterMenu from "./filter-menu";
+import type { Priority, Status } from "./issue";
+
 interface Props {
   title: string;
   onToggleMenu?: () => void;
@@ -15,7 +17,14 @@ interface Props {
 const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
   const [filterVisible, setFilterVisible] = useState(false);
   const [, setOrderByParam] = useQueryState("orderBy");
-  const [, setFilterByParam] = useQueryState("filter");
+  const [statusFilters, setStatusFilterByParam] = useQueryState(
+    "statusFilter",
+    queryTypes.array<Status>(queryTypes.integer)
+  );
+  const [priorityFilters, setPriorityFilterByParam] = useQueryState(
+    "priorityFilter",
+    queryTypes.array<Priority>(queryTypes.integer)
+  );
 
   return (
     <>
@@ -34,7 +43,18 @@ const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
           </div>
           <span>{issuesCount}</span>
           <FilterMenu
-            onSelect={(filter) => setFilterByParam(filter.toLocaleString())}
+            onSelectPriority={async (priority) => {
+              await setPriorityFilterByParam([
+                ...((priorityFilters as Priority[]) || []),
+                priority,
+              ]);
+            }}
+            onSelectStatus={async (status) => {
+              await setStatusFilterByParam([
+                ...((statusFilters as Status[]) || []),
+                status,
+              ]);
+            }}
           />
         </div>
 
