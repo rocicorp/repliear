@@ -42,8 +42,8 @@ export enum Order {
   MODIFIED = "MODIFIED",
 }
 
-const ordenEnumSchema = z.nativeEnum(Order);
-export type OrderEnum = z.infer<typeof ordenEnumSchema>;
+export const orderEnumSchema = z.nativeEnum(Order);
+export type OrderEnum = z.infer<typeof orderEnumSchema>;
 
 export enum Filter {
   PRIORITY,

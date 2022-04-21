@@ -8,6 +8,8 @@ import {
   issueFromKeyAndValue,
   issuePrefix,
   IssueValue,
+  Order,
+  orderEnumSchema,
   Priority,
   priorityEnumSchema,
   Status,
@@ -74,6 +76,11 @@ function getIssueFilter(
   }
 }
 
+function getIssueOrder(orderBy: string | null): Order {
+  const parseResult = orderEnumSchema.safeParse(orderBy);
+  return parseResult.success ? parseResult.data : Order.MODIFIED;
+}
+
 function getTitle(view: string | null) {
   switch (view?.toLowerCase()) {
     case "active":
@@ -91,15 +98,14 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   const [view] = useQueryState("view");
   const [priorityFilter] = useQueryState("priorityFilter");
   const [statusFilter] = useQueryState("statusFilter");
-  // const [orderBy] = useQueryState("orderBy", {
-  //   defaultValue: "modified",
-  // });
+  const [orderBy] = useQueryState("orderBy");
   const [menuVisible, setMenuVisible] = useState(false);
 
   type State = {
     allIssuesMap: Map<string, Issue>;
     issuesView: Issue[];
     issueFilter: IssueFilter;
+    issueOrder: Order;
   };
   function reducer(
     state: State,
@@ -116,9 +122,15 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           type: "setIssueFilter";
           issueFilter: IssueFilter;
         }
+      | {
+          type: "setIssueOrder";
+          issueOrder: Order;
+        }
   ): State {
     const issueFilter =
       action.type === "setIssueFilter" ? action.issueFilter : state.issueFilter;
+    const issueOrder =
+      action.type === "setIssueOrder" ? action.issueOrder : state.issueOrder;
     function filter(issue: Issue): boolean {
       if (issueFilter.status) {
         if (!issueFilter.status.has(issue.status)) {
@@ -133,7 +145,16 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
       return true;
     }
     function order(issue: Issue): string {
-      return Number.MAX_SAFE_INTEGER - issue.modified + "-" + issue.id;
+      let orderValue: number;
+      switch (issueOrder) {
+        case Order.CREATED:
+          orderValue = issue.created;
+          break;
+        case Order.MODIFIED:
+          orderValue = issue.modified;
+          break;
+      }
+      return Number.MAX_SAFE_INTEGER - orderValue + "-" + issue.id;
     }
     function filterAndSort(issues: Issue[]): Issue[] {
       return sortBy(issues.filter(filter), order);
@@ -185,6 +206,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
               );
               const index = sortedIndexBy(newIssuesView, oldIssue, order);
               if (newIssuesView[index]?.id === oldIssue.id) {
+                console.log("splicing old");
                 newIssuesView.splice(index, 1);
               }
               const newIssue = issueFromKeyAndValue(
@@ -216,13 +238,22 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           issueFilter: action.issueFilter,
         };
       }
+      case "setIssueOrder": {
+        return {
+          ...state,
+          issuesView: filterAndSort([...state.allIssuesMap.values()]),
+          issueOrder: action.issueOrder,
+        };
+      }
     }
+
     return state;
   }
   const [state, dispatch] = useReducer(reducer, {
     allIssuesMap: new Map(),
     issuesView: [],
     issueFilter: getIssueFilter(view, priorityFilter, statusFilter),
+    issueOrder: getIssueOrder(orderBy),
   });
   useEffect(() => {
     async function fetchIssues() {
@@ -250,6 +281,13 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
       issueFilter: getIssueFilter(view, priorityFilter, statusFilter),
     });
   }, [view, priorityFilter, statusFilter]);
+
+  useEffect(() => {
+    dispatch({
+      type: "setIssueOrder",
+      issueOrder: getIssueOrder(orderBy),
+    });
+  }, [orderBy]);
 
   const handleCreateIssue = (issue: IssueValue) => rep.mutate.putIssue(issue);
   const handleUpdateIssue = (id: string, changes: Partial<IssueValue>) =>
