@@ -1,6 +1,6 @@
-import { IssueWithoutIndexFields, Priority, Status } from "../frontend/issue";
+import { Issue, Priority, Status } from "../frontend/issue";
 
-export async function getReactIssues(): Promise<IssueWithoutIndexFields[]> {
+export async function getReactIssues(): Promise<Issue[]> {
   const issues = (await import("./issues-react.js.gz")).default.map(
     (reactIssue) => ({
       id: reactIssue.id.toString(),

@@ -2,17 +2,10 @@ import React from "react";
 import type { Replicache } from "replicache";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
-import {
-  getActiveIssuesCount,
-  getAllIssuesCount,
-  getBacklogIssuesCount,
-  IssueValue,
-  IssueWithoutIndexFields,
-} from "./issue";
+import type { IssueValue } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
-import { useSubscribe } from "replicache-react";
 import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
 
@@ -40,31 +33,13 @@ function getTitleForIssueFilter(issueFilter: IssueFilter) {
   }
 }
 
-function getCountFetcherForIssueFilter(issueFilter: IssueFilter) {
-  switch (issueFilter) {
-    case "active":
-      return getActiveIssuesCount;
-    case "backlog":
-      return getBacklogIssuesCount;
-    default:
-      return getAllIssuesCount;
-  }
-}
-
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [issueFilterQueryParam] = useQueryState("issueFilter");
   const [layoutViewParam] = useQueryState("view");
   const issueFilter = getIssueFilter(issueFilterQueryParam);
   const [menuVisible, setMenuVisible] = useState(false);
-  const issuesCount = useSubscribe(
-    rep,
-    getCountFetcherForIssueFilter(issueFilter),
-    0,
-    [issueFilter]
-  );
 
-  const handleCreateIssue = (issue: IssueWithoutIndexFields) =>
-    rep.mutate.putIssue(issue);
+  const handleCreateIssue = (issue: IssueValue) => rep.mutate.putIssue(issue);
   const handleUpdateIssue = (id: string, changes: Partial<IssueValue>) =>
     rep.mutate.updateIssue({
       id,
@@ -83,7 +58,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           <TopFilter
             onToggleMenu={() => setMenuVisible(!menuVisible)}
             title={getTitleForIssueFilter(issueFilter)}
-            issuesCount={issuesCount}
+            issuesCount={1000}
           />
           {layoutViewParam === "board" ? (
             <IssueBoard rep={rep} issueFilter={issueFilter} />
