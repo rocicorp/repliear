@@ -56,8 +56,13 @@ const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
   console.log("order", order);
   return (
     <div ref={ref}>
+      {order !== null && (
+        <div className="text-white hover:text-gray-2 absolute top-3 right-9">
+          {order}
+        </div>
+      )}
       <button
-        className="flex items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
+        className="absolute right-2 top-2 items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
         ref={setOrderRef}
         onClick={handleDropdownClick}
       >
@@ -68,7 +73,7 @@ const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
           className="flex-shrink-0 focus:outline-none text-sm"
           onClick={onCancelOrder}
         >
-          <CancelIcon className="!w-3 text-white hover:text-gray-2 absolute top-4 right-6" />
+          <CancelIcon className="!w-3 text-white hover:text-gray-2 absolute top-4 right-2" />
         </button>
       )}
       <div
