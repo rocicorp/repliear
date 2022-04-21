@@ -12,7 +12,7 @@ export async function getReactIssues(): Promise<IssueWithoutIndexFields[]> {
       description: "", // (reactIssue.body || "").substring(0, 100),
       status: reactIssue.state === "open" ? Status.TODO : Status.DONE,
       modified: Date.parse(reactIssue.updated_at),
-      created: Date.parse(reactIssue.created_at)
+      created: Date.parse(reactIssue.created_at),
     })
   );
   return issues;

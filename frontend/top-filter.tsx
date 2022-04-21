@@ -33,7 +33,9 @@ const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
             {title}
           </div>
           <span>{issuesCount}</span>
-          <FilterMenu onSelect={(filter) => setFilterByParam(filter.toLocaleString())} />
+          <FilterMenu
+            onSelect={(filter) => setFilterByParam(filter.toLocaleString())}
+          />
         </div>
 
         {/* right section */}

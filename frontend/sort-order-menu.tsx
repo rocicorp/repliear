@@ -37,7 +37,6 @@ const SortOrderMenu = ({ onSelect }: Props) => {
 
   const options = orderedBys.map(([order, label], idx) => {
     return (
-      
       <div
         key={idx}
         className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"

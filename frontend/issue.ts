@@ -40,7 +40,7 @@ export type StatusEnum = z.infer<typeof statusEnumSchema>;
 
 export enum Order {
   CREATED,
-  MODIFIED
+  MODIFIED,
 }
 
 const ordenEnumSchema = z.nativeEnum(Order);
@@ -48,7 +48,7 @@ export type OrderEnum = z.infer<typeof ordenEnumSchema>;
 
 export enum Filter {
   PRIORITY,
-  STATUS
+  STATUS,
 }
 
 const filterEnumSchema = z.nativeEnum(Filter);

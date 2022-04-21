@@ -15,7 +15,7 @@ interface Props {
   priority: Priority;
 }
 
-export  const statusOpts = [
+export const statusOpts = [
   [NoPriorityIcon, "No priority", Priority.NONE],
   [UrgentPriorityIcon, "Urgent", Priority.URGENT],
   [HighPriorityIcon, "High", Priority.HIGH],
@@ -56,8 +56,6 @@ const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
         return "Priority";
     }
   };
-
-
 
   useClickOutside(ref, () => {
     if (priorityDropDownVisible) {

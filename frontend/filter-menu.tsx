@@ -1,16 +1,19 @@
 import React, { RefObject, useRef, useState } from "react";
 import { usePopper } from "react-popper";
-import { Filter } from "./issue";
+import { Filter, Priority, Status } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
 import SignalStrongIcon from "./assets/icons/signal-strong.svg";
 import TodoIcon from "./assets/icons/circle.svg";
+import { statusOpts } from "./priority-menu";
+import { statuses } from "./status-menu";
 interface Props {
-  onSelect: (filter: Filter) => void;
+  onSelect: (filter: Status | Priority) => void;
 }
 
 const FilterMenu = ({ onSelect }: Props) => {
   const [filterRef, setFilterRef] = useState<HTMLButtonElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
+  const [filter, setFilter] = useState<Filter | null>(null);
   const [filterDropDownVisible, setFilterDropDownVisible] = useState(false);
 
   const { styles, attributes, update } = usePopper(filterRef, popperRef, {
@@ -26,6 +29,7 @@ const FilterMenu = ({ onSelect }: Props) => {
 
   useClickOutside(ref, () => {
     if (filterDropDownVisible) {
+      setFilter(null);
       setFilterDropDownVisible(false);
     }
   });
@@ -35,23 +39,60 @@ const FilterMenu = ({ onSelect }: Props) => {
     [TodoIcon, Filter.STATUS, "Status"],
   ];
 
-  const options = () => {
-    
-    filterBys.map(([Icon, filter, label], idx) => {
-      return (
-        <div
-          key={idx}
-          className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
-          onClick={() => {
-            onSelect(filter as Filter);
-            setFilterDropDownVisible(false);
-          }}
-        >
-          <Icon />
-          {label}
-        </div>
-      );
-    });
+  //
+  const options = (filter: Filter | null) => {
+    switch (filter) {
+      case Filter.PRIORITY:
+        return statusOpts.map(([Icon, label, priority], idx) => {
+          return (
+            <div
+              key={idx}
+              className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
+              onClick={() => {
+                onSelect(priority as Priority);
+                setFilter(null);
+                setFilterDropDownVisible(false);
+              }}
+            >
+              <Icon className="mr-4" />
+              {label}
+            </div>
+          );
+        });
+
+      case Filter.STATUS:
+        return statuses.map(([Icon, status, label], idx) => {
+          return (
+            <div
+              key={idx}
+              className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
+              onClick={() => {
+                onSelect(status as Status);
+                setFilter(null);
+                setFilterDropDownVisible(false);
+              }}
+            >
+              <Icon className="mr-4" />
+              {label}
+            </div>
+          );
+        });
+      default:
+        return filterBys.map(([Icon, filter, label], idx) => {
+          return (
+            <div
+              key={idx}
+              className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
+              onClick={() => {
+                setFilter(filter as Filter);
+              }}
+            >
+              <Icon className="mr-4" />
+              {label}
+            </div>
+          );
+        });
+    }
   };
 
   return (
@@ -72,7 +113,7 @@ const FilterMenu = ({ onSelect }: Props) => {
         {...attributes.popper}
         className="cursor-default bg-white rounded shadow-modal z-100 w-34"
       >
-        <div style={styles.offset}>{options}</div>
+        <div style={styles.offset}>{options(filter)}</div>
       </div>
     </div>
   );
