@@ -107,6 +107,32 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     issueFilter: IssueFilter;
     issueOrder: Order;
   };
+  function timedReducer(
+    state: State,
+    action:
+      | {
+          type: "init";
+          allIssuesMap: Map<string, Issue>;
+        }
+      | {
+          type: "diff";
+          diff: Diff;
+        }
+      | {
+          type: "setIssueFilter";
+          issueFilter: IssueFilter;
+        }
+      | {
+          type: "setIssueOrder";
+          issueOrder: Order;
+        }
+  ): State {
+    const start = Date.now();
+    const result = reducer(state, action);
+    console.log(`Reducer took ${Date.now() - start}ms`, action);
+    return result;
+  }
+
   function reducer(
     state: State,
     action:
@@ -206,7 +232,6 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
               );
               const index = sortedIndexBy(newIssuesView, oldIssue, order);
               if (newIssuesView[index]?.id === oldIssue.id) {
-                console.log("splicing old");
                 newIssuesView.splice(index, 1);
               }
               const newIssue = issueFromKeyAndValue(
@@ -249,7 +274,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
 
     return state;
   }
-  const [state, dispatch] = useReducer(reducer, {
+  const [state, dispatch] = useReducer(timedReducer, {
     allIssuesMap: new Map(),
     issuesView: [],
     issueFilter: getIssueFilter(view, priorityFilter, statusFilter),
