@@ -39,7 +39,7 @@ function getIssueFilter(
       };
     case "backlog":
       return {
-        status: new Set([Status.IN_PROGRESS, Status.TODO]),
+        status: new Set([Status.BACKLOG]),
       };
     default: {
       let status = undefined;
