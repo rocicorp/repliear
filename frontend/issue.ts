@@ -59,13 +59,9 @@ export const issueSchema = z.object({
   title: z.string(),
   priority: priorityEnumSchema,
   status: statusEnumSchema,
-  // milliseconds elapsed since January 1, 1970 00:00:00 UTC as base 10 string
   modified: z.number(),
   created: z.number(),
   description: z.string(),
-  indexReverseModified: z.string(),
-  indexActiveReverseModified: z.string(),
-  indexBacklogReverseModified: z.string(),
 });
 
 export type Issue = z.TypeOf<typeof issueSchema>;
