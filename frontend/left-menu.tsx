@@ -22,6 +22,7 @@ interface Props {
 
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const [, setLayoutViewParam] = useQueryState("view");
+  const [, setIssueFilter] = useQueryState("issueFilter");
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
@@ -85,24 +86,33 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           {/* actions */}
 
           <ItemGroup title="Issues">
-            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-450">
-              <span className="w-3 h-3 mr-2"></span>
-              <Link href={`/d/${id}?issueFilter=active`}>
-                <span>Active</span>
-              </Link>
+            <div
+              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
+              onClick={async () => {
+                await setLayoutViewParam(null);
+                await setIssueFilter("active");
+              }}
+            >
+              <span className="h-3">Active</span>
             </div>
-            <div className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-450">
-              <span className="w-3 h-3 mr-2"></span>
-              <Link href={`/d/${id}?issueFilter=backlog`}>
-                <span>Backlog</span>
-              </Link>
+
+            <div
+              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
+              onClick={async () => {
+                await setLayoutViewParam(null);
+                await setIssueFilter("backlog");
+              }}
+            >
+              <span className="h-3">Backlog</span>
             </div>
             <div
-              className="flex items-center pl-8 rounded cursor-pointer group h-7 hover:bg-gray-450"
-              onClick={() => setLayoutViewParam("board")}
+              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
+              onClick={async () => {
+                await setLayoutViewParam("board");
+                await setIssueFilter(null);
+              }}
             >
-              <span className="w-3 h-3 mr-2"></span>
-              <span>Board</span>
+              <span className="h-3">Board</span>
             </div>
           </ItemGroup>
 

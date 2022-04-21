@@ -17,26 +17,42 @@ export const issueID = (key: string) => {
 };
 
 export enum Priority {
-  NONE,
-  LOW,
-  MEDIUM,
-  HIGH,
-  URGENT,
+  NONE = "NONE",
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH",
+  URGENT = "URGENT",
 }
 
 const priorityEnumSchema = z.nativeEnum(Priority);
 export type PriorityEnum = z.infer<typeof priorityEnumSchema>;
 
 export enum Status {
-  BACKLOG = 1,
-  TODO = 2,
-  IN_PROGRESS = 3,
-  DONE = 4,
-  CANCELED = 5,
+  BACKLOG = "BACKLOG",
+  TODO = "TODO",
+  IN_PROGRESS = "IN_PROGRESS",
+  DONE = "DONE",
+  CANCELED = "CANCELED",
 }
 
 const statusEnumSchema = z.nativeEnum(Status);
 export type StatusEnum = z.infer<typeof statusEnumSchema>;
+
+export enum Order {
+  CREATED = "CREATED",
+  MODIFIED = "MODIFIED",
+}
+
+const ordenEnumSchema = z.nativeEnum(Order);
+export type OrderEnum = z.infer<typeof ordenEnumSchema>;
+
+export enum Filter {
+  PRIORITY,
+  STATUS,
+}
+
+const filterEnumSchema = z.nativeEnum(Filter);
+export type FilterEnum = z.infer<typeof filterEnumSchema>;
 
 export const issueSchema = z.object({
   id: z.string(),
@@ -45,6 +61,7 @@ export const issueSchema = z.object({
   status: statusEnumSchema,
   // milliseconds elapsed since January 1, 1970 00:00:00 UTC as base 10 string
   modified: z.number(),
+  created: z.number(),
   description: z.string(),
   indexReverseModified: z.string(),
   indexActiveReverseModified: z.string(),
