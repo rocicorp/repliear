@@ -1,12 +1,10 @@
 import MenuIcon from "./assets/icons/menu.svg";
-import React, { useState } from "react";
-//import type { Issue } from "./issue";
+import React from "react";
 
-import IssueFilterModal from "./issue-filter-modal";
 import SortOrderMenu from "./sort-order-menu";
 import { queryTypes, useQueryState } from "next-usequerystate";
 import FilterMenu from "./filter-menu";
-import type { Priority, Status } from "./issue";
+import { Order, Priority, Status } from "./issue";
 
 interface Props {
   title: string;
@@ -14,16 +12,46 @@ interface Props {
   issuesCount: number;
 }
 
+interface FilterStatusProps {
+  filter: Status[] | Priority[] | null;
+  onDelete: () => void;
+  label: string;
+}
+
+const FilterStatus = ({ filter, onDelete, label }: FilterStatusProps) => {
+  if (!filter || filter.length === 0) return null;
+  return (
+    <div className="flex items-center pl-4">
+      <span className="px-1 text-gray-2 bg-gray-400 rounded">{label} is</span>
+      <span className="px-1 text-gray-2 bg-gray-400 rounded">
+        {filter.join(", ")}
+      </span>
+      <span
+        className="px-1 text-gray-2 bg-gray-400 rounded cursor-pointer"
+        onClick={onDelete}
+      >
+        &times;
+      </span>
+    </div>
+  );
+};
+
 const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
-  const [filterVisible, setFilterVisible] = useState(false);
-  const [, setOrderByParam] = useQueryState("orderBy");
+  const [orderBy, setOrderByParam] = useQueryState(
+    "orderBy",
+    queryTypes.stringEnum<Order>(Object.values(Order))
+  );
   const [statusFilters, setStatusFilterByParam] = useQueryState(
     "statusFilter",
-    queryTypes.array<Status>(queryTypes.integer)
+    queryTypes.array<Status>(
+      queryTypes.stringEnum<Status>(Object.values(Status))
+    )
   );
   const [priorityFilters, setPriorityFilterByParam] = useQueryState(
     "priorityFilter",
-    queryTypes.array<Priority>(queryTypes.integer)
+    queryTypes.array<Priority>(
+      queryTypes.stringEnum<Priority>(Object.values(Priority))
+    )
   );
 
   return (
@@ -37,7 +65,6 @@ const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
           >
             <MenuIcon className="w-3.5 text-white hover:text-gray-2" />
           </button>
-
           <div className="p-1 font-semibold cursor-default hover:bg-gray-450">
             {title}
           </div>
@@ -45,14 +72,15 @@ const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
           <FilterMenu
             onSelectPriority={async (priority) => {
               await setPriorityFilterByParam([
-                ...((priorityFilters as Priority[]) || []),
-                priority,
+                ...new Set([
+                  ...((priorityFilters as Priority[]) || []),
+                  priority,
+                ]),
               ]);
             }}
             onSelectStatus={async (status) => {
               await setStatusFilterByParam([
-                ...((statusFilters as Status[]) || []),
-                status,
+                ...new Set([...((statusFilters as Status[]) || []), status]),
               ]);
             }}
           />
@@ -61,14 +89,26 @@ const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
         {/* right section */}
         <div className="flex items-center">
           <SortOrderMenu
-            onSelect={(orderBy) => setOrderByParam(orderBy.toLocaleString())}
+            onSelect={(orderBy) => setOrderByParam(orderBy)}
+            onCancelOrder={() => setOrderByParam(null)}
+            order={orderBy}
           />
         </div>
       </div>
-      <IssueFilterModal
-        isOpen={filterVisible}
-        onDismiss={() => setFilterVisible(false)}
-      />
+      {statusFilters || priorityFilters ? (
+        <div className="flex  pl-2 pr-6 border-b border-gray-400 h-8 lg:pl-9">
+          <FilterStatus
+            filter={statusFilters}
+            onDelete={() => setStatusFilterByParam(null)}
+            label="Status"
+          />
+          <FilterStatus
+            filter={priorityFilters}
+            onDelete={() => setPriorityFilterByParam(null)}
+            label="Priority"
+          />
+        </div>
+      ) : null}
     </>
   );
 };

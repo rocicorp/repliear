@@ -3,12 +3,15 @@ import { usePopper } from "react-popper";
 import { Order } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
 import SortOutlinedIcon from "@mui/icons-material/SortOutlined";
+import CancelIcon from "@mui/icons-material/Cancel";
 
 interface Props {
   onSelect: (orderBy: Order) => void;
+  onCancelOrder: () => void;
+  order: Order | null;
 }
 
-const SortOrderMenu = ({ onSelect }: Props) => {
+const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
   const [orderRef, setOrderRef] = useState<HTMLButtonElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [orderByDropDownVisible, setOrderByDropDownVisible] = useState(false);
@@ -50,6 +53,7 @@ const SortOrderMenu = ({ onSelect }: Props) => {
     );
   });
 
+  console.log("order", order);
   return (
     <div ref={ref}>
       <button
@@ -59,6 +63,14 @@ const SortOrderMenu = ({ onSelect }: Props) => {
       >
         <SortOutlinedIcon />
       </button>
+      {order !== null && (
+        <button
+          className="flex-shrink-0 focus:outline-none text-sm"
+          onClick={onCancelOrder}
+        >
+          <CancelIcon className="!w-3 text-white hover:text-gray-2 absolute top-4 right-6" />
+        </button>
+      )}
       <div
         ref={setPopperRef}
         style={{
