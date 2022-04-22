@@ -27,27 +27,61 @@ import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
 import { sortBy, sortedIndexBy } from "lodash";
 
-type IssueFilter = {
-  status?: Set<Status>;
-  priority?: Set<Priority>;
-};
+class Filter {
+  readonly status?: ReadonlySet<Status>;
+  readonly priority?: ReadonlySet<Priority>;
+  constructor(status?: ReadonlySet<Status>, priority?: ReadonlySet<Priority>) {
+    this.status = status;
+    this.priority = priority;
+  }
+  filter(issue: Issue) {
+    if (this.status) {
+      if (!this.status.has(issue.status)) {
+        return false;
+      }
+    }
+    if (this.priority) {
+      if (!this.priority.has(issue.priority)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  hasConstraints() {
+    return !!(this.status || this.priority);
+  }
+}
 
-function getIssueFilter(
+class Filters {
+  readonly viewFilter: Filter;
+  readonly additionalFilter: Filter;
+
+  constructor(viewFilter: Filter, issueFilter: Filter) {
+    this.viewFilter = viewFilter;
+    this.additionalFilter = issueFilter;
+  }
+
+  filter(issue: Issue) {
+    return this.viewFilter.filter(issue) && this.additionalFilter.filter(issue);
+  }
+}
+
+function getFilters(
   view: string | null,
   priorityFilter: string | null,
   statusFilter: string | null
-): IssueFilter {
-  let viewStatusFilters: Set<Status> | undefined;
+): Filters {
+  let viewFilter: Filter = new Filter();
   switch (view?.toLowerCase()) {
     case "active":
-      viewStatusFilters = new Set([Status.IN_PROGRESS, Status.TODO]);
+      viewFilter = new Filter(new Set([Status.IN_PROGRESS, Status.TODO]));
       break;
     case "backlog":
-      viewStatusFilters = new Set([Status.BACKLOG]);
+      viewFilter = new Filter(new Set([Status.BACKLOG]));
       break;
   }
 
-  let status = viewStatusFilters;
+  let status = undefined;
   let priority = undefined;
   if (statusFilter) {
     status = new Set<Status>();
@@ -55,15 +89,13 @@ function getIssueFilter(
       const parseResult = statusEnumSchema.safeParse(s);
       if (
         parseResult.success &&
-        (!viewStatusFilters || viewStatusFilters.has(parseResult.data))
+        (!viewFilter?.status || viewFilter?.status.has(parseResult.data))
       ) {
         status.add(parseResult.data);
       }
     }
-    if (status.size === 0) {
-      status = viewStatusFilters;
-    }
   }
+
   if (priorityFilter) {
     priority = new Set<Priority>();
     for (const p of priorityFilter.split(",")) {
@@ -76,10 +108,8 @@ function getIssueFilter(
       priority = undefined;
     }
   }
-  return {
-    status,
-    priority,
-  };
+  const additionalFilter = new Filter(status, priority);
+  return new Filters(viewFilter, additionalFilter);
 }
 
 function getIssueOrder(orderBy: string | null): Order {
@@ -102,8 +132,9 @@ function getTitle(view: string | null) {
 
 type State = {
   allIssuesMap: Map<string, Issue>;
-  issuesView: Issue[];
-  issueFilter: IssueFilter;
+  viewIssueCount: number;
+  filteredIssues: Issue[];
+  filters: Filters;
   issueOrder: Order;
 };
 function timedReducer(
@@ -118,8 +149,8 @@ function timedReducer(
         diff: Diff;
       }
     | {
-        type: "setIssueFilter";
-        issueFilter: IssueFilter;
+        type: "setFilters";
+        filters: Filters;
       }
     | {
         type: "setIssueOrder";
@@ -144,31 +175,18 @@ function reducer(
         diff: Diff;
       }
     | {
-        type: "setIssueFilter";
-        issueFilter: IssueFilter;
+        type: "setFilters";
+        filters: Filters;
       }
     | {
         type: "setIssueOrder";
         issueOrder: Order;
       }
 ): State {
-  const issueFilter =
-    action.type === "setIssueFilter" ? action.issueFilter : state.issueFilter;
+  const filters = action.type === "setFilters" ? action.filters : state.filters;
   const issueOrder =
     action.type === "setIssueOrder" ? action.issueOrder : state.issueOrder;
-  function filter(issue: Issue): boolean {
-    if (issueFilter.status) {
-      if (!issueFilter.status.has(issue.status)) {
-        return false;
-      }
-    }
-    if (issueFilter.priority) {
-      if (!issueFilter.priority.has(issue.priority)) {
-        return false;
-      }
-    }
-    return true;
-  }
+
   function order(issue: Issue): string {
     let orderValue: number;
     switch (issueOrder) {
@@ -182,27 +200,43 @@ function reducer(
     return Number.MAX_SAFE_INTEGER - orderValue + "-" + issue.id;
   }
   function filterAndSort(issues: Issue[]): Issue[] {
-    return sortBy(issues.filter(filter), order);
+    return sortBy(issues.filter(filters.filter.bind(filters)), order);
+  }
+  function countViewIssues(issues: Issue[]): number {
+    let count = 0;
+    for (const issue of issues) {
+      if (filters.viewFilter.filter(issue)) {
+        count++;
+      }
+    }
+    return count;
   }
 
   switch (action.type) {
-    case "init":
+    case "init": {
+      const allIssues = [...action.allIssuesMap.values()];
       return {
         ...state,
         allIssuesMap: action.allIssuesMap,
-        issuesView: filterAndSort([...action.allIssuesMap.values()]),
+        viewIssueCount: countViewIssues(allIssues),
+        filteredIssues: filterAndSort([...action.allIssuesMap.values()]),
       };
+    }
     case "diff": {
       const newAllIssuesMap = new Map(state.allIssuesMap);
-      const newIssuesView = [...state.issuesView];
+      let newViewIssueCount = state.viewIssueCount;
+      const newFilteredIssues = [...state.filteredIssues];
       for (const diffOp of action.diff) {
         switch (diffOp.op) {
           case "add": {
             const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
             newAllIssuesMap.set(diffOp.key, newIssue);
-            if (filter(newIssue)) {
-              newIssuesView.splice(
-                sortedIndexBy(newIssuesView, newIssue, order),
+            if (filters.viewFilter.filter(newIssue)) {
+              newViewIssueCount++;
+            }
+            if (filters.filter(newIssue)) {
+              newFilteredIssues.splice(
+                sortedIndexBy(newFilteredIssues, newIssue, order),
                 0,
                 newIssue
               );
@@ -211,24 +245,33 @@ function reducer(
           }
           case "del": {
             const oldIssue = issueFromKeyAndValue(diffOp.key, diffOp.oldValue);
-            const index = sortedIndexBy(newIssuesView, oldIssue, order);
-            if (newIssuesView[index]?.id === oldIssue.id) {
-              newIssuesView.splice(index, 1);
-            }
+            const index = sortedIndexBy(newFilteredIssues, oldIssue, order);
             newAllIssuesMap.delete(diffOp.key);
+            if (filters.viewFilter.filter(oldIssue)) {
+              newViewIssueCount--;
+            }
+            if (newFilteredIssues[index]?.id === oldIssue.id) {
+              newFilteredIssues.splice(index, 1);
+            }
             break;
           }
           case "change": {
             const oldIssue = issueFromKeyAndValue(diffOp.key, diffOp.oldValue);
-            const index = sortedIndexBy(newIssuesView, oldIssue, order);
-            if (newIssuesView[index]?.id === oldIssue.id) {
-              newIssuesView.splice(index, 1);
+            const index = sortedIndexBy(newFilteredIssues, oldIssue, order);
+            if (filters.viewFilter.filter(oldIssue)) {
+              newViewIssueCount--;
+            }
+            if (newFilteredIssues[index]?.id === oldIssue.id) {
+              newFilteredIssues.splice(index, 1);
             }
             const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
             newAllIssuesMap.set(diffOp.key, newIssue);
-            if (filter(newIssue)) {
-              newIssuesView.splice(
-                sortedIndexBy(newIssuesView, newIssue, order),
+            if (filters.viewFilter.filter(newIssue)) {
+              newViewIssueCount++;
+            }
+            if (filters.filter(newIssue)) {
+              newFilteredIssues.splice(
+                sortedIndexBy(newFilteredIssues, newIssue, order),
                 0,
                 newIssue
               );
@@ -240,20 +283,23 @@ function reducer(
       return {
         ...state,
         allIssuesMap: newAllIssuesMap,
-        issuesView: newIssuesView,
+        viewIssueCount: newViewIssueCount,
+        filteredIssues: newFilteredIssues,
       };
     }
-    case "setIssueFilter": {
+    case "setFilters": {
+      const allIssues = [...state.allIssuesMap.values()];
       return {
         ...state,
-        issuesView: filterAndSort([...state.allIssuesMap.values()]),
-        issueFilter: action.issueFilter,
+        viewIssueCount: countViewIssues(allIssues),
+        filters: action.filters,
+        filteredIssues: filterAndSort(allIssues),
       };
     }
     case "setIssueOrder": {
       return {
         ...state,
-        issuesView: filterAndSort([...state.allIssuesMap.values()]),
+        filteredIssues: sortBy(state.filteredIssues, order),
         issueOrder: action.issueOrder,
       };
     }
@@ -271,8 +317,9 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
 
   const [state, dispatch] = useReducer(timedReducer, {
     allIssuesMap: new Map(),
-    issuesView: [],
-    issueFilter: getIssueFilter(view, priorityFilter, statusFilter),
+    viewIssueCount: 0,
+    filteredIssues: [],
+    filters: getFilters(view, priorityFilter, statusFilter),
     issueOrder: getIssueOrder(orderBy),
   });
   useEffect(() => {
@@ -297,8 +344,8 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
 
   useLayoutEffect(() => {
     dispatch({
-      type: "setIssueFilter",
-      issueFilter: getIssueFilter(view, priorityFilter, statusFilter),
+      type: "setFilters",
+      filters: getFilters(view, priorityFilter, statusFilter),
     });
   }, [view, priorityFilter, statusFilter]);
 
@@ -331,13 +378,18 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           <TopFilter
             onToggleMenu={() => setMenuVisible(!menuVisible)}
             title={getTitle(view)}
-            issuesCount={state.issuesView.length}
+            filteredIssuesCount={
+              state.filters.additionalFilter.hasConstraints()
+                ? state.filteredIssues.length
+                : undefined
+            }
+            issuesCount={state.viewIssueCount}
           />
           {view === "board" ? (
-            <IssueBoard issues={state.issuesView} />
+            <IssueBoard issues={state.filteredIssues} />
           ) : (
             <IssueList
-              issues={state.issuesView}
+              issues={state.filteredIssues}
               onUpdateIssue={handleUpdateIssue}
             />
           )}

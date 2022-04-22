@@ -9,6 +9,7 @@ import { Order, Priority, Status } from "./issue";
 interface Props {
   title: string;
   onToggleMenu?: () => void;
+  filteredIssuesCount?: number;
   issuesCount: number;
 }
 
@@ -36,7 +37,12 @@ const FilterStatus = ({ filter, onDelete, label }: FilterStatusProps) => {
   );
 };
 
-const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
+const TopFilter = ({
+  title,
+  onToggleMenu,
+  filteredIssuesCount,
+  issuesCount,
+}: Props) => {
   const [orderBy, setOrderByParam] = useQueryState(
     "orderBy",
     queryTypes.stringEnum<Order>(Object.values(Order))
@@ -68,7 +74,13 @@ const TopFilter = ({ title, onToggleMenu, issuesCount }: Props) => {
           <div className="p-1 font-semibold cursor-default hover:bg-gray-450">
             {title}
           </div>
-          <span>{issuesCount}</span>
+          {filteredIssuesCount ? (
+            <span>
+              {filteredIssuesCount} / {issuesCount}
+            </span>
+          ) : (
+            <span>{issuesCount}</span>
+          )}
           <FilterMenu
             onSelectPriority={async (priority) => {
               await setPriorityFilterByParam([
