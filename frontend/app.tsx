@@ -27,89 +27,79 @@ import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
 import { sortBy, sortedIndexBy } from "lodash";
 
-class Filter {
-  readonly status?: ReadonlySet<Status>;
-  readonly priority?: ReadonlySet<Priority>;
-  constructor(status?: ReadonlySet<Status>, priority?: ReadonlySet<Priority>) {
-    this.status = status;
-    this.priority = priority;
-  }
-  filter(issue: Issue) {
-    if (this.status) {
-      if (!this.status.has(issue.status)) {
-        return false;
-      }
-    }
-    if (this.priority) {
-      if (!this.priority.has(issue.priority)) {
-        return false;
-      }
-    }
-    return true;
-  }
-  hasConstraints() {
-    return !!(this.status || this.priority);
-  }
-}
-
-class Filters {
-  readonly viewFilter: Filter;
-  readonly additionalFilter: Filter;
-
-  constructor(viewFilter: Filter, issueFilter: Filter) {
-    this.viewFilter = viewFilter;
-    this.additionalFilter = issueFilter;
-  }
-
-  filter(issue: Issue) {
-    return this.viewFilter.filter(issue) && this.additionalFilter.filter(issue);
-  }
-}
+type Filters = {
+  readonly viewFilter: (issue: Issue) => boolean;
+  readonly issuesFilter: (issue: Issue) => boolean;
+  readonly hasNonViewFilters: boolean;
+};
 
 function getFilters(
   view: string | null,
   priorityFilter: string | null,
   statusFilter: string | null
 ): Filters {
-  let viewFilter: Filter = new Filter();
+  let viewStatuses: Set<Status> | undefined = undefined;
   switch (view?.toLowerCase()) {
     case "active":
-      viewFilter = new Filter(new Set([Status.IN_PROGRESS, Status.TODO]));
+      viewStatuses = new Set([Status.IN_PROGRESS, Status.TODO]);
       break;
     case "backlog":
-      viewFilter = new Filter(new Set([Status.BACKLOG]));
+      viewStatuses = new Set([Status.BACKLOG]);
       break;
   }
 
-  let status = undefined;
-  let priority = undefined;
+  let issuesStatuses: Set<Status> | undefined = undefined;
+  let issuesPriorities: Set<Priority> | undefined = undefined;
+  let hasNonViewFilters = false;
   if (statusFilter) {
-    status = new Set<Status>();
+    issuesStatuses = new Set<Status>();
     for (const s of statusFilter.split(",")) {
       const parseResult = statusEnumSchema.safeParse(s);
       if (
         parseResult.success &&
-        (!viewFilter?.status || viewFilter?.status.has(parseResult.data))
+        (!viewStatuses || viewStatuses.has(parseResult.data))
       ) {
-        status.add(parseResult.data);
+        hasNonViewFilters = true;
+        issuesStatuses.add(parseResult.data);
       }
     }
+  }
+  if (!hasNonViewFilters) {
+    issuesStatuses = viewStatuses;
   }
 
   if (priorityFilter) {
-    priority = new Set<Priority>();
+    issuesPriorities = new Set<Priority>();
     for (const p of priorityFilter.split(",")) {
       const parseResult = priorityEnumSchema.safeParse(p);
       if (parseResult.success) {
-        priority.add(parseResult.data);
+        hasNonViewFilters = true;
+        issuesPriorities.add(parseResult.data);
       }
     }
-    if (priority.size === 0) {
-      priority = undefined;
+    if (issuesPriorities.size === 0) {
+      issuesPriorities = undefined;
     }
   }
-  const additionalFilter = new Filter(status, priority);
-  return new Filters(viewFilter, additionalFilter);
+  return {
+    viewFilter: (issue: Issue) => {
+      return viewStatuses ? viewStatuses.has(issue.status) : true;
+    },
+    issuesFilter: (issue: Issue) => {
+      if (issuesStatuses) {
+        if (!issuesStatuses.has(issue.status)) {
+          return false;
+        }
+      }
+      if (issuesPriorities) {
+        if (!issuesPriorities.has(issue.priority)) {
+          return false;
+        }
+      }
+      return true;
+    },
+    hasNonViewFilters,
+  };
 }
 
 function getIssueOrder(orderBy: string | null): Order {
@@ -200,12 +190,12 @@ function reducer(
     return Number.MAX_SAFE_INTEGER - orderValue + "-" + issue.id;
   }
   function filterAndSort(issues: Issue[]): Issue[] {
-    return sortBy(issues.filter(filters.filter.bind(filters)), order);
+    return sortBy(issues.filter(filters.issuesFilter), order);
   }
   function countViewIssues(issues: Issue[]): number {
     let count = 0;
     for (const issue of issues) {
-      if (filters.viewFilter.filter(issue)) {
+      if (filters.viewFilter(issue)) {
         count++;
       }
     }
@@ -231,10 +221,10 @@ function reducer(
           case "add": {
             const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
             newAllIssuesMap.set(diffOp.key, newIssue);
-            if (filters.viewFilter.filter(newIssue)) {
+            if (filters.viewFilter(newIssue)) {
               newViewIssueCount++;
             }
-            if (filters.filter(newIssue)) {
+            if (filters.issuesFilter(newIssue)) {
               newFilteredIssues.splice(
                 sortedIndexBy(newFilteredIssues, newIssue, order),
                 0,
@@ -247,7 +237,7 @@ function reducer(
             const oldIssue = issueFromKeyAndValue(diffOp.key, diffOp.oldValue);
             const index = sortedIndexBy(newFilteredIssues, oldIssue, order);
             newAllIssuesMap.delete(diffOp.key);
-            if (filters.viewFilter.filter(oldIssue)) {
+            if (filters.viewFilter(oldIssue)) {
               newViewIssueCount--;
             }
             if (newFilteredIssues[index]?.id === oldIssue.id) {
@@ -258,7 +248,7 @@ function reducer(
           case "change": {
             const oldIssue = issueFromKeyAndValue(diffOp.key, diffOp.oldValue);
             const index = sortedIndexBy(newFilteredIssues, oldIssue, order);
-            if (filters.viewFilter.filter(oldIssue)) {
+            if (filters.viewFilter(oldIssue)) {
               newViewIssueCount--;
             }
             if (newFilteredIssues[index]?.id === oldIssue.id) {
@@ -266,10 +256,10 @@ function reducer(
             }
             const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
             newAllIssuesMap.set(diffOp.key, newIssue);
-            if (filters.viewFilter.filter(newIssue)) {
+            if (filters.viewFilter(newIssue)) {
               newViewIssueCount++;
             }
-            if (filters.filter(newIssue)) {
+            if (filters.issuesFilter(newIssue)) {
               newFilteredIssues.splice(
                 sortedIndexBy(newFilteredIssues, newIssue, order),
                 0,
@@ -379,7 +369,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             onToggleMenu={() => setMenuVisible(!menuVisible)}
             title={getTitle(view)}
             filteredIssuesCount={
-              state.filters.additionalFilter.hasConstraints()
+              state.filters.hasNonViewFilters
                 ? state.filteredIssues.length
                 : undefined
             }
