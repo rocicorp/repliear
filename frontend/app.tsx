@@ -4,7 +4,7 @@ import React, {
   useLayoutEffect,
   useReducer,
 } from "react";
-import type { Replicache } from "replicache";
+import type { Diff, Replicache } from "replicache";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
 import {
