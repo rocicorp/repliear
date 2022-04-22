@@ -1,4 +1,3 @@
-import State from "pusher-js/types/src/core/http/state";
 import { IssueWithoutIndexFields, Priority, Status } from "../frontend/issue";
 
 export async function getReactIssues(): Promise<IssueWithoutIndexFields[]> {
