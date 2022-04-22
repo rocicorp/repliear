@@ -37,48 +37,49 @@ function getIssueFilter(
   priorityFilter: string | null,
   statusFilter: string | null
 ): IssueFilter {
+  let viewStatusFilters: Set<Status> | undefined;
   switch (view?.toLowerCase()) {
     case "active":
-      return {
-        status: new Set([Status.IN_PROGRESS, Status.TODO]),
-      };
+      viewStatusFilters = new Set([Status.IN_PROGRESS, Status.TODO]);
+      break;
     case "backlog":
-      return {
-        status: new Set([Status.BACKLOG]),
-      };
-    default: {
-      let status = undefined;
-      let priority = undefined;
-      if (statusFilter) {
-        status = new Set<Status>();
-        for (const s of statusFilter.split(",")) {
-          const parseResult = statusEnumSchema.safeParse(s);
-          if (parseResult.success) {
-            status.add(parseResult.data);
-          }
-        }
-        if (status.size === 0) {
-          status = undefined;
-        }
+      viewStatusFilters = new Set([Status.BACKLOG]);
+      break;
+  }
+
+  let status = viewStatusFilters;
+  let priority = undefined;
+  if (statusFilter) {
+    status = new Set<Status>();
+    for (const s of statusFilter.split(",")) {
+      const parseResult = statusEnumSchema.safeParse(s);
+      if (
+        parseResult.success &&
+        (!viewStatusFilters || viewStatusFilters.has(parseResult.data))
+      ) {
+        status.add(parseResult.data);
       }
-      if (priorityFilter) {
-        priority = new Set<Priority>();
-        for (const p of priorityFilter.split(",")) {
-          const parseResult = priorityEnumSchema.safeParse(p);
-          if (parseResult.success) {
-            priority.add(parseResult.data);
-          }
-        }
-        if (priority.size === 0) {
-          priority = undefined;
-        }
-      }
-      return {
-        status,
-        priority,
-      };
+    }
+    if (status.size === 0) {
+      status = viewStatusFilters;
     }
   }
+  if (priorityFilter) {
+    priority = new Set<Priority>();
+    for (const p of priorityFilter.split(",")) {
+      const parseResult = priorityEnumSchema.safeParse(p);
+      if (parseResult.success) {
+        priority.add(parseResult.data);
+      }
+    }
+    if (priority.size === 0) {
+      priority = undefined;
+    }
+  }
+  return {
+    status,
+    priority,
+  };
 }
 
 function getIssueOrder(orderBy: string | null): Order {
