@@ -1,4 +1,9 @@
-import React, { useEffect, useReducer } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useReducer,
+} from "react";
 import type { Diff, Replicache } from "replicache";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
@@ -94,6 +99,168 @@ function getTitle(view: string | null) {
   }
 }
 
+type State = {
+  allIssuesMap: Map<string, Issue>;
+  issuesView: Issue[];
+  issueFilter: IssueFilter;
+  issueOrder: Order;
+};
+function timedReducer(
+  state: State,
+  action:
+    | {
+        type: "init";
+        allIssuesMap: Map<string, Issue>;
+      }
+    | {
+        type: "diff";
+        diff: Diff;
+      }
+    | {
+        type: "setIssueFilter";
+        issueFilter: IssueFilter;
+      }
+    | {
+        type: "setIssueOrder";
+        issueOrder: Order;
+      }
+): State {
+  const start = Date.now();
+  const result = reducer(state, action);
+  console.log(`Reducer took ${Date.now() - start}ms`, action);
+  return result;
+}
+
+function reducer(
+  state: State,
+  action:
+    | {
+        type: "init";
+        allIssuesMap: Map<string, Issue>;
+      }
+    | {
+        type: "diff";
+        diff: Diff;
+      }
+    | {
+        type: "setIssueFilter";
+        issueFilter: IssueFilter;
+      }
+    | {
+        type: "setIssueOrder";
+        issueOrder: Order;
+      }
+): State {
+  const issueFilter =
+    action.type === "setIssueFilter" ? action.issueFilter : state.issueFilter;
+  const issueOrder =
+    action.type === "setIssueOrder" ? action.issueOrder : state.issueOrder;
+  function filter(issue: Issue): boolean {
+    if (issueFilter.status) {
+      if (!issueFilter.status.has(issue.status)) {
+        return false;
+      }
+    }
+    if (issueFilter.priority) {
+      if (!issueFilter.priority.has(issue.priority)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  function order(issue: Issue): string {
+    let orderValue: number;
+    switch (issueOrder) {
+      case Order.CREATED:
+        orderValue = issue.created;
+        break;
+      case Order.MODIFIED:
+        orderValue = issue.modified;
+        break;
+    }
+    return Number.MAX_SAFE_INTEGER - orderValue + "-" + issue.id;
+  }
+  function filterAndSort(issues: Issue[]): Issue[] {
+    return sortBy(issues.filter(filter), order);
+  }
+
+  switch (action.type) {
+    case "init":
+      return {
+        ...state,
+        allIssuesMap: action.allIssuesMap,
+        issuesView: filterAndSort([...action.allIssuesMap.values()]),
+      };
+    case "diff": {
+      const newAllIssuesMap = new Map(state.allIssuesMap);
+      const newIssuesView = [...state.issuesView];
+      for (const diffOp of action.diff) {
+        switch (diffOp.op) {
+          case "add": {
+            const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
+            newAllIssuesMap.set(diffOp.key, newIssue);
+            if (filter(newIssue)) {
+              newIssuesView.splice(
+                sortedIndexBy(newIssuesView, newIssue, order),
+                0,
+                newIssue
+              );
+            }
+            break;
+          }
+          case "del": {
+            const oldIssue = issueFromKeyAndValue(diffOp.key, diffOp.oldValue);
+            const index = sortedIndexBy(newIssuesView, oldIssue, order);
+            if (newIssuesView[index]?.id === oldIssue.id) {
+              newIssuesView.splice(index, 1);
+            }
+            newAllIssuesMap.delete(diffOp.key);
+            break;
+          }
+          case "change": {
+            const oldIssue = issueFromKeyAndValue(diffOp.key, diffOp.oldValue);
+            const index = sortedIndexBy(newIssuesView, oldIssue, order);
+            if (newIssuesView[index]?.id === oldIssue.id) {
+              newIssuesView.splice(index, 1);
+            }
+            const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
+            newAllIssuesMap.set(diffOp.key, newIssue);
+            if (filter(newIssue)) {
+              newIssuesView.splice(
+                sortedIndexBy(newIssuesView, newIssue, order),
+                0,
+                newIssue
+              );
+            }
+            break;
+          }
+        }
+      }
+      return {
+        ...state,
+        allIssuesMap: newAllIssuesMap,
+        issuesView: newIssuesView,
+      };
+    }
+    case "setIssueFilter": {
+      return {
+        ...state,
+        issuesView: filterAndSort([...state.allIssuesMap.values()]),
+        issueFilter: action.issueFilter,
+      };
+    }
+    case "setIssueOrder": {
+      return {
+        ...state,
+        issuesView: filterAndSort([...state.allIssuesMap.values()]),
+        issueOrder: action.issueOrder,
+      };
+    }
+  }
+
+  return state;
+}
+
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [view] = useQueryState("view");
   const [priorityFilter] = useQueryState("priorityFilter");
@@ -101,179 +268,6 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   const [orderBy] = useQueryState("orderBy");
   const [menuVisible, setMenuVisible] = useState(false);
 
-  type State = {
-    allIssuesMap: Map<string, Issue>;
-    issuesView: Issue[];
-    issueFilter: IssueFilter;
-    issueOrder: Order;
-  };
-  function timedReducer(
-    state: State,
-    action:
-      | {
-          type: "init";
-          allIssuesMap: Map<string, Issue>;
-        }
-      | {
-          type: "diff";
-          diff: Diff;
-        }
-      | {
-          type: "setIssueFilter";
-          issueFilter: IssueFilter;
-        }
-      | {
-          type: "setIssueOrder";
-          issueOrder: Order;
-        }
-  ): State {
-    const start = Date.now();
-    const result = reducer(state, action);
-    console.log(`Reducer took ${Date.now() - start}ms`, action);
-    return result;
-  }
-
-  function reducer(
-    state: State,
-    action:
-      | {
-          type: "init";
-          allIssuesMap: Map<string, Issue>;
-        }
-      | {
-          type: "diff";
-          diff: Diff;
-        }
-      | {
-          type: "setIssueFilter";
-          issueFilter: IssueFilter;
-        }
-      | {
-          type: "setIssueOrder";
-          issueOrder: Order;
-        }
-  ): State {
-    const issueFilter =
-      action.type === "setIssueFilter" ? action.issueFilter : state.issueFilter;
-    const issueOrder =
-      action.type === "setIssueOrder" ? action.issueOrder : state.issueOrder;
-    function filter(issue: Issue): boolean {
-      if (issueFilter.status) {
-        if (!issueFilter.status.has(issue.status)) {
-          return false;
-        }
-      }
-      if (issueFilter.priority) {
-        if (!issueFilter.priority.has(issue.priority)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    function order(issue: Issue): string {
-      let orderValue: number;
-      switch (issueOrder) {
-        case Order.CREATED:
-          orderValue = issue.created;
-          break;
-        case Order.MODIFIED:
-          orderValue = issue.modified;
-          break;
-      }
-      return Number.MAX_SAFE_INTEGER - orderValue + "-" + issue.id;
-    }
-    function filterAndSort(issues: Issue[]): Issue[] {
-      return sortBy(issues.filter(filter), order);
-    }
-
-    switch (action.type) {
-      case "init":
-        return {
-          ...state,
-          allIssuesMap: action.allIssuesMap,
-          issuesView: filterAndSort([...action.allIssuesMap.values()]),
-        };
-      case "diff": {
-        const newAllIssuesMap = new Map(state.allIssuesMap);
-        const newIssuesView = [...state.issuesView];
-        for (const diffOp of action.diff) {
-          switch (diffOp.op) {
-            case "add": {
-              const newIssue = issueFromKeyAndValue(
-                diffOp.key,
-                diffOp.newValue
-              );
-              newAllIssuesMap.set(diffOp.key, newIssue);
-              if (filter(newIssue)) {
-                newIssuesView.splice(
-                  sortedIndexBy(newIssuesView, newIssue, order),
-                  0,
-                  newIssue
-                );
-              }
-              break;
-            }
-            case "del": {
-              const oldIssue = issueFromKeyAndValue(
-                diffOp.key,
-                diffOp.oldValue
-              );
-              const index = sortedIndexBy(newIssuesView, oldIssue, order);
-              if (newIssuesView[index]?.id === oldIssue.id) {
-                newIssuesView.splice(index, 1);
-              }
-              newAllIssuesMap.delete(diffOp.key);
-              break;
-            }
-            case "change": {
-              const oldIssue = issueFromKeyAndValue(
-                diffOp.key,
-                diffOp.oldValue
-              );
-              const index = sortedIndexBy(newIssuesView, oldIssue, order);
-              if (newIssuesView[index]?.id === oldIssue.id) {
-                newIssuesView.splice(index, 1);
-              }
-              const newIssue = issueFromKeyAndValue(
-                diffOp.key,
-                diffOp.newValue
-              );
-              newAllIssuesMap.set(diffOp.key, newIssue);
-              if (filter(newIssue)) {
-                newIssuesView.splice(
-                  sortedIndexBy(newIssuesView, newIssue, order),
-                  0,
-                  newIssue
-                );
-              }
-              break;
-            }
-          }
-        }
-        return {
-          ...state,
-          allIssuesMap: newAllIssuesMap,
-          issuesView: newIssuesView,
-        };
-      }
-      case "setIssueFilter": {
-        return {
-          ...state,
-          issuesView: filterAndSort([...state.allIssuesMap.values()]),
-          issueFilter: action.issueFilter,
-        };
-      }
-      case "setIssueOrder": {
-        return {
-          ...state,
-          issuesView: filterAndSort([...state.allIssuesMap.values()]),
-          issueOrder: action.issueOrder,
-        };
-      }
-    }
-
-    return state;
-  }
   const [state, dispatch] = useReducer(timedReducer, {
     allIssuesMap: new Map(),
     issuesView: [],
@@ -287,8 +281,10 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
         type: "init",
         allIssuesMap: allIssues,
       });
+      console.log("watching");
       rep.watch(
-        (diff) => {
+        (diff, oldHash, newHash) => {
+          console.log(diff, oldHash, newHash);
           dispatch({
             type: "diff",
             diff,
@@ -300,7 +296,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     void fetchIssues();
   }, [rep]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     dispatch({
       type: "setIssueFilter",
       issueFilter: getIssueFilter(view, priorityFilter, statusFilter),
@@ -315,11 +311,14 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   }, [orderBy]);
 
   const handleCreateIssue = (issue: IssueValue) => rep.mutate.putIssue(issue);
-  const handleUpdateIssue = (id: string, changes: Partial<IssueValue>) =>
-    rep.mutate.updateIssue({
-      id,
-      changes,
-    });
+  const handleUpdateIssue = useCallback(
+    (id: string, changes: Partial<IssueValue>) =>
+      rep.mutate.updateIssue({
+        id,
+        changes,
+      }),
+    [rep]
+  );
 
   return (
     <div>

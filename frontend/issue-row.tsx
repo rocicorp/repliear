@@ -10,11 +10,7 @@ interface Props {
   onChangeStatus?: (issue: Issue, status: Status) => void;
 }
 
-export default function IssueRow({
-  issue,
-  onChangePriority,
-  onChangeStatus,
-}: Props) {
+function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
   const handleChangePriority = (p: Priority) => {
     if (onChangePriority) onChangePriority(issue, p);
   };
@@ -24,7 +20,6 @@ export default function IssueRow({
   };
   return (
     <div
-      key={issue.id}
       className="inline-flex items-center flex-grow flex-shrink w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-400 hover:bg-gray-400 hover:bg-opacity-40 h-11 text-white border-y-1"
       id={issue.id}
     >
@@ -49,3 +44,5 @@ export default function IssueRow({
     </div>
   );
 }
+
+export default React.memo(IssueRow);
