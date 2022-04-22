@@ -20,6 +20,7 @@ import IssueList from "./issue-list";
 import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
 import { sortBy, sortedIndexBy } from "lodash";
+import IssueDetail from "./issue-detail";
 
 type Filters = {
   readonly viewFilter: (issue: Issue) => boolean;
@@ -325,6 +326,21 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
       }),
     [rep]
   );
+  const Layout = () => {
+    switch (layoutViewParam) {
+      case "board":
+        return  <IssueBoard issues={state.filteredIssues} />;
+      case "detail":
+        return <IssueDetail />;
+      default:
+        return (
+           <IssueList
+              issues={state.filteredIssues}
+              onUpdateIssue={handleUpdateIssue}
+          />
+        );
+    }
+  };
 
   return (
     <div>
@@ -335,6 +351,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           onCreateIssue={handleCreateIssue}
         />
         <div className="flex flex-col flex-grow">
+ 		{layoutViewParam !== "detail" && (
           <TopFilter
             onToggleMenu={() => setMenuVisible(!menuVisible)}
             title={getTitle(view)}
@@ -345,14 +362,8 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             }
             issuesCount={state.viewIssueCount}
           />
-          {view === "board" ? (
-            <IssueBoard issues={state.filteredIssues} />
-          ) : (
-            <IssueList
-              issues={state.filteredIssues}
-              onUpdateIssue={handleUpdateIssue}
-            />
           )}
+          <Layout />
         </div>
       </div>
     </div>
