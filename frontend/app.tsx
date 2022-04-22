@@ -334,7 +334,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             issuesCount={state.issuesView.length}
           />
           {view === "board" ? (
-            <IssueBoard rep={rep} />
+            <IssueBoard rep={rep} issues={state.issuesView} />
           ) : (
             <IssueList
               issues={state.issuesView}
