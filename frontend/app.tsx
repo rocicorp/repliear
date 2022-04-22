@@ -4,7 +4,7 @@ import React, {
   useLayoutEffect,
   useReducer,
 } from "react";
-import type { Diff, Replicache } from "replicache";
+import type { Replicache } from "replicache";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
 import {
@@ -334,7 +334,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             issuesCount={state.issuesView.length}
           />
           {view === "board" ? (
-            <IssueBoard rep={rep} issues={state.issuesView} />
+            <IssueBoard issues={state.issuesView} />
           ) : (
             <IssueList
               issues={state.issuesView}

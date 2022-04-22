@@ -3,19 +3,14 @@ import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
 import { getIssueByType, Status, Issue } from "./issue";
 import IssueCol from "./issue-col";
-import type { Replicache } from "replicache";
-import type { M } from "./mutators";
 
 interface Props {
-  rep: Replicache<M>;
   issues: Issue[];
   // todo: implement this later
   //onUpdateIssue?: (id: string, changes: Partial<IssueValue>) => void;
 }
-//TODO(greg): fix this to use watch
-//const ISSUES_WINDOW_SIZE = 200;
 
-export default function IssueBoard({ rep, issues }: Props) {
+export default function IssueBoard({ issues }: Props) {
   const issuesByType = getIssueByType(issues);
 
   const onDragEnd = ({ source, destination }: DropResult) => {
