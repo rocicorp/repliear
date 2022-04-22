@@ -281,10 +281,8 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
         type: "init",
         allIssuesMap: allIssues,
       });
-      console.log("watching");
       rep.watch(
-        (diff, oldHash, newHash) => {
-          console.log(diff, oldHash, newHash);
+        (diff) => {
           dispatch({
             type: "diff",
             diff,
