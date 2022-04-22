@@ -1,3 +1,4 @@
+import State from "pusher-js/types/src/core/http/state";
 import { IssueWithoutIndexFields, Priority, Status } from "../frontend/issue";
 
 export async function getReactIssues(): Promise<IssueWithoutIndexFields[]> {
@@ -9,8 +10,8 @@ export async function getReactIssues(): Promise<IssueWithoutIndexFields[]> {
       // exceeds the nextjs max response size.
       title: reactIssue.title.substring(0, 100),
       description: "", // (reactIssue.body || "").substring(0, 100),
-      priority: getPriority(reactIssue.id),
-      status: getStatus(reactIssue.id, reactIssue.state === "open"),
+      priority: getPriority(reactIssue),
+      status: getStatus(reactIssue),
       modified: Date.parse(reactIssue.updated_at),
       created: Date.parse(reactIssue.created_at),
     })
@@ -18,16 +19,26 @@ export async function getReactIssues(): Promise<IssueWithoutIndexFields[]> {
   return issues;
 }
 
-function getStatus(id: number, open: boolean): Status {
-  if (!open) {
-    switch (id % 2) {
+function getStatus({
+  id,
+  state,
+  created_at,
+}: {
+  id: number;
+  state: "open" | "closed";
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  created_at: string;
+}): Status {
+  const stableRandom = id + Date.parse(created_at);
+  if (state === "closed") {
+    switch (stableRandom % 2) {
       case 0:
         return Status.DONE;
       case 1:
         return Status.CANCELED;
     }
   }
-  switch (id % 3) {
+  switch (stableRandom % 3) {
     case 0:
       return Status.BACKLOG;
     case 1:
@@ -38,8 +49,16 @@ function getStatus(id: number, open: boolean): Status {
   return Status.TODO;
 }
 
-function getPriority(id: number): Priority {
-  switch (id % 5) {
+function getPriority({
+  id,
+  created_at,
+}: {
+  id: number;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  created_at: string;
+}): Priority {
+  const stableRandom = id + Date.parse(created_at);
+  switch (stableRandom % 5) {
     case 0:
       return Priority.NONE;
     case 1:
