@@ -4,11 +4,10 @@ import React, {
   useLayoutEffect,
   useReducer,
 } from "react";
-import type { Diff, Replicache } from "replicache";
+import type { ExperimentalDiff as Diff, Replicache } from "replicache";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
 import {
-  getAllIssuesMap,
   Issue,
   issueFromKeyAndValue,
   issuePrefix,
@@ -314,19 +313,14 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   });
   useEffect(() => {
     async function fetchIssues() {
-      const allIssues = await rep.query((tx) => getAllIssuesMap(tx));
-      dispatch({
-        type: "init",
-        allIssuesMap: allIssues,
-      });
-      rep.watch(
+      rep.experimentalWatch(
         (diff) => {
           dispatch({
             type: "diff",
             diff,
           });
         },
-        { prefix: issuePrefix }
+        { prefix: issuePrefix, initialValuesInFirstDiff: true }
       );
     }
     void fetchIssues();
