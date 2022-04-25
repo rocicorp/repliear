@@ -1,10 +1,17 @@
 import StatusIcon from "./status-icon";
 import React, { CSSProperties, forwardRef, memo } from "react";
-import { Droppable, DroppableProvided } from "react-beautiful-dnd";
+import {
+  DraggableProvided,
+  DraggableStateSnapshot,
+  Droppable,
+  DroppableProvided,
+} from "react-beautiful-dnd";
 import type { Issue, Status } from "./issue";
 import IssueItem from "./issue-item";
 import { FixedSizeList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
+import PriorityMenu from "./priority-menu";
+import classNames from "classnames";
 
 interface Props {
   status: Status;
@@ -18,19 +25,67 @@ interface RowProps {
   style: CSSProperties;
 }
 
-function IssueCol({ title, status, issues }: Props) {
-  const statusIcon = <StatusIcon status={status} />;
-
-  const Row = ({ data: items, index, style }: RowProps) => (
+const IssueCloneItem = ({
+  issue,
+  provided,
+  snapshot,
+}: {
+  issue: Issue;
+  provided: DraggableProvided;
+  snapshot: DraggableStateSnapshot;
+}) => {
+  const isDragging = snapshot.isDragging && !snapshot.isDropAnimating;
+  return (
     <div
       style={{
-        ...style,
-        top: `${parseFloat(style.top as string) + 10}px`,
+        ...provided.draggableProps.style,
       }}
+      ref={provided.innerRef}
+      className={classNames(
+        "cursor-default flex flex-col w-11/12 px-4 py-3 mb-2 text-white rounded focus:outline-none",
+        {
+          /* eslint-disable @typescript-eslint/naming-convention */
+          "shadow-modal": isDragging,
+          "bg-gray-300": isDragging,
+          "bg-gray-400": !isDragging,
+          /* eslint-enable @typescript-eslint/naming-convention */
+        }
+      )}
+      {...provided.draggableProps}
+      {...provided.dragHandleProps}
     >
-      <IssueItem issue={items[index]} index={index} key={index} />
+      <div className="flex justify-between w-full cursor-default">
+        <div className="flex flex-col">
+          <span className="text-xs font-normal uppercase">{issue.id}</span>
+          <span className="mt-1 text-sm font-medium text-gray-2 line-clamp-2 overflow-ellipsis h-10">
+            {issue.title}
+          </span>
+        </div>
+      </div>
+      <div className="mt-2.5 flex items-center">
+        <PriorityMenu
+          labelVisible={false}
+          priority={issue.priority}
+          onSelect={() => null}
+        />
+      </div>
     </div>
   );
+};
+
+const Row = ({ data: items, index, style }: RowProps) => (
+  <div
+    style={{
+      ...style,
+      top: `${parseFloat(style.top as string) + 10}px`,
+    }}
+  >
+    <IssueItem issue={items[index]} index={index} key={index} />
+  </div>
+);
+
+function IssueCol({ title, status, issues }: Props) {
+  const statusIcon = <StatusIcon status={status} />;
 
   const innerElementType = forwardRef<
     HTMLDivElement,
@@ -48,7 +103,21 @@ function IssueCol({ title, status, issues }: Props) {
   innerElementType.displayName = "innerElementType";
 
   return (
-    <Droppable droppableId={status.toString()} key={status} type="category">
+    <Droppable
+      droppableId={status.toString()}
+      key={status}
+      type="category"
+      renderClone={(provided, snapshot, rubric) => {
+        const issue = issues[rubric.source.index];
+        return (
+          <IssueCloneItem
+            issue={issue}
+            provided={provided}
+            snapshot={snapshot}
+          />
+        );
+      }}
+    >
       {(provided: DroppableProvided) => {
         return (
           <div
