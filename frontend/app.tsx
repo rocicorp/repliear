@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useReducer,
-} from "react";
+import React, { useCallback, useEffect, useReducer } from "react";
 import type { ExperimentalDiff as Diff, Replicache } from "replicache";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
