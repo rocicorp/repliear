@@ -32,27 +32,41 @@ export default function IssueDetail() {
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5 justify-between">
               <div className="text-md pb-4">Issue: #</div>
-              <div className="">
-                <EditIcon />
+              <div className="text-sm">
+                <EditIcon className="!w-4 mx-4" />
                 &#8230;
               </div>
             </div>
             <div className="flex flex-col border-solid border-b my-0 mx-auto px-5">
-              <div className="text-lg py-4">
+              <div className="text-md py-4">
                 non-json values seem to bork scan
               </div>
-              <div className="text-md pb-4 text-gray-5">
+              <div className="text-sm pb-4 text-gray-1">
                 aaron ran into this and we discussed it in yesterdays sync. even
                 if we are moving away from string patch to JSON which would
                 eliminate the possibility of non-json in a value, we should make
-                sure we log a sensible error in case the value is not json.
+                sure we log a sensible error i .0n case the value is not json.
                 right now it just crashes somewhere in prolly::Map.
               </div>
               <div className=" pb-4">
-                <a href="" className="text-md text-blue-700">
+                <a
+                  href=""
+                  className="text-md text-blue-600 hover:text-blue-800 visited:text-purple-600"
+                >
                   View original issue in GitHub
                 </a>
               </div>
+            </div>
+            <div className="text-md py-4 px-5 text-gray-4">Comments</div>
+            <div className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap ">
+              <div className="h-6 mb-1 -mt-px relative">cesar</div>
+              <div className="block flex-1 whitespace-pre-wrap">Comment 1</div>
+            </div>
+            <div className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap ">
+              <textarea
+                className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
+                placeholder="Leave a comment ..."
+              />
             </div>
           </div>
         </div>
@@ -62,23 +76,29 @@ export default function IssueDetail() {
               <div className="text-md pb-4">REP-215</div>
             </div>
             <div className="flex flex-row">
-              <div className="flex-initial p-5">
-                <div className="w-[90px]">Status</div>
+              <div className="flex-initial p-4">
+                <div className="w-[85px] text-md">Status</div>
               </div>
-              <div className="flex-initial w-2 p-5">
-                <StatusMenu onSelect={setStatus} status={status} />
+              <div className="flex-initial w-2 p-4">
+                <StatusMenu
+                  onSelect={setStatus}
+                  status={status}
+                  labelVisible={true}
+                  wideMode={true}
+                />
               </div>
             </div>
 
             <div className="flex flex-row  flex-grow overflow-y-auto">
-              <div className="flex-initial p-5">
-                <div className="w-[90px]">Priority</div>
+              <div className="flex-initial p-4">
+                <div className="w-[85px] text-md">Priority</div>
               </div>
-              <div className="flex-initial w-2 p-5">
+              <div className="flex-initial w-2 p-4">
                 <PriorityMenu
                   onSelect={setPriority}
                   labelVisible={true}
                   priority={priority}
+                  wideMode={true}
                 />
               </div>
             </div>
