@@ -33,7 +33,7 @@
     "react-popper": "^2.2.5",
     "react-virtualized-auto-sizer": "^1.0.6",
     "react-window": "^1.8.6",
-    "replicache": "^9.0.0",
+    "replicache": "file:replicache-10.0.0-alpha.4.tgz",
     "replicache-react": "^2.0.0"
   },
   "devDependencies": {
