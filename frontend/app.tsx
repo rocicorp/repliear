@@ -130,10 +130,6 @@ function timedReducer(
   state: State,
   action:
     | {
-        type: "init";
-        allIssuesMap: Map<string, Issue>;
-      }
-    | {
         type: "diff";
         diff: Diff;
       }
@@ -155,10 +151,6 @@ function timedReducer(
 function reducer(
   state: State,
   action:
-    | {
-        type: "init";
-        allIssuesMap: Map<string, Issue>;
-      }
     | {
         type: "diff";
         diff: Diff;
@@ -202,15 +194,6 @@ function reducer(
   }
 
   switch (action.type) {
-    case "init": {
-      const allIssues = [...action.allIssuesMap.values()];
-      return {
-        ...state,
-        allIssuesMap: action.allIssuesMap,
-        viewIssueCount: countViewIssues(allIssues),
-        filteredIssues: filterAndSort([...action.allIssuesMap.values()]),
-      };
-    }
     case "diff": {
       const newAllIssuesMap = new Map(state.allIssuesMap);
       let newViewIssueCount = state.viewIssueCount;
@@ -311,22 +294,20 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     filters: getFilters(view, priorityFilter, statusFilter),
     issueOrder: getIssueOrder(orderBy),
   });
+
   useEffect(() => {
-    async function fetchIssues() {
-      rep.experimentalWatch(
-        (diff) => {
-          dispatch({
-            type: "diff",
-            diff,
-          });
-        },
-        { prefix: issuePrefix, initialValuesInFirstDiff: true }
-      );
-    }
-    void fetchIssues();
+    rep.experimentalWatch(
+      (diff) => {
+        dispatch({
+          type: "diff",
+          diff,
+        });
+      },
+      { prefix: issuePrefix, initialValuesInFirstDiff: true }
+    );
   }, [rep]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     dispatch({
       type: "setFilters",
       filters: getFilters(view, priorityFilter, statusFilter),
