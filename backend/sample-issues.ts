@@ -22,7 +22,6 @@ export async function getReactIssues(): Promise<
 
 function getStatus({
   number,
-  state,
   created_at,
 }: {
   number: number;
@@ -31,7 +30,8 @@ function getStatus({
   created_at: string;
 }): Status {
   const stableRandom = number + Date.parse(created_at);
-  if (state === "closed") {
+  // 90% closed, 10% open
+  if (stableRandom % 10 < 8) {
     // 2/3's done, 1/3 cancelled
     switch (stableRandom % 3) {
       case 0:
