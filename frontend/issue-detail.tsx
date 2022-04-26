@@ -16,24 +16,24 @@ export default function IssueDetail() {
   const [status, setStatus] = useState(Status.BACKLOG);
 
   return (
-    <div className="m-3 rounded-md shadow-mdw-7xl	border-gray-400 border h-full">
+    <div className="m-3 rounded-md shadow-mdw-7xl	border-gray-400 border">
       <div className="flex bg-gray-400 border border-gray-300 justify-around">
         <div className="flex-1 p-4">
           <div
-            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-1 hover-text-gray-1 text-white"
+            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-1 hover-text-gray-1 text-white cursor-pointer"
             // onClick={handleClickCloseBtn}
           >
             <CloseIcon className="w-4" />
           </div>
         </div>
       </div>
-      <div className="flex w-full p-4 ">
-        <div className=" flex-row w-3/4 p-8 border-gray-300 border-r my-2">
+      <div className="flex w-full p-4 h-full overflow-auto">
+        <div className=" flex-row w-3/4 p-8 border-gray-300 border-r my-2 overflow-auto h-[calc(100vh-140px)] ">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5 justify-between">
               <div className="text-md pb-4">Issue: #</div>
               <div className="text-sm">
-                <EditIcon className="!w-4 mx-4" />
+                <EditIcon className="!w-4 mx-4 cursor-pointer" />
                 &#8230;
               </div>
             </div>
@@ -51,7 +51,7 @@ export default function IssueDetail() {
               <div className=" pb-4">
                 <a
                   href=""
-                  className="text-md text-blue-600 hover:text-blue-800 visited:text-purple-600"
+                  className="text-md hover:text-blue-800 visited:text-purple-600"
                 >
                   View original issue in GitHub
                 </a>
@@ -62,6 +62,7 @@ export default function IssueDetail() {
               <div className="h-6 mb-1 -mt-px relative">cesar</div>
               <div className="block flex-1 whitespace-pre-wrap">Comment 1</div>
             </div>
+
             <div className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
@@ -79,7 +80,7 @@ export default function IssueDetail() {
               <div className="flex-initial p-4">
                 <div className="w-[85px] text-md">Status</div>
               </div>
-              <div className="flex-initial w-2 p-4">
+              <div className="flex-initial p-4">
                 <StatusMenu
                   onSelect={setStatus}
                   status={status}
@@ -93,7 +94,7 @@ export default function IssueDetail() {
               <div className="flex-initial p-4">
                 <div className="w-[85px] text-md">Priority</div>
               </div>
-              <div className="flex-initial w-2 p-4">
+              <div className="flex-initial p-4">
                 <PriorityMenu
                   onSelect={setPriority}
                   labelVisible={true}

@@ -31,7 +31,7 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
             }}
             ref={provided.innerRef}
             className={classNames(
-              "cursor-default flex flex-col w-11/12 px-4 py-3 mb-2 text-white rounded focus:outline-none",
+              "cursor-default flex flex-col w-11/12 px-4 py-2 mb-2 text-white rounded focus:outline-none",
               {
                 /* eslint-disable @typescript-eslint/naming-convention */
                 "shadow-modal": isDragging,

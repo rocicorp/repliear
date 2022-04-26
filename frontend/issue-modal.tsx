@@ -1,5 +1,4 @@
 import AttachmentIcon from "./assets/icons/attachment.svg";
-import OwnerIcon from "./assets/icons/avatar.svg";
 import CloseIcon from "./assets/icons/close.svg";
 import GitIssueIcon from "./assets/icons/git-issue.svg";
 import ZoomIcon from "./assets/icons/zoom.svg";
@@ -112,10 +111,6 @@ export default function IssueModal({
           labelVisible={true}
           priority={priority}
         />
-        <button className="inline-flex items-center h-6 px-2 ml-2 text-gray-500 bg-gray-2 border-none rounded focus:outline-none hover:bg-gray-2 hover:text-gray-1">
-          <OwnerIcon className="w-3.5 h-3.5 ml-2 mr-0.5" />
-          <span>Assignee</span>
-        </button>
       </div>
 
       {/* Footer */}
