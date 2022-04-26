@@ -3,18 +3,23 @@ import { transact } from "../../backend/pg";
 import {
   createDatabase,
   getChangedEntries,
-  getCookie,
+  getIssueMeta,
   getLastMutationID,
+  getNonIssueMetaEntries,
+  getVersion,
   initSpace,
 } from "../../backend/data";
 import { z } from "zod";
-import type { PullResponse } from "replicache";
+import type { JSONValue, PullResponse } from "replicache";
 import { getReactIssues } from "../../backend/sample-issues";
 import { getReactComments } from "backend/sample-comments";
 
 const pullRequest = z.object({
   clientID: z.string(),
-  cookie: z.union([z.number(), z.null()]),
+  cookie: z.union([
+    z.object({ version: z.number(), endKey: z.string().optional() }),
+    z.null(),
+  ]),
 });
 
 const pull = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -33,12 +38,57 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
     async (executor) => {
       await createDatabase(executor);
       await initSpace(executor, spaceID, getReactIssues, getReactComments);
-
-      return Promise.all([
-        getChangedEntries(executor, spaceID, requestCookie ?? 0),
-        getLastMutationID(executor, pull.clientID),
-        getCookie(executor, spaceID),
-      ]);
+      if (!requestCookie) {
+        const lastMutationIDPromise = getLastMutationID(
+          executor,
+          pull.clientID
+        );
+        const entriesPromise = getIssueMeta(executor, spaceID);
+        const version = await getVersion(executor, spaceID);
+        const responseCookie = { version, endKey: "" };
+        return Promise.all([
+          entriesPromise,
+          lastMutationIDPromise,
+          responseCookie,
+        ]);
+      } else {
+        const lastMutationIDPromise = getLastMutationID(
+          executor,
+          pull.clientID
+        );
+        let entries: [
+          key: string,
+          value: JSONValue,
+          deleted?: boolean
+        ][] = await getChangedEntries(executor, spaceID, requestCookie.version);
+        let responseEndKey = undefined;
+        if (requestCookie.endKey !== undefined) {
+          const limit = 4000;
+          const incrementalEntries = await getNonIssueMetaEntries(
+            executor,
+            spaceID,
+            requestCookie.endKey,
+            limit
+          );
+          entries = [...entries, ...incrementalEntries];
+          const initialSyncDone = incrementalEntries.length < limit;
+          if (initialSyncDone) {
+            responseEndKey = undefined;
+          } else {
+            responseEndKey =
+              incrementalEntries[incrementalEntries.length - 1][0];
+          }
+          entries.push([
+            "control/partialSync",
+            {
+              endKey: responseEndKey,
+            },
+          ]);
+        }
+        const version = await getVersion(executor, spaceID);
+        const responseCookie = { version, endKey: responseEndKey };
+        return Promise.all([entries, lastMutationIDPromise, responseCookie]);
+      }
     }
   );
 

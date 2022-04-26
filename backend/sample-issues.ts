@@ -1,17 +1,21 @@
-import { Issue, Priority, Status } from "../frontend/issue";
+import { Description, Issue, Priority, Status } from "../frontend/issue";
 
-export async function getReactIssues(): Promise<Issue[]> {
+export async function getReactIssues(): Promise<
+  { issue: Issue; description: Description }[]
+> {
   const issues = (await import("./issues-react.js.gz")).default
     // remove this data set truncation when we have partial sync
     .map((reactIssue) => ({
-      id: reactIssue.number.toString(),
-      title: reactIssue.title,
-      description: "",
-      priority: getPriority(reactIssue),
-      status: getStatus(reactIssue),
-      modified: Date.parse(reactIssue.updated_at),
-      created: Date.parse(reactIssue.created_at),
-      creator: reactIssue.creator_user_login,
+      issue: {
+        id: reactIssue.number.toString(),
+        title: reactIssue.title,
+        priority: getPriority(reactIssue),
+        status: getStatus(reactIssue),
+        modified: Date.parse(reactIssue.updated_at),
+        created: Date.parse(reactIssue.created_at),
+        creator: reactIssue.creator_user_login,
+      },
+      description: reactIssue.body || "",
     }));
   return issues;
 }

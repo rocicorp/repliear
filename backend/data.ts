@@ -2,7 +2,8 @@ import type { JSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
 import { ReplicacheTransaction } from "./replicache-transaction";
-import { Issue, putIssue, Comment, putComment } from "../frontend/issue";
+import type { Issue, Comment, Description } from "../frontend/issue";
+import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
 import { nanoid } from "nanoid";
 
@@ -70,7 +71,7 @@ export const SAMPLE_SPACE_ID = "sampleSpaceID-11";
 
 export async function getUnusedSpace(
   executor: Executor,
-  getSampleIssues: () => Promise<Issue[]>,
+  getSampleIssues: () => Promise<{ issue: Issue; description: Description }[]>,
   getSampleComments: () => Promise<Comment[]>
 ): Promise<string> {
   let spaceID = await tryGetUnusedSpace(executor);
@@ -102,7 +103,7 @@ async function tryGetUnusedSpace(
 export async function initSpaces(
   executor: Executor,
   count: number,
-  getSampleIssues: () => Promise<Issue[]>,
+  getSampleIssues: () => Promise<{ issue: Issue; description: Description }[]>,
   getSampleComments: () => Promise<Comment[]>
 ): Promise<void> {
   console.log("Initing", count, "spaces.");
@@ -114,7 +115,7 @@ export async function initSpaces(
 export async function initSpace(
   executor: Executor,
   spaceID: string,
-  getSampleIssues: () => Promise<Issue[]>,
+  getSampleIssues: () => Promise<{ issue: Issue; description: Description }[]>,
   getSampleComments: () => Promise<Comment[]>
 ) {
   const { rows } = await executor(`select version from space where id = $1`, [
@@ -134,7 +135,7 @@ export async function initSpace(
   const initialVersion = 1;
 
   if (sampleSpaceRows.length === 0) {
-    await insertSpace(executor, SAMPLE_SPACE_ID, initialVersion);
+    await insertSpace(executor, SAMPLE_SPACE_ID, initialVersion, true);
     console.log("Initializing template space", SAMPLE_SPACE_ID);
     const issuesTx = new ReplicacheTransaction(
       executor,
@@ -143,8 +144,8 @@ export async function initSpace(
       initialVersion
     );
     const start = Date.now();
-    for (const issue of await getSampleIssues()) {
-      await putIssue(issuesTx, issue);
+    for (const { issue, description } of await getSampleIssues()) {
+      await mutators.putIssue(issuesTx, { issue, description });
     }
     await issuesTx.flush();
     const sampleComments = await getSampleComments();
@@ -165,7 +166,7 @@ export async function initSpace(
         initialVersion
       );
       for (const comment of sampleCommentGroup) {
-        await putComment(commentTx, comment);
+        await mutators.putIssueComment(commentTx, comment);
       }
       await commentTx.flush();
     }
@@ -173,7 +174,7 @@ export async function initSpace(
   }
   const start = Date.now();
   console.log("Copying from template space");
-  await insertSpace(executor, spaceID, initialVersion);
+  await insertSpace(executor, spaceID, initialVersion, false);
   await executor(
     `
      insert into entry (spaceid, key, value, deleted, version, lastmodified)
@@ -189,11 +190,12 @@ export async function initSpace(
 async function insertSpace(
   executor: Executor,
   spaceID: string,
-  version: number
+  version: number,
+  used: boolean
 ) {
   return await executor(
-    `insert into space (id, version, used, lastmodified) values ($1, $2, false, now())`,
-    [spaceID, version]
+    `insert into space (id, version, used, lastmodified) values ($1, $2, $3, now())`,
+    [spaceID, version, used]
   );
 }
 
@@ -259,6 +261,34 @@ export async function delEntries(
   );
 }
 
+export async function getIssueMeta(
+  executor: Executor,
+  spaceID: string
+): Promise<[key: string, value: JSONValue][]> {
+  const {
+    rows,
+  } = await executor(
+    `select key, value from entry where spaceid = $1 and key like 'issue/%' and deleted = false`,
+    [spaceID]
+  );
+  return rows.map((row) => [row.key, JSON.parse(row.value)]);
+}
+
+export async function getNonIssueMetaEntries(
+  executor: Executor,
+  spaceID: string,
+  startKey: string,
+  limit: number
+): Promise<[key: string, value: JSONValue][]> {
+  const {
+    rows,
+  } = await executor(
+    `select key, value from entry where spaceid = $1 and key not like 'issue/%' and key > $2 and deleted = false order by key limit $3`,
+    [spaceID, startKey, limit]
+  );
+  return rows.map((row) => [row.key, JSON.parse(row.value)]);
+}
+
 export async function getChangedEntries(
   executor: Executor,
   spaceID: string,
@@ -273,7 +303,7 @@ export async function getChangedEntries(
   return rows.map((row) => [row.key, JSON.parse(row.value), row.deleted]);
 }
 
-export async function getCookie(
+export async function getVersion(
   executor: Executor,
   spaceID: string
 ): Promise<number | undefined> {
@@ -287,7 +317,7 @@ export async function getCookie(
   return z.number().parse(value);
 }
 
-export async function setCookie(
+export async function setVersion(
   executor: Executor,
   spaceID: string,
   version: number

@@ -1,11 +1,11 @@
 import { transact } from "../../backend/pg";
 import {
   createDatabase,
-  getCookie,
   getLastMutationID,
+  getVersion,
   initSpace,
-  setCookie,
   setLastMutationID,
+  setVersion,
 } from "../../backend/data";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ReplicacheTransaction } from "../../backend/replicache-transaction";
@@ -15,6 +15,7 @@ import { jsonSchema } from "../../util/json";
 import { assertNotUndefined } from "../../util/asserts";
 import { getReactIssues } from "../../backend/sample-issues";
 import { getReactComments } from "backend/sample-comments";
+import type { MutatorDefs } from "replicache";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
 // See notes in bug: https://github.com/rocicorp/replidraw/issues/47
@@ -40,7 +41,7 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
     await createDatabase(executor);
     await initSpace(executor, spaceID, getReactIssues, getReactComments);
 
-    const prevVersion = await getCookie(executor, spaceID);
+    const prevVersion = await getVersion(executor, spaceID);
     assertNotUndefined(prevVersion);
     const nextVersion = prevVersion + 1;
     let lastMutationID =
@@ -74,7 +75,7 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
       console.log("Processing mutation:", JSON.stringify(mutation, null, ""));
 
       const t1 = Date.now();
-      const mutator = mutators[mutation.name];
+      const mutator = (mutators as MutatorDefs)[mutation.name];
       if (!mutator) {
         console.error(`Unknown mutator: ${mutation.name} - skipping`);
         continue;
@@ -94,7 +95,7 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
 
     await Promise.all([
       setLastMutationID(executor, push.clientID, lastMutationID),
-      setCookie(executor, spaceID, nextVersion),
+      setVersion(executor, spaceID, nextVersion),
       tx.flush(),
     ]);
   });

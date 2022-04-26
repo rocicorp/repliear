@@ -1,8 +1,30 @@
+import { groupBy } from "lodash";
 import React from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
-import { getIssueByType, Status, Issue } from "./issue";
+import { Status, Issue } from "./issue";
 import IssueCol from "./issue-col";
+
+export type IssuesByStatusType = {
+  [Status.BACKLOG]: Issue[];
+  [Status.TODO]: Issue[];
+  [Status.IN_PROGRESS]: Issue[];
+  [Status.DONE]: Issue[];
+  [Status.CANCELED]: Issue[];
+};
+
+export const getIssueByType = (allIssues: Issue[]): IssuesByStatusType => {
+  const issuesBySType = groupBy(allIssues, "status");
+  const defaultIssueByType = {
+    [Status.BACKLOG]: [],
+    [Status.TODO]: [],
+    [Status.IN_PROGRESS]: [],
+    [Status.DONE]: [],
+    [Status.CANCELED]: [],
+  };
+  const result = { ...defaultIssueByType, ...issuesBySType };
+  return result;
+};
 
 interface Props {
   issues: Issue[];

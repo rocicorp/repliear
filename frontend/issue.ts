@@ -4,7 +4,6 @@ import type {
   WriteTransaction,
 } from "replicache";
 import { z } from "zod";
-import groupBy from "lodash/groupBy";
 
 export const ISSUE_KEY_PREFIX = `issue/`;
 export const issueKey = (id: string) => `${ISSUE_KEY_PREFIX}${id}`;
@@ -60,7 +59,6 @@ export const issueSchema = z.object({
   status: statusEnumSchema,
   modified: z.number(),
   created: z.number(),
-  description: z.string(),
   creator: z.string(),
 });
 
@@ -101,26 +99,30 @@ export function issueFromKeyAndValue(
   };
 }
 
-export type IssuesByStatusType = {
-  [Status.BACKLOG]: Issue[];
-  [Status.TODO]: Issue[];
-  [Status.IN_PROGRESS]: Issue[];
-  [Status.DONE]: Issue[];
-  [Status.CANCELED]: Issue[];
-};
+export const DESCRIPTION_KEY_PREFIX = `description/`;
+export const descriptionKey = (issueID: string) =>
+  `${DESCRIPTION_KEY_PREFIX}${issueID}`;
+export const descriptionSchema = z.string();
 
-export const getIssueByType = (allIssues: Issue[]): IssuesByStatusType => {
-  const issuesBySType = groupBy(allIssues, "status");
-  const defaultIssueByType = {
-    [Status.BACKLOG]: [],
-    [Status.TODO]: [],
-    [Status.IN_PROGRESS]: [],
-    [Status.DONE]: [],
-    [Status.CANCELED]: [],
-  };
-  const result = { ...defaultIssueByType, ...issuesBySType };
-  return result;
-};
+export type Description = z.TypeOf<typeof descriptionSchema>;
+export async function getIssueDescription(
+  tx: ReadTransaction,
+  issueID: string
+): Promise<Description | undefined> {
+  const entry = await tx.get(descriptionKey(issueID));
+  if (entry === undefined) {
+    return undefined;
+  }
+  return descriptionSchema.parse(entry);
+}
+
+export async function putIssueDescription(
+  tx: WriteTransaction,
+  issueID: string,
+  description: Description
+): Promise<void> {
+  await tx.put(descriptionKey(issueID), description);
+}
 
 export const COMMENT_KEY_PREFIX = `comment/`;
 export const commentKey = (issueID: string, commentID: string) =>
@@ -154,7 +156,7 @@ export const commentValueSchema = commentSchema.omit({
   issueID: true,
 });
 
-export async function getCommentsOfIssue(
+export async function getIssueComments(
   tx: ReadTransaction,
   issueID: string
 ): Promise<Comment[]> {
@@ -172,7 +174,7 @@ export async function getCommentsOfIssue(
   });
 }
 
-export async function putComment(
+export async function putIssueComment(
   tx: WriteTransaction,
   comment: Comment
 ): Promise<void> {

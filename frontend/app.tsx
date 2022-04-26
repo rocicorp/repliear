@@ -195,7 +195,6 @@ function reducer(
       let newViewIssueCount = state.viewIssueCount;
       const newFilteredIssues = [...state.filteredIssues];
       for (const diffOp of action.diff) {
-        console.log(diffOp);
         switch (diffOp.op) {
           case "add": {
             const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
