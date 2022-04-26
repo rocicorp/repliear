@@ -13,6 +13,7 @@ import {
   priorityEnumSchema,
   Status,
   statusEnumSchema,
+  Description,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -340,7 +341,8 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     });
   }, [orderBy]);
 
-  const handleCreateIssue = (issue: IssueValue) => rep.mutate.putIssue(issue);
+  const handleCreateIssue = (issue: Issue, description: Description) =>
+    rep.mutate.putIssue({ issue, description });
   const handleUpdateIssue = useCallback(
     (id: string, changes: Partial<IssueValue>) =>
       rep.mutate.updateIssue({
