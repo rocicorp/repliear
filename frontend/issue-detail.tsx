@@ -2,7 +2,14 @@ import React, { useState } from "react";
 import CloseIcon from "./assets/icons/close.svg";
 import EditIcon from "@mui/icons-material/Edit";
 import PriorityMenu from "./priority-menu";
-import { getIssue, Issue, Priority, Status } from "./issue";
+import {
+  Comment,
+  getCommentsOfIssue,
+  getIssue,
+  Issue,
+  Priority,
+  Status,
+} from "./issue";
 import StatusMenu from "./status-menu";
 import { useQueryState } from "next-usequerystate";
 
@@ -15,14 +22,14 @@ interface Props {
 }
 
 //todo: will fill this in correct when comments are merged
-const comments = (comments: any[]) => {
+const commentsList = (comments: Comment[]) => {
   return comments.map((comment) => (
     <div
       key={comment.id}
       className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap "
     >
-      <div className="h-6 mb-1 -mt-px relative">{comment.name}</div>
-      <div className="block flex-1 whitespace-pre-wrap">{comment.value}</div>
+      <div className="h-6 mb-1 -mt-px relative">{comment.creator}</div>
+      <div className="block flex-1 whitespace-pre-wrap">{comment.body}</div>
     </div>
   ));
 };
@@ -42,6 +49,18 @@ export default function IssueDetail({ rep }: Props) {
       return null;
     },
     null,
+    [issueParam]
+  );
+
+  const comments = useSubscribe<Comment[] | []>(
+    rep,
+    async (tx) => {
+      if (issueParam) {
+        return (await getCommentsOfIssue(tx, issueParam as string)) || [];
+      }
+      return [];
+    },
+    [],
     [issueParam]
   );
 
@@ -87,13 +106,7 @@ export default function IssueDetail({ rep }: Props) {
               </div>
             </div>
             <div className="text-md py-4 px-5 text-gray-4">Comments</div>
-            {comments([
-              {
-                id: "1",
-                name: "Demo User",
-                value: "Comment to Demo",
-              },
-            ])}
+            {commentsList(comments)}
             <div className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
