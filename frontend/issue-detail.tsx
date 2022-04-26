@@ -11,7 +11,7 @@ import {
   Status,
 } from "./issue";
 import StatusMenu from "./status-menu";
-import { useQueryState } from "next-usequerystate";
+import { queryTypes, useQueryStates } from "next-usequerystate";
 
 import type { Replicache } from "replicache";
 import type { M } from "./mutators";
@@ -21,7 +21,6 @@ interface Props {
   rep: Replicache<M>;
 }
 
-//todo: will fill this in correct when comments are merged
 const commentsList = (comments: Comment[]) => {
   return comments.map((comment) => (
     <div
@@ -37,36 +36,44 @@ const commentsList = (comments: Comment[]) => {
 export default function IssueDetail({ rep }: Props) {
   const [priority, setPriority] = useState(Priority.NONE);
   const [status, setStatus] = useState(Status.BACKLOG);
-  const [, setShowDetail] = useQueryState("showDetail");
-  const [issueParam, setIssueParam] = useQueryState("issue");
+  const [detailView, setDetailView] = useQueryStates({
+    view: queryTypes.string,
+    iss: queryTypes.string,
+  });
+  const { iss } = detailView;
 
-  const issue = useSubscribe<Issue | null>(
+  const issueR = useSubscribe<Issue | null>(
     rep,
     async (tx) => {
-      if (issueParam) {
-        return (await getIssue(tx, issueParam as string)) || null;
+      if (iss) {
+        return (await getIssue(tx, iss as string)) || null;
       }
       return null;
     },
     null,
-    [issueParam]
+    [iss]
   );
 
   const comments = useSubscribe<Comment[] | []>(
     rep,
     async (tx) => {
-      if (issueParam) {
-        return (await getCommentsOfIssue(tx, issueParam as string)) || [];
+      if (iss) {
+        return (await getCommentsOfIssue(tx, iss as string)) || [];
       }
       return [];
     },
     [],
-    [issueParam]
+    [iss]
   );
 
   const handleClickCloseBtn = async () => {
-    await setShowDetail(null);
-    await setIssueParam(null);
+    await setDetailView(
+      { view: null, iss: null },
+      {
+        scroll: false,
+        shallow: true,
+      }
+    );
   };
 
   return (
@@ -85,16 +92,16 @@ export default function IssueDetail({ rep }: Props) {
         <div className=" flex-row w-3/4 p-8 border-gray-300 border-r my-2 overflow-auto h-[calc(100vh-140px)] ">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5 justify-between">
-              <div className="text-md pb-4">{issue?.id}</div>
+              <div className="text-md pb-4">{issueR?.id}</div>
               <div className="text-sm">
                 <EditIcon className="!w-4 mx-4 cursor-pointer" />
                 &#8230;
               </div>
             </div>
             <div className="flex flex-col border-solid border-b my-0 mx-auto px-5">
-              <div className="text-md py-4">{issue?.title}</div>
+              <div className="text-md py-4">{issueR?.title}</div>
               <div className="text-sm pb-4 text-gray-1">
-                {issue?.description}
+                {issueR?.description}
               </div>
               <div className=" pb-4">
                 <a
@@ -118,7 +125,7 @@ export default function IssueDetail({ rep }: Props) {
         <div className="flex-row w-1/4 p-8 my-2">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5">
-              <div className="text-md pb-4">{issue?.id}</div>
+              <div className="text-md pb-4">{issueR?.id}</div>
             </div>
             <div className="flex flex-row">
               <div className="flex-initial p-4">

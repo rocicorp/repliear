@@ -7,7 +7,7 @@ import {
   DraggableStateSnapshot,
 } from "react-beautiful-dnd";
 import type { Issue, Priority } from "./issue";
-import { queryTypes, useQueryState } from "next-usequerystate";
+import { queryTypes, useQueryStates } from "next-usequerystate";
 
 interface IssueProps {
   issue: Issue;
@@ -16,16 +16,26 @@ interface IssueProps {
 }
 
 const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
-  const [, setShowDetail] = useQueryState("showDetail", queryTypes.boolean);
-  const [, setIssueParam] = useQueryState("issue");
+  const [, setDetailView] = useQueryStates(
+    {
+      view: queryTypes.string,
+      iss: queryTypes.string,
+    },
+    { history: "push" }
+  );
 
   const handleChangePriority = (p: Priority) => {
     if (onChangePriority) onChangePriority(issue, p);
   };
 
   const handleIssueItemClick = async () => {
-    await setIssueParam(issue.id);
-    await setShowDetail(true);
+    await setDetailView(
+      { view: "detail", iss: issue.id },
+      {
+        scroll: false,
+        shallow: true,
+      }
+    );
   };
 
   return (
