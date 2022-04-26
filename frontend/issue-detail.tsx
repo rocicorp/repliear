@@ -111,7 +111,7 @@ export default function IssueDetail({ rep }: Props) {
               </div>
             </div>
             <div className="flex flex-col border-solid border-b my-0 mx-auto px-5">
-              <div className="text-md py-4">{issue?.id}</div>
+              <div className="text-md py-4">{issue?.title}</div>
               <div className="text-sm pb-4 text-gray-1">{description}</div>
               <div className=" pb-4">
                 <a
