@@ -1,12 +1,11 @@
 import { Issue, Priority, Status } from "../frontend/issue";
 
 export async function getReactIssues(): Promise<Issue[]> {
-  const issues = (await import("./issues-react.js.gz")).default.map(
-    (reactIssue) => ({
+  const issues = (await import("./issues-react.js.gz")).default
+    // remove this data set truncation when we have partial sync
+    .slice(0, 1000)
+    .map((reactIssue) => ({
       id: reactIssue.number.toString(),
-      // TODO: Remove this title and body truncation when we add incremental
-      // client view sync.  Without this the initial pull response
-      // exceeds the nextjs max response size.
       title: reactIssue.title.substring(0, 100),
       description: reactIssue.body || "",
       priority: getPriority(reactIssue),
@@ -14,8 +13,7 @@ export async function getReactIssues(): Promise<Issue[]> {
       modified: Date.parse(reactIssue.updated_at),
       created: Date.parse(reactIssue.created_at),
       creator: reactIssue.creator_user_login,
-    })
-  );
+    }));
   return issues;
 }
 
