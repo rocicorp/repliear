@@ -17,7 +17,7 @@ import {
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
-import { useQueryState } from "next-usequerystate";
+import { queryTypes, useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
 import { sortBy, sortedIndexBy } from "lodash";
 import IssueDetail from "./issue-detail";
@@ -276,8 +276,41 @@ function reducer(
   return state;
 }
 
+interface LayoutProps {
+  view: string | null;
+  showDetail: boolean | null;
+  state: State;
+  rep: Replicache<M>;
+  handleUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
+}
+
+const Layout = ({
+  view,
+  showDetail,
+  state,
+  rep,
+  handleUpdateIssue,
+}: LayoutProps) => {
+  if (showDetail) {
+    return <IssueDetail rep={rep} />;
+  }
+
+  switch (view) {
+    case "board":
+      return <IssueBoard issues={state.filteredIssues} />;
+    default:
+      return (
+        <IssueList
+          issues={state.filteredIssues}
+          onUpdateIssue={handleUpdateIssue}
+        />
+      );
+  }
+};
+
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [view] = useQueryState("view");
+  const [showDetail] = useQueryState("showDetail", queryTypes.boolean);
   const [priorityFilter] = useQueryState("priorityFilter");
   const [statusFilter] = useQueryState("statusFilter");
   const [orderBy] = useQueryState("orderBy");
@@ -326,21 +359,6 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
       }),
     [rep]
   );
-  const Layout = () => {
-    switch (view) {
-      case "board":
-        return <IssueBoard issues={state.filteredIssues} />;
-      case "detail":
-        return <IssueDetail rep={rep} />;
-      default:
-        return (
-          <IssueList
-            issues={state.filteredIssues}
-            onUpdateIssue={handleUpdateIssue}
-          />
-        );
-    }
-  };
 
   return (
     <div>
@@ -351,7 +369,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           onCreateIssue={handleCreateIssue}
         />
         <div className="flex flex-col flex-grow">
-          {view !== "detail" && (
+          {!showDetail && (
             <TopFilter
               onToggleMenu={() => setMenuVisible(!menuVisible)}
               title={getTitle(view)}
@@ -363,7 +381,13 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
               issuesCount={state.viewIssueCount}
             />
           )}
-          <Layout />
+          <Layout
+            view={view}
+            showDetail={showDetail}
+            state={state}
+            rep={rep}
+            handleUpdateIssue={handleUpdateIssue}
+          />
         </div>
       </div>
     </div>

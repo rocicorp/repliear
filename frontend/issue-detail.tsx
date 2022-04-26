@@ -14,10 +14,23 @@ interface Props {
   rep: Replicache<M>;
 }
 
+//todo: will fill this in correct when comments are merged
+const comments = (comments: any[]) => {
+  return comments.map((comment) => (
+    <div
+      key={comment.id}
+      className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap "
+    >
+      <div className="h-6 mb-1 -mt-px relative">{comment.name}</div>
+      <div className="block flex-1 whitespace-pre-wrap">{comment.value}</div>
+    </div>
+  ));
+};
+
 export default function IssueDetail({ rep }: Props) {
   const [priority, setPriority] = useState(Priority.NONE);
   const [status, setStatus] = useState(Status.BACKLOG);
-  const [, setLayoutViewParam] = useQueryState("view");
+  const [, setShowDetail] = useQueryState("showDetail");
   const [issueParam, setIssueParam] = useQueryState("issue");
 
   const issue = useSubscribe<Issue | null>(
@@ -32,29 +45,9 @@ export default function IssueDetail({ rep }: Props) {
     [issueParam]
   );
 
-  console.log("issue", issue);
-
   const handleClickCloseBtn = async () => {
-    await setLayoutViewParam(null);
+    await setShowDetail(null);
     await setIssueParam(null);
-  };
-
-  const comments = () => {
-    return [
-      {
-        id: "1",
-        name: "Cesar",
-        value: "Comment 1",
-      },
-    ].map((comment) => (
-      <div
-        key={comment.id}
-        className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap "
-      >
-        <div className="h-6 mb-1 -mt-px relative">{comment.name}</div>
-        <div className="block flex-1 whitespace-pre-wrap">{comment.value}</div>
-      </div>
-    ));
   };
 
   return (
@@ -87,14 +80,20 @@ export default function IssueDetail({ rep }: Props) {
               <div className=" pb-4">
                 <a
                   href=""
-                  className="text-md hover:text-blue-800 visited:text-purple-600"
+                  className="text-md hover:text-gray-1 visited:text-gray-100 text-gray-200"
                 >
                   View original issue in GitHub
                 </a>
               </div>
             </div>
             <div className="text-md py-4 px-5 text-gray-4">Comments</div>
-            {comments()}
+            {comments([
+              {
+                id: "1",
+                name: "Demo User",
+                value: "Comment to Demo",
+              },
+            ])}
             <div className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
@@ -106,7 +105,7 @@ export default function IssueDetail({ rep }: Props) {
         <div className="flex-row w-1/4 p-8 my-2">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5">
-              <div className="text-md pb-4">REP-215</div>
+              <div className="text-md pb-4">{issue?.id}</div>
             </div>
             <div className="flex flex-row">
               <div className="flex-initial p-4">
