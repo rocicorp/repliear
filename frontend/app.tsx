@@ -331,7 +331,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
       case "board":
         return  <IssueBoard issues={state.filteredIssues} />;
       case "detail":
-        return <IssueDetail />;
+        return <IssueDetail rep={rep} />;
       default:
         return (
            <IssueList
