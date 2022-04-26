@@ -67,6 +67,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
     }
   }
 
+  console.log("issues size", JSON.stringify(getReactIssues()).length);
   console.log("Pull response size", JSON.stringify(resp).length);
   res.json(resp);
   res.end();
