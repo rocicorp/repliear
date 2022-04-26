@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { IssueWithoutIndexFields, Priority, Status } from "../frontend/issue";
+import { Issue, Priority, Status } from "../frontend/issue";
 import { setup, teardown, test } from "mocha";
 import type { JSONValue } from "replicache";
 import {
@@ -14,34 +14,37 @@ import {
 } from "./data";
 import { transact, withExecutor } from "./pg";
 
-const i1: IssueWithoutIndexFields = {
+const i1: Issue = {
   priority: Priority.HIGH,
   id: "1",
   title: "Issue 1",
   description: "",
   status: Status.IN_PROGRESS,
   modified: 0,
+  created: 0,
 };
 
-const i2: IssueWithoutIndexFields = {
+const i2: Issue = {
   priority: Priority.MEDIUM,
   id: "2",
   title: "Issue 2",
   description: "",
   status: Status.IN_PROGRESS,
   modified: 0,
+  created: 0,
 };
 
-const i3: IssueWithoutIndexFields = {
+const i3: Issue = {
   priority: Priority.LOW,
   id: "3",
   title: "Issue 3",
   description: "",
   status: Status.TODO,
   modified: 0,
+  created: 0,
 };
 
-export const SampleIssues: IssueWithoutIndexFields[] = [i1, i2, i3];
+export const SampleIssues: Issue[] = [i1, i2, i3];
 
 setup(async () => {
   // TODO: This is a very expensive way to unit test :).
@@ -316,15 +319,17 @@ test("initSpace", async () => {
       Promise.resolve(SampleIssues)
     );
     expect(await getCookie(executor, testSpaceID1)).eq(1);
-    // 3 issues and 2 counts (count/all and count/active)
-    expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(5);
+    expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(
+      SampleIssues.length
+    );
     expect(await getCookie(executor, testSpaceID2)).undefined;
     await initSpace(executor, testSpaceID2, () => {
       throw new Error("unexpected call to getSampleIssues on subsequent calls");
     });
     expect(await getCookie(executor, testSpaceID2)).eq(1);
 
-    // 3 issues and 2 counts (count/all and count/active)
-    expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(5);
+    expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(
+      SampleIssues.length
+    );
   });
 });
