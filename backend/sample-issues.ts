@@ -6,13 +6,14 @@ export async function getReactIssues(): Promise<Issue[]> {
     .map((reactIssue) => ({
       id: reactIssue.number.toString(),
       title: reactIssue.title,
-      description: "",
+      description: reactIssue.body || "",
       priority: getPriority(reactIssue),
       status: getStatus(reactIssue),
       modified: Date.parse(reactIssue.updated_at),
       created: Date.parse(reactIssue.created_at),
       creator: reactIssue.creator_user_login,
     }));
+  console.log(JSON.stringify(issues).length);
   return issues;
 }
 
