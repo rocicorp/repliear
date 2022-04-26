@@ -63,7 +63,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
         ][] = await getChangedEntries(executor, spaceID, requestCookie.version);
         let responseEndKey = undefined;
         if (requestCookie.endKey !== undefined) {
-          const limit = 4000;
+          const limit = 3000;
           const incrementalEntries = await getNonIssueMetaEntries(
             executor,
             spaceID,
