@@ -1,34 +1,33 @@
 import { Issue, Priority, Status } from "../frontend/issue";
 
 export async function getReactIssues(): Promise<Issue[]> {
-  const issues = (await import("./issues-react.js.gz")).default.map(
-    (reactIssue) => ({
-      id: reactIssue.id.toString(),
-      // TODO: Remove this title and body truncation when we add incremental
-      // client view sync.  Without this the initial pull response
-      // exceeds the nextjs max response size.
+  const issues = (await import("./issues-react.js.gz")).default
+    // remove this data set truncation when we have partial sync
+    .slice(0, 1000)
+    .map((reactIssue) => ({
+      id: reactIssue.number.toString(),
       title: reactIssue.title.substring(0, 100),
-      description: "", // (reactIssue.body || "").substring(0, 100),
+      description: reactIssue.body || "",
       priority: getPriority(reactIssue),
       status: getStatus(reactIssue),
       modified: Date.parse(reactIssue.updated_at),
       created: Date.parse(reactIssue.created_at),
-    })
-  );
+      creator: reactIssue.creator_user_login,
+    }));
   return issues;
 }
 
 function getStatus({
-  id,
+  number,
   state,
   created_at,
 }: {
-  id: number;
+  number: number;
   state: "open" | "closed";
   // eslint-disable-next-line @typescript-eslint/naming-convention
   created_at: string;
 }): Status {
-  const stableRandom = id + Date.parse(created_at);
+  const stableRandom = number + Date.parse(created_at);
   if (state === "closed") {
     // 2/3's done, 1/3 cancelled
     switch (stableRandom % 3) {
@@ -55,14 +54,14 @@ function getStatus({
 }
 
 function getPriority({
-  id,
+  number,
   created_at,
 }: {
-  id: number;
+  number: number;
   // eslint-disable-next-line @typescript-eslint/naming-convention
   created_at: string;
 }): Priority {
-  const stableRandom = id + Date.parse(created_at);
+  const stableRandom = number + Date.parse(created_at);
   // bell curve priorities
   switch (stableRandom % 10) {
     case 0:

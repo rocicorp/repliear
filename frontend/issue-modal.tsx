@@ -42,6 +42,7 @@ export default function IssueModal({
       status,
       modified: new Date().getTime(),
       created: new Date().getTime(),
+      creator: "Me",
     });
     if (onDismiss) onDismiss();
     resetModalState();

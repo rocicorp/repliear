@@ -6,13 +6,13 @@ import type {
 import { z } from "zod";
 import groupBy from "lodash/groupBy";
 
-export const issuePrefix = `issue/`;
-export const issueKey = (id: string) => `${issuePrefix}${id}`;
+export const ISSUE_KEY_PREFIX = `issue/`;
+export const issueKey = (id: string) => `${ISSUE_KEY_PREFIX}${id}`;
 export const issueID = (key: string) => {
-  if (!key.startsWith(issuePrefix)) {
-    throw new Error(`Invalid key: ${key}`);
+  if (!key.startsWith(ISSUE_KEY_PREFIX)) {
+    throw new Error(`Invalid issue key: ${key}`);
   }
-  return key.substring(issuePrefix.length);
+  return key.substring(ISSUE_KEY_PREFIX.length);
 };
 
 export enum Priority {
@@ -61,6 +61,7 @@ export const issueSchema = z.object({
   modified: z.number(),
   created: z.number(),
   description: z.string(),
+  creator: z.string(),
 });
 
 export type Issue = z.TypeOf<typeof issueSchema>;
@@ -78,8 +79,8 @@ export async function getIssue(
     return undefined;
   }
   return {
-    id,
     ...issueValueSchema.parse(val),
+    id,
   };
 }
 
@@ -90,52 +91,14 @@ export async function putIssue(
   await tx.put(issueKey(issue.id), issue);
 }
 
-export function isActiveStatus(status: Status): boolean {
-  return status === Status.TODO || status === Status.IN_PROGRESS;
-}
-
-export function isBacklogStatus(status: Status): boolean {
-  return status === Status.BACKLOG;
-}
-
 export function issueFromKeyAndValue(
   key: string,
   value: ReadonlyJSONValue
 ): Issue {
   return {
-    id: issueID(key),
     ...issueValueSchema.parse(value),
+    id: issueID(key),
   };
-}
-
-export async function getAllIssuesMap(
-  tx: ReadTransaction
-): Promise<Map<string, Issue>> {
-  const entries = await tx
-    .scan({
-      prefix: issuePrefix,
-    })
-    .entries()
-    .toArray();
-  return new Map(
-    entries.map(([issueKey, val]) => [
-      issueKey,
-      issueFromKeyAndValue(issueKey, val),
-    ])
-  );
-}
-
-export async function getAllIssues(tx: ReadTransaction): Promise<Issue[]> {
-  const entries = await tx
-    .scan({
-      prefix: issuePrefix,
-    })
-    .entries()
-    .toArray();
-  const issues = entries.map(([issueKey, val]) =>
-    issueFromKeyAndValue(issueKey, val)
-  );
-  return issues as Issue[];
 }
 
 export type IssuesByStatusType = {
@@ -158,3 +121,60 @@ export const getIssueByType = (allIssues: Issue[]): IssuesByStatusType => {
   const result = { ...defaultIssueByType, ...issuesBySType };
   return result;
 };
+
+export const COMMENT_KEY_PREFIX = `comment/`;
+export const commentKey = (issueID: string, commentID: string) =>
+  `${COMMENT_KEY_PREFIX}${issueID}/${commentID}`;
+export const commentIDs = (key: string) => {
+  if (!key.startsWith(COMMENT_KEY_PREFIX)) {
+    throw new Error(`Invalid comment key: ${key}`);
+  }
+  const ids = key.substring(COMMENT_KEY_PREFIX.length).split("/");
+  if (ids.length !== 2) {
+    throw new Error(`Invalid comment key: ${key}`);
+  }
+  return {
+    issueID: ids[0],
+    commentID: ids[1],
+  };
+};
+
+export const commentSchema = z.object({
+  id: z.string(),
+  issueID: z.string(),
+  created: z.number(),
+  body: z.string(),
+  creator: z.string(),
+});
+
+export type Comment = z.TypeOf<typeof commentSchema>;
+export type CommentValue = z.TypeOf<typeof commentValueSchema>;
+export const commentValueSchema = commentSchema.omit({
+  id: true,
+  issueID: true,
+});
+
+export async function getCommentsOfIssue(
+  tx: ReadTransaction,
+  issueID: string
+): Promise<Comment[]> {
+  const entries = await tx
+    .scan({ prefix: COMMENT_KEY_PREFIX + issueID })
+    .entries()
+    .toArray();
+  return entries.map(([key, val]) => {
+    const ids = commentIDs(key);
+    return {
+      ...commentValueSchema.parse(val),
+      id: ids.commentID,
+      issueID: ids.issueID,
+    };
+  });
+}
+
+export async function putComment(
+  tx: WriteTransaction,
+  comment: Comment
+): Promise<void> {
+  await tx.put(commentKey(comment.issueID, comment.id), comment);
+}

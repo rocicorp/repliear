@@ -5,7 +5,7 @@ import type { M } from "./mutators";
 import {
   Issue,
   issueFromKeyAndValue,
-  issuePrefix,
+  ISSUE_KEY_PREFIX,
   IssueValue,
   Order,
   orderEnumSchema,
@@ -195,6 +195,7 @@ function reducer(
       let newViewIssueCount = state.viewIssueCount;
       const newFilteredIssues = [...state.filteredIssues];
       for (const diffOp of action.diff) {
+        console.log(diffOp);
         switch (diffOp.op) {
           case "add": {
             const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
@@ -332,7 +333,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           diff,
         });
       },
-      { prefix: issuePrefix, initialValuesInFirstDiff: true }
+      { prefix: ISSUE_KEY_PREFIX, initialValuesInFirstDiff: true }
     );
   }, [rep]);
 
