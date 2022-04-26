@@ -7,6 +7,7 @@ export async function getReactComments(): Promise<Comment[]> {
       issueID: reactComment.number.toString(),
       created: Date.parse(reactComment.created_at),
       body: reactComment.body || "",
+      creator: reactComment.creator_user_login,
     })
   );
   return comments;

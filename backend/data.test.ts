@@ -22,6 +22,7 @@ const i1: Issue = {
   status: Status.IN_PROGRESS,
   modified: 0,
   created: 0,
+  creator: "testUser1",
 };
 
 const i2: Issue = {
@@ -32,6 +33,7 @@ const i2: Issue = {
   status: Status.IN_PROGRESS,
   modified: 0,
   created: 0,
+  creator: "testUser2",
 };
 
 const i3: Issue = {
@@ -42,6 +44,7 @@ const i3: Issue = {
   status: Status.TODO,
   modified: 0,
   created: 0,
+  creator: "testUser3",
 };
 
 export const SampleIssues: Issue[] = [i1, i2, i3];

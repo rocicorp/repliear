@@ -90,7 +90,11 @@ async function tryGetUnusedSpace(
 ): Promise<string | undefined> {
   return (
     await executor(
-      `update space set used = true where id = (select id from space where used = false order by id limit 1) returning id`
+      `
+      update space set used = true where 
+      id = (select id from space where used = false order by id limit 1) 
+      returning id
+      `
     )
   ).rows[0]?.id;
 }
@@ -101,7 +105,7 @@ export async function initSpaces(
   getSampleIssues: () => Promise<Issue[]>,
   getSampleComments: () => Promise<Comment[]>
 ): Promise<void> {
-  console.log("initing", count, "spaces");
+  console.log("Initing", count, "spaces.");
   for (let i = 0; i < count; i++) {
     await initSpace(executor, nanoid(6), getSampleIssues, getSampleComments);
   }
@@ -122,19 +126,15 @@ export async function initSpace(
   }
   console.log("Initializing space", spaceID);
 
-  const initialVersion = 1;
-
   const {
     rows: sampleSpaceRows,
   } = await executor(`select version from space where id = $1`, [
     SAMPLE_SPACE_ID,
   ]);
+  const initialVersion = 1;
 
   if (sampleSpaceRows.length === 0) {
-    await executor(
-      `insert into space (id, version, used, lastmodified) values ($1, $2, false, now())`,
-      [SAMPLE_SPACE_ID, initialVersion]
-    );
+    await insertSpace(executor, SAMPLE_SPACE_ID, initialVersion);
     console.log("Initializing template space", SAMPLE_SPACE_ID);
     const issuesTx = new ReplicacheTransaction(
       executor,
@@ -173,10 +173,7 @@ export async function initSpace(
   }
   const start = Date.now();
   console.log("Copying from template space");
-  await executor(
-    `insert into space (id, version, used, lastmodified) values ($1, $2, false, now())`,
-    [spaceID, initialVersion]
-  );
+  await insertSpace(executor, spaceID, initialVersion);
   await executor(
     `
      insert into entry (spaceid, key, value, deleted, version, lastmodified)
@@ -186,6 +183,17 @@ export async function initSpace(
   );
   console.log(
     "Copying from template space took " + (Date.now() - start) + "ms"
+  );
+}
+
+async function insertSpace(
+  executor: Executor,
+  spaceID: string,
+  version: number
+) {
+  return await executor(
+    `insert into space (id, version, used, lastmodified) values ($1, $2, false, now())`,
+    [spaceID, version]
   );
 }
 

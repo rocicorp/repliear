@@ -61,6 +61,7 @@ export const issueSchema = z.object({
   modified: z.number(),
   created: z.number(),
   description: z.string(),
+  creator: z.string(),
 });
 
 export type Issue = z.TypeOf<typeof issueSchema>;
@@ -143,6 +144,7 @@ export const commentSchema = z.object({
   issueID: z.string(),
   created: z.number(),
   body: z.string(),
+  creator: z.string(),
 });
 
 export type Comment = z.TypeOf<typeof commentSchema>;

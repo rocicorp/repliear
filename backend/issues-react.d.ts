@@ -8,6 +8,8 @@ declare module "*issues-react.js.gz" {
     updated_at: string;
     // eslint-disable-next-line @typescript-eslint/naming-convention
     created_at: string;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    creator_user_login: string;
   }[];
   export default gitHubIssues;
 }

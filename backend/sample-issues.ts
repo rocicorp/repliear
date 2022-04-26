@@ -13,6 +13,7 @@ export async function getReactIssues(): Promise<Issue[]> {
       status: getStatus(reactIssue),
       modified: Date.parse(reactIssue.updated_at),
       created: Date.parse(reactIssue.created_at),
+      creator: reactIssue.creator_user_login,
     })
   );
   return issues;
