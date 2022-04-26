@@ -4,6 +4,7 @@ import type { Executor } from "./pg";
 import { ReplicacheTransaction } from "./replicache-transaction";
 import { Issue, putIssue, Comment, putComment } from "../frontend/issue";
 import { flatten } from "lodash";
+import { nanoid } from "nanoid";
 
 export async function createDatabase(executor: Executor) {
   const schemaVersion = await getSchemaVersion(executor);
@@ -36,6 +37,7 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create table space (
       id text primary key not null,
       version integer not null,
+      used boolean not null,
       lastmodified timestamp(6) not null
       )`);
 
@@ -66,6 +68,45 @@ export async function createSchemaVersion1(executor: Executor) {
 
 export const SAMPLE_SPACE_ID = "sampleSpaceID-5";
 
+export async function getUnusedSpace(
+  executor: Executor,
+  getSampleIssues: () => Promise<Issue[]>,
+  getSampleComments: () => Promise<Comment[]>
+): Promise<string> {
+  let spaceID = await tryGetUnusedSpace(executor);
+  if (spaceID) {
+    return spaceID;
+  }
+  await initSpaces(executor, 1, getSampleIssues, getSampleComments);
+  spaceID = await tryGetUnusedSpace(executor);
+  if (spaceID) {
+    return spaceID;
+  }
+  throw new Error("Could not find or create unused space");
+}
+
+async function tryGetUnusedSpace(
+  executor: Executor
+): Promise<string | undefined> {
+  return (
+    await executor(
+      `update space set used = true where id = (select id from space where used = false order by id limit 1) returning id`
+    )
+  ).rows[0]?.id;
+}
+
+export async function initSpaces(
+  executor: Executor,
+  count: number,
+  getSampleIssues: () => Promise<Issue[]>,
+  getSampleComments: () => Promise<Comment[]>
+): Promise<void> {
+  console.log("initing", count, "spaces");
+  for (let i = 0; i < count; i++) {
+    await initSpace(executor, nanoid(6), getSampleIssues, getSampleComments);
+  }
+}
+
 export async function initSpace(
   executor: Executor,
   spaceID: string,
@@ -91,11 +132,11 @@ export async function initSpace(
 
   if (sampleSpaceRows.length === 0) {
     await executor(
-      `insert into space (id, version, lastmodified) values ($1, $2, now())`,
+      `insert into space (id, version, used, lastmodified) values ($1, $2, false, now())`,
       [SAMPLE_SPACE_ID, initialVersion]
     );
     console.log("Initializing template space", SAMPLE_SPACE_ID);
-    const tx = new ReplicacheTransaction(
+    const issuesTx = new ReplicacheTransaction(
       executor,
       SAMPLE_SPACE_ID,
       "fake-client-id-for-server-init",
@@ -103,18 +144,37 @@ export async function initSpace(
     );
     const start = Date.now();
     for (const issue of await getSampleIssues()) {
-      await putIssue(tx, issue);
+      await putIssue(issuesTx, issue);
     }
-    for (const comment of await getSampleComments()) {
-      await putComment(tx, comment);
+    await issuesTx.flush();
+    const sampleComments = await getSampleComments();
+    const sampleCommentGroups: Comment[][] = [];
+    for (let i = 0; i < sampleComments.length; i++) {
+      if (i % 20000 === 0) {
+        sampleCommentGroups.push([]);
+      }
+      sampleCommentGroups[sampleCommentGroups.length - 1].push(
+        sampleComments[i]
+      );
     }
-    await tx.flush();
+    for (const sampleCommentGroup of sampleCommentGroups) {
+      const commentTx = new ReplicacheTransaction(
+        executor,
+        SAMPLE_SPACE_ID,
+        "fake-client-id-for-server-init",
+        initialVersion
+      );
+      for (const comment of sampleCommentGroup) {
+        await putComment(commentTx, comment);
+      }
+      await commentTx.flush();
+    }
     console.log("Creating template space took " + (Date.now() - start) + "ms");
   }
   const start = Date.now();
   console.log("Copying from template space");
   await executor(
-    `insert into space (id, version, lastmodified) values ($1, $2, now())`,
+    `insert into space (id, version, used, lastmodified) values ($1, $2, false, now())`,
     [spaceID, initialVersion]
   );
   await executor(

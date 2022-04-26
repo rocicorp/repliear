@@ -8,7 +8,7 @@ export async function getReactIssues(): Promise<Issue[]> {
       // client view sync.  Without this the initial pull response
       // exceeds the nextjs max response size.
       title: reactIssue.title.substring(0, 100),
-      description: "", // (reactIssue.body || "").substring(0, 100),
+      description: reactIssue.body || "",
       priority: getPriority(reactIssue),
       status: getStatus(reactIssue),
       modified: Date.parse(reactIssue.updated_at),
