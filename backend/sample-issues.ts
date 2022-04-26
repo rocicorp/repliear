@@ -3,7 +3,7 @@ import { Issue, Priority, Status } from "../frontend/issue";
 export async function getReactIssues(): Promise<Issue[]> {
   const issues = (await import("./issues-react.js.gz")).default
     // remove this data set truncation when we have partial sync
-    .slice(0, 10000)
+    //.slice(0, 10000)
     .map((reactIssue) => ({
       id: reactIssue.number.toString(),
       title: reactIssue.title.substring(0, 100),

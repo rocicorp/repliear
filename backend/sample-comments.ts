@@ -12,5 +12,5 @@ export async function getReactComments(): Promise<Comment[]> {
       creator: reactComment.creator_user_login,
     })
   );
-  return comments.filter((comment) => issueIDs.has(comment.issueID));
+  return comments.filter((comment) => issueIDs.has(comment.issueID)) && [];
 }
