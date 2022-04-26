@@ -327,16 +327,16 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     [rep]
   );
   const Layout = () => {
-    switch (layoutViewParam) {
+    switch (view) {
       case "board":
-        return  <IssueBoard issues={state.filteredIssues} />;
+        return <IssueBoard issues={state.filteredIssues} />;
       case "detail":
         return <IssueDetail rep={rep} />;
       default:
         return (
-           <IssueList
-              issues={state.filteredIssues}
-              onUpdateIssue={handleUpdateIssue}
+          <IssueList
+            issues={state.filteredIssues}
+            onUpdateIssue={handleUpdateIssue}
           />
         );
     }
@@ -351,17 +351,17 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           onCreateIssue={handleCreateIssue}
         />
         <div className="flex flex-col flex-grow">
- 		{layoutViewParam !== "detail" && (
-          <TopFilter
-            onToggleMenu={() => setMenuVisible(!menuVisible)}
-            title={getTitle(view)}
-            filteredIssuesCount={
-              state.filters.hasNonViewFilters
-                ? state.filteredIssues.length
-                : undefined
-            }
-            issuesCount={state.viewIssueCount}
-          />
+          {view !== "detail" && (
+            <TopFilter
+              onToggleMenu={() => setMenuVisible(!menuVisible)}
+              title={getTitle(view)}
+              filteredIssuesCount={
+                state.filters.hasNonViewFilters
+                  ? state.filteredIssues.length
+                  : undefined
+              }
+              issuesCount={state.viewIssueCount}
+            />
           )}
           <Layout />
         </div>
