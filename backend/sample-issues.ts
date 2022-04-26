@@ -3,7 +3,7 @@ import { Issue, Priority, Status } from "../frontend/issue";
 export async function getReactIssues(): Promise<Issue[]> {
   const issues = (await import("./issues-react.js.gz")).default.map(
     (reactIssue) => ({
-      id: reactIssue.id.toString(),
+      id: reactIssue.number.toString(),
       // TODO: Remove this title and body truncation when we add incremental
       // client view sync.  Without this the initial pull response
       // exceeds the nextjs max response size.
@@ -19,16 +19,16 @@ export async function getReactIssues(): Promise<Issue[]> {
 }
 
 function getStatus({
-  id,
+  number,
   state,
   created_at,
 }: {
-  id: number;
+  number: number;
   state: "open" | "closed";
   // eslint-disable-next-line @typescript-eslint/naming-convention
   created_at: string;
 }): Status {
-  const stableRandom = id + Date.parse(created_at);
+  const stableRandom = number + Date.parse(created_at);
   if (state === "closed") {
     // 2/3's done, 1/3 cancelled
     switch (stableRandom % 3) {
@@ -55,14 +55,14 @@ function getStatus({
 }
 
 function getPriority({
-  id,
+  number,
   created_at,
 }: {
-  id: number;
+  number: number;
   // eslint-disable-next-line @typescript-eslint/naming-convention
   created_at: string;
 }): Priority {
-  const stableRandom = id + Date.parse(created_at);
+  const stableRandom = number + Date.parse(created_at);
   // bell curve priorities
   switch (stableRandom % 10) {
     case 0:

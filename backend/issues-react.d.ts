@@ -1,6 +1,6 @@
 declare module "*issues-react.js.gz" {
   const gitHubIssues: {
-    id: number;
+    number: number;
     title: string;
     body: string | null;
     state: "open" | "closed";

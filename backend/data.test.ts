@@ -315,17 +315,27 @@ test("initSpace", async () => {
     const testSpaceID1 = "test-s-i1";
     const testSpaceID2 = "test-s-i2";
     expect(await getCookie(executor, testSpaceID1)).undefined;
-    await initSpace(executor, testSpaceID1, () =>
-      Promise.resolve(SampleIssues)
+    await initSpace(
+      executor,
+      testSpaceID1,
+      () => Promise.resolve(SampleIssues),
+      () => Promise.resolve([])
     );
     expect(await getCookie(executor, testSpaceID1)).eq(1);
     expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(
       SampleIssues.length
     );
     expect(await getCookie(executor, testSpaceID2)).undefined;
-    await initSpace(executor, testSpaceID2, () => {
-      throw new Error("unexpected call to getSampleIssues on subsequent calls");
-    });
+    await initSpace(
+      executor,
+      testSpaceID2,
+      () => {
+        throw new Error(
+          "unexpected call to getSampleIssues on subsequent calls"
+        );
+      },
+      () => Promise.resolve([])
+    );
     expect(await getCookie(executor, testSpaceID2)).eq(1);
 
     expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(
