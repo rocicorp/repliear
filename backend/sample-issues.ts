@@ -6,7 +6,7 @@ export async function getReactIssues(): Promise<Issue[]> {
     .map((reactIssue) => ({
       id: reactIssue.number.toString(),
       title: reactIssue.title,
-      description: reactIssue.body || "",
+      description: "",
       priority: getPriority(reactIssue),
       status: getStatus(reactIssue),
       modified: Date.parse(reactIssue.updated_at),
