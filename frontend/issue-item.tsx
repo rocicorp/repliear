@@ -7,6 +7,7 @@ import {
   DraggableStateSnapshot,
 } from "react-beautiful-dnd";
 import type { Issue, Priority } from "./issue";
+import { queryTypes, useQueryState } from "next-usequerystate";
 
 interface IssueProps {
   issue: Issue;
@@ -15,8 +16,16 @@ interface IssueProps {
 }
 
 const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
+  const [, setShowDetail] = useQueryState("showDetail", queryTypes.boolean);
+  const [, setIssueParam] = useQueryState("issue");
+
   const handleChangePriority = (p: Priority) => {
     if (onChangePriority) onChangePriority(issue, p);
+  };
+
+  const handleIssueItemClick = async () => {
+    await setIssueParam(issue.id);
+    await setShowDetail(true);
   };
 
   return (
@@ -31,7 +40,7 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
             }}
             ref={provided.innerRef}
             className={classNames(
-              "cursor-default flex flex-col w-11/12 px-4 py-3 mb-2 text-white rounded focus:outline-none",
+              "cursor-default flex flex-col w-11/12 px-4 py-2 mb-2 text-white rounded focus:outline-none",
               {
                 /* eslint-disable @typescript-eslint/naming-convention */
                 "shadow-modal": isDragging,
@@ -43,7 +52,10 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
             {...provided.draggableProps}
             {...provided.dragHandleProps}
           >
-            <div className="flex justify-between w-full cursor-default">
+            <div
+              className="flex justify-between w-full cursor-pointer"
+              onClick={handleIssueItemClick}
+            >
               <div className="flex flex-col">
                 <span className="text-xs font-normal uppercase">
                   {issue.id}

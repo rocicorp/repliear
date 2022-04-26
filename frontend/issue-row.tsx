@@ -3,6 +3,7 @@ import type { Issue, Priority, Status } from "./issue";
 import { formatDate } from "../util/date";
 import PriorityMenu from "./priority-menu";
 import StatusMenu from "./status-menu";
+import { queryTypes, useQueryState } from "next-usequerystate";
 
 interface Props {
   issue: Issue;
@@ -11,6 +12,8 @@ interface Props {
 }
 
 function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
+  const [, setShowDetail] = useQueryState("showDetail", queryTypes.boolean);
+  const [, setIssueParam] = useQueryState("issue");
   const handleChangePriority = (p: Priority) => {
     if (onChangePriority) onChangePriority(issue, p);
   };
@@ -18,6 +21,12 @@ function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
   const handleChangeStatus = (status: Status) => {
     if (onChangeStatus) onChangeStatus(issue, status);
   };
+
+  const handleIssueRowClick = async () => {
+    await setIssueParam(issue.id);
+    await setShowDetail(true);
+  };
+
   return (
     <div
       className="inline-flex items-center flex-grow flex-shrink w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-400 hover:bg-gray-400 hover:bg-opacity-40 h-11 text-white border-y-1"
@@ -34,10 +43,12 @@ function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
       <div className="flex-shrink-0 ml-2">
         <StatusMenu onSelect={handleChangeStatus} status={issue.status} />
       </div>
-      <div className="flex-wrap flex-shrink ml-2 overflow-hidden font-medium line-clamp-1 overflow-ellipsis">
+      <div
+        className="flex-wrap flex-grow ml-2 overflow-hidden font-medium line-clamp-1 overflow-ellipsis cursor-pointer"
+        onClick={handleIssueRowClick}
+      >
         {issue.title.substr(0, 3000) || ""}
       </div>
-      <div className="flex flex-grow ml-2"></div>
       <div className="flex-shrink-0 hidden w-12 ml-2 mr-3 font-normal sm:block">
         {formatDate(new Date(issue.modified))}
       </div>

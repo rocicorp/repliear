@@ -4,6 +4,7 @@ import type { IssueValue } from "./issue";
 
 export type M = typeof mutators;
 export const mutators: MutatorDefs = {
+  getIssue,
   putIssue,
   updateIssue: async (
     tx: WriteTransaction,

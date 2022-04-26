@@ -17,9 +17,10 @@ import {
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
-import { useQueryState } from "next-usequerystate";
+import { queryTypes, useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
 import { sortBy, sortedIndexBy } from "lodash";
+import IssueDetail from "./issue-detail";
 
 type Filters = {
   readonly viewFilter: (issue: Issue) => boolean;
@@ -275,8 +276,41 @@ function reducer(
   return state;
 }
 
+interface LayoutProps {
+  view: string | null;
+  showDetail: boolean | null;
+  state: State;
+  rep: Replicache<M>;
+  handleUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
+}
+
+const Layout = ({
+  view,
+  showDetail,
+  state,
+  rep,
+  handleUpdateIssue,
+}: LayoutProps) => {
+  if (showDetail) {
+    return <IssueDetail rep={rep} />;
+  }
+
+  switch (view) {
+    case "board":
+      return <IssueBoard issues={state.filteredIssues} />;
+    default:
+      return (
+        <IssueList
+          issues={state.filteredIssues}
+          onUpdateIssue={handleUpdateIssue}
+        />
+      );
+  }
+};
+
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [view] = useQueryState("view");
+  const [showDetail] = useQueryState("showDetail", queryTypes.boolean);
   const [priorityFilter] = useQueryState("priorityFilter");
   const [statusFilter] = useQueryState("statusFilter");
   const [orderBy] = useQueryState("orderBy");
@@ -335,24 +369,25 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           onCreateIssue={handleCreateIssue}
         />
         <div className="flex flex-col flex-grow">
-          <TopFilter
-            onToggleMenu={() => setMenuVisible(!menuVisible)}
-            title={getTitle(view)}
-            filteredIssuesCount={
-              state.filters.hasNonViewFilters
-                ? state.filteredIssues.length
-                : undefined
-            }
-            issuesCount={state.viewIssueCount}
-          />
-          {view === "board" ? (
-            <IssueBoard issues={state.filteredIssues} />
-          ) : (
-            <IssueList
-              issues={state.filteredIssues}
-              onUpdateIssue={handleUpdateIssue}
+          {!showDetail && (
+            <TopFilter
+              onToggleMenu={() => setMenuVisible(!menuVisible)}
+              title={getTitle(view)}
+              filteredIssuesCount={
+                state.filters.hasNonViewFilters
+                  ? state.filteredIssues.length
+                  : undefined
+              }
+              issuesCount={state.viewIssueCount}
             />
           )}
+          <Layout
+            view={view}
+            showDetail={showDetail}
+            state={state}
+            rep={rep}
+            handleUpdateIssue={handleUpdateIssue}
+          />
         </div>
       </div>
     </div>

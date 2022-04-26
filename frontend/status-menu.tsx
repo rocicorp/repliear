@@ -6,10 +6,13 @@ import BacklogIcon from "./assets/icons/circle-dot.svg";
 import TodoIcon from "./assets/icons/circle.svg";
 import DoneIcon from "./assets/icons/done.svg";
 import InProgressIcon from "./assets/icons/half-circle.svg";
-import { Status } from "./issue";
+import { Status, StatusEnum } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
+import classnames from "classnames";
 
 interface Props {
+  labelVisible?: boolean;
+  wideMode?: boolean;
   onSelect: (status: Status) => void;
   status: Status;
 }
@@ -22,7 +25,29 @@ export const statuses = [
   [CancelIcon, Status.CANCELED, "Canceled"],
 ];
 
-const StatusMenu = ({ onSelect, status }: Props) => {
+const getStatusString = (status: StatusEnum) => {
+  switch (status) {
+    case Status.BACKLOG:
+      return "Backlog";
+    case Status.TODO:
+      return "Todo";
+    case Status.IN_PROGRESS:
+      return "In Progress";
+    case Status.DONE:
+      return "Done";
+    case Status.CANCELED:
+      return "Canceled";
+    default:
+      return "Backlog";
+  }
+};
+
+const StatusMenu = ({
+  labelVisible = false,
+  wideMode = false,
+  onSelect,
+  status,
+}: Props) => {
   const [statusRef, setStatusRef] = useState<HTMLButtonElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [statusDropDownVisible, setStatusDropDownVisible] = useState(false);
@@ -30,6 +55,16 @@ const StatusMenu = ({ onSelect, status }: Props) => {
   const { styles, attributes, update } = usePopper(statusRef, popperRef, {
     placement: "bottom-start",
   });
+
+  const classes = classnames(
+    "inline-flex items-center h-6 px-2 border-none rounded focus:outline-none",
+    {
+      /* eslint-disable @typescript-eslint/naming-convention */
+      "text-gray-2 hover:bg-gray-500 hover:text-gray-400": !labelVisible,
+      "text-md hover:bg-gray-500 hover:text-gray-3": wideMode,
+      /* eslint-enable @typescript-eslint/naming-convention */
+    }
+  );
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
 
@@ -62,11 +97,12 @@ const StatusMenu = ({ onSelect, status }: Props) => {
   return (
     <div ref={ref}>
       <button
-        className="flex items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
+        className={classes}
         ref={setStatusRef}
         onClick={handleDropdownClick}
       >
-        <StatusIcon status={status} />
+        <StatusIcon status={status} className={wideMode ? "mr-2" : "mr-0.5"} />
+        {labelVisible && <span>{getStatusString(status)}</span>}
       </button>
       <div
         ref={setPopperRef}

@@ -8,9 +8,11 @@ import NoPriorityIcon from "./assets/icons/dots.svg";
 import UrgentPriorityIcon from "./assets/icons/rounded-claim.svg";
 import { Priority, PriorityEnum } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
+import classnames from "classnames";
 
 interface Props {
-  labelVisible: boolean;
+  labelVisible?: boolean;
+  wideMode?: boolean;
   onSelect: (priority: Priority) => void;
   priority: Priority;
 }
@@ -23,7 +25,12 @@ export const statusOpts = [
   [LowPriorityIcon, "Low", Priority.LOW],
 ];
 
-const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
+const PriorityMenu = ({
+  labelVisible,
+  wideMode,
+  onSelect,
+  priority,
+}: Props) => {
   const [priorityRef, setPriorityRef] = useState<HTMLButtonElement | null>(
     null
   );
@@ -63,6 +70,16 @@ const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
     }
   });
 
+  const classes = classnames(
+    "inline-flex items-center h-6 px-2 border-none rounded focus:outline-none",
+    {
+      /* eslint-disable @typescript-eslint/naming-convention */
+      "text-gray-2 hover:bg-gray-500 hover:text-gray-400": !labelVisible,
+      "text-md hover:bg-gray-500 hover:text-gray-3": wideMode,
+      /* eslint-enable @typescript-eslint/naming-convention */
+    }
+  );
+
   const options = statusOpts.map(([Icon, label, priority], idx) => {
     return (
       <div
@@ -81,15 +98,14 @@ const PriorityMenu = ({ labelVisible, onSelect, priority }: Props) => {
   return (
     <div ref={ref}>
       <button
-        className={
-          labelVisible
-            ? `inline-flex items-center h-6 px-2 text-gray-500 bg-gray-2 border-none rounded focus:outline-none hover:bg-gray-2 hover:text-gray-1`
-            : ""
-        }
+        className={classes}
         ref={setPriorityRef}
         onClick={handleDropdownClick}
       >
-        <PriorityIcon priority={priority} className="mr-0.5" />
+        <PriorityIcon
+          priority={priority}
+          className={wideMode ? "mr-2" : "mr-0.5"}
+        />
         {labelVisible && <span>{getPriorityString(priority)}</span>}
       </button>
       <div
