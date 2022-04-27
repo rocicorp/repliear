@@ -1,18 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { transact } from "../../backend/pg";
 import {
-  createDatabase,
   getChangedEntries,
   getIssueMeta,
   getLastMutationID,
   getNonIssueMetaEntries,
   getVersion,
-  initSpace,
 } from "../../backend/data";
 import { z } from "zod";
 import type { JSONValue, PullResponse } from "replicache";
-import { getReactIssues } from "../../backend/sample-issues";
-import { getReactComments } from "backend/sample-comments";
+// import { getReactIssues } from "../../backend/sample-issues";
+// import { getReactComments } from "backend/sample-comments";
 
 const pullRequest = z.object({
   clientID: z.string(),
@@ -36,8 +34,8 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const [entries, lastMutationID, responseCookie] = await transact(
     async (executor) => {
-      await createDatabase(executor);
-      await initSpace(executor, spaceID, getReactIssues, getReactComments);
+      // await createDatabase(executor);
+      // await initSpace(executor, spaceID, getReactIssues, getReactComments);
       if (!requestCookie) {
         const lastMutationIDPromise = getLastMutationID(
           executor,
