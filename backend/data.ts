@@ -265,12 +265,14 @@ export async function getIssueMeta(
   executor: Executor,
   spaceID: string
 ): Promise<[key: string, value: JSONValue][]> {
+  const start = Date.now();
   const {
     rows,
   } = await executor(
     `select key, value from entry where spaceid = $1 and key like 'issue/%' and deleted = false`,
     [spaceID]
   );
+  console.log("getIssueMeta took", Date.now() - start, "ms");
   return rows.map((row) => [row.key, JSON.parse(row.value)]);
 }
 
