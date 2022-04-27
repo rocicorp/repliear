@@ -43,7 +43,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
           executor,
           pull.clientID
         );
-        const entriesPromise = getIssueMeta(executor, spaceID);
+        const entriesPromise = await getIssueMeta(executor, spaceID);
         const version = await getVersion(executor, spaceID);
         const responseCookie = { version, endKey: "" };
         return Promise.all([
