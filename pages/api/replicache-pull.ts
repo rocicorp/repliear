@@ -96,6 +96,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log("responseCookie: ", responseCookie);
   console.log("Read all objects in", Date.now() - t0);
 
+  const start = Date.now();
   const resp: PullResponse = {
     lastMutationID: lastMutationID ?? 0,
     cookie: responseCookie ?? 0,
@@ -116,6 +117,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       });
     }
   }
+  console.log("Built patch in", Date.now() - start);
 
   res.json(resp);
   res.end();
