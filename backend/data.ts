@@ -271,7 +271,7 @@ export async function getIssueEntries(
   const { rows } = await executor(
     `
     select key, value from entry 
-    where spaceid = $1 and key > 'issue/' and key < 'issue0' and deleted = false
+    where spaceid = $1 and key like 'issue/%' and deleted = false
     `,
     [spaceID]
   );
