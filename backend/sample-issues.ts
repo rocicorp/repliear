@@ -1,8 +1,7 @@
-import { Description, Issue, Priority, Status } from "../frontend/issue";
+import { Priority, Status } from "../frontend/issue";
+import type { SampleData } from "./data";
 
-export async function getReactIssues(): Promise<
-  { issue: Issue; description: Description }[]
-> {
+export async function getReactSampleData(): Promise<SampleData> {
   const issues = (await import("./issues-react.js.gz")).default
     // remove this data set truncation when we have partial sync
     .map((reactIssue) => ({
@@ -17,7 +16,19 @@ export async function getReactIssues(): Promise<
       },
       description: reactIssue.body || "",
     }));
-  return issues;
+  const comments = (await import("./comments-react.js.gz")).default.map(
+    (reactComment) => ({
+      id: reactComment.comment_id,
+      issueID: reactComment.number.toString(),
+      created: Date.parse(reactComment.created_at),
+      body: reactComment.body || "",
+      creator: reactComment.creator_user_login,
+    })
+  );
+  return {
+    issues,
+    comments,
+  };
 }
 
 function getStatus({

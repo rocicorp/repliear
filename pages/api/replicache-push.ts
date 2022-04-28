@@ -13,8 +13,7 @@ import { mutators } from "../../frontend/mutators";
 import { z } from "zod";
 import { jsonSchema } from "../../util/json";
 import { assertNotUndefined } from "../../util/asserts";
-import { getReactIssues } from "../../backend/sample-issues";
-import { getReactComments } from "backend/sample-comments";
+import { getReactSampleData } from "../../backend/sample-issues";
 import type { MutatorDefs } from "replicache";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
@@ -39,7 +38,7 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
   const t0 = Date.now();
   await transact(async (executor) => {
     await createDatabase(executor);
-    await initSpace(executor, spaceID, getReactIssues, getReactComments);
+    await initSpace(executor, spaceID, getReactSampleData);
 
     const prevVersion = await getVersion(executor, spaceID);
     assertNotUndefined(prevVersion);

@@ -1,16 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { transact } from "../../backend/pg";
 import {
+  createDatabase,
   getChangedEntries,
-  getIssueMeta,
+  getIssueEntries,
   getLastMutationID,
-  getNonIssueMetaEntries,
+  getNonIssueEntries,
   getVersion,
+  initSpace,
 } from "../../backend/data";
 import { z } from "zod";
 import type { JSONValue, PullResponse } from "replicache";
-// import { getReactIssues } from "../../backend/sample-issues";
-// import { getReactComments } from "backend/sample-comments";
+import { getReactSampleData } from "../../backend/sample-issues";
 
 const pullRequest = z.object({
   clientID: z.string(),
@@ -34,14 +35,14 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const [entries, lastMutationID, responseCookie] = await transact(
     async (executor) => {
-      // await createDatabase(executor);
-      // await initSpace(executor, spaceID, getReactIssues, getReactComments);
+      await createDatabase(executor);
+      await initSpace(executor, spaceID, getReactSampleData);
       if (!requestCookie) {
         const lastMutationIDPromise = getLastMutationID(
           executor,
           pull.clientID
         );
-        const entriesPromise = await getIssueMeta(executor, spaceID);
+        const entriesPromise = await getIssueEntries(executor, spaceID);
         const version = await getVersion(executor, spaceID);
         const responseCookie = { version, endKey: "" };
         return Promise.all([
@@ -62,7 +63,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
         let responseEndKey = undefined;
         if (requestCookie.endKey !== undefined) {
           const limit = 3000;
-          const incrementalEntries = await getNonIssueMetaEntries(
+          const incrementalEntries = await getNonIssueEntries(
             executor,
             spaceID,
             requestCookie.endKey,

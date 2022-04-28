@@ -1,7 +1,6 @@
 import { transact } from "../backend/pg";
 import { createDatabase, getUnusedSpace } from "../backend/data";
-import { getReactIssues } from "../backend/sample-issues";
-import { getReactComments } from "../backend/sample-comments";
+import { getReactSampleData } from "../backend/sample-issues";
 
 function Page() {
   return "";
@@ -10,7 +9,7 @@ function Page() {
 export async function getServerSideProps() {
   const spaceID = await transact(async (executor) => {
     await createDatabase(executor);
-    return getUnusedSpace(executor, getReactIssues, getReactComments);
+    return getUnusedSpace(executor, getReactSampleData);
   });
   return {
     redirect: {

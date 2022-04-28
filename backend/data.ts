@@ -7,6 +7,11 @@ import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
 import { nanoid } from "nanoid";
 
+export type SampleData = {
+  issues: { issue: Issue; description: Description }[];
+  comments: Comment[];
+};
+
 export async function createDatabase(executor: Executor) {
   const schemaVersion = await getSchemaVersion(executor);
   if (schemaVersion < 0 || schemaVersion > 1) {
@@ -71,14 +76,13 @@ export const SAMPLE_SPACE_ID = "sampleSpaceID-12";
 
 export async function getUnusedSpace(
   executor: Executor,
-  getSampleIssues: () => Promise<{ issue: Issue; description: Description }[]>,
-  getSampleComments: () => Promise<Comment[]>
+  getSampleData: () => Promise<SampleData>
 ): Promise<string> {
   let spaceID = await tryGetUnusedSpace(executor);
   if (spaceID) {
     return spaceID;
   }
-  await initSpaces(executor, 1, getSampleIssues, getSampleComments);
+  await initSpaces(executor, 1, getSampleData);
   spaceID = await tryGetUnusedSpace(executor);
   if (spaceID) {
     return spaceID;
@@ -103,20 +107,18 @@ async function tryGetUnusedSpace(
 export async function initSpaces(
   executor: Executor,
   count: number,
-  getSampleIssues: () => Promise<{ issue: Issue; description: Description }[]>,
-  getSampleComments: () => Promise<Comment[]>
+  getSampleData: () => Promise<SampleData>
 ): Promise<void> {
   console.log("Initing", count, "spaces.");
   for (let i = 0; i < count; i++) {
-    await initSpace(executor, nanoid(6), getSampleIssues, getSampleComments);
+    await initSpace(executor, nanoid(6), getSampleData);
   }
 }
 
 export async function initSpace(
   executor: Executor,
   spaceID: string,
-  getSampleIssues: () => Promise<{ issue: Issue; description: Description }[]>,
-  getSampleComments: () => Promise<Comment[]>
+  getSampleData: () => Promise<SampleData>
 ) {
   const { rows } = await executor(`select version from space where id = $1`, [
     spaceID,
@@ -144,11 +146,12 @@ export async function initSpace(
       initialVersion
     );
     const start = Date.now();
-    for (const { issue, description } of await getSampleIssues()) {
+    const sampleData = await getSampleData();
+    for (const { issue, description } of sampleData.issues) {
       await mutators.putIssue(issuesTx, { issue, description });
     }
     await issuesTx.flush();
-    const sampleComments = await getSampleComments();
+    const sampleComments = await sampleData.comments;
     const sampleCommentGroups: Comment[][] = [];
     for (let i = 0; i < sampleComments.length; i++) {
       if (i % 20000 === 0) {
@@ -261,29 +264,32 @@ export async function delEntries(
   );
 }
 
-export async function getIssueMeta(
+export async function getIssueEntries(
   executor: Executor,
   spaceID: string
 ): Promise<[key: string, value: JSONValue][]> {
-  const {
-    rows,
-  } = await executor(
-    `select key, value from entry where spaceid = $1 and key > 'issue/' and key < 'issue0' and deleted = false`,
+  const { rows } = await executor(
+    `
+    select key, value from entry 
+    where spaceid = $1 and key > 'issue/' and key < 'issue0' and deleted = false
+    `,
     [spaceID]
   );
   return rows.map((row) => [row.key, JSON.parse(row.value)]);
 }
 
-export async function getNonIssueMetaEntries(
+export async function getNonIssueEntries(
   executor: Executor,
   spaceID: string,
   startKey: string,
   limit: number
 ): Promise<[key: string, value: JSONValue][]> {
-  const {
-    rows,
-  } = await executor(
-    `select key, value from entry where spaceid = $1 and key not like 'issue/%' and key > $2 and deleted = false order by key limit $3`,
+  const { rows } = await executor(
+    `
+    select key, value from entry 
+    where spaceid = $1 and key not like 'issue/%' and key > $2 and deleted = false 
+    order by key limit $3
+    `,
     [spaceID, startKey, limit]
   );
   return rows.map((row) => [row.key, JSON.parse(row.value)]);
