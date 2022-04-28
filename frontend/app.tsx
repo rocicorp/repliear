@@ -14,7 +14,7 @@ import {
   Status,
   statusEnumSchema,
   Description,
-  CommentValue,
+  Comment,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -283,7 +283,7 @@ interface LayoutProps {
   state: State;
   rep: Replicache<M>;
   handleUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
-  handleCreateComment: (comment: CommentValue) => void;
+  handleCreateComment: (comment: Comment) => void;
 }
 
 const Layout = ({
@@ -357,8 +357,8 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
 
   const handleCreateIssue = (issue: Issue, description: Description) =>
     rep.mutate.putIssue({ issue, description });
-  const handleCreateComment = (comment: CommentValue) =>
-    rep.mutate.putComment(comment);
+  const handleCreateComment = (comment: Comment) =>
+    rep.mutate.putIssueComment(comment);
   const handleUpdateIssue = useCallback(
     async (id: string, changes: Partial<IssueValue>) => {
       await rep.mutate.updateIssue({

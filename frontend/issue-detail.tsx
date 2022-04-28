@@ -6,13 +6,12 @@ import {
   Comment,
   getIssueComments,
   Description,
-  CommentValue,
-  getIssue,
   getIssueDescription,
   Issue,
   IssueValue,
   Priority,
   Status,
+  getIssue,
 } from "./issue";
 import StatusMenu from "./status-menu";
 import { queryTypes, useQueryStates } from "next-usequerystate";
@@ -24,7 +23,11 @@ import { Remark } from "react-remark";
 import { nanoid } from "nanoid";
 
 interface Props {
-  onUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
+  onUpdateIssue: (
+    id: string,
+    changes: Partial<IssueValue>,
+    description?: Description
+  ) => void;
   onAddComment: (comment: Comment) => void;
   rep: Replicache<M>;
 }
@@ -55,8 +58,8 @@ export default function IssueDetail({
 
   const [editMode, setEditMode] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [titleText, setTitle] = useState("");
+  const [descriptionText, setDescription] = useState("");
 
   const { iss } = detailView;
   const issue = useSubscribe<Issue | null>(
@@ -96,37 +99,37 @@ export default function IssueDetail({
 
   const handleChangePriority = useCallback(
     (priority: Priority) => {
-      issueR && onUpdateIssue(issueR.id, { priority });
+      issue && onUpdateIssue(issue.id, { priority });
     },
-    [onUpdateIssue, issueR]
+    [onUpdateIssue, issue]
   );
 
   const handleChangeStatus = useCallback(
     (status: Status) => {
-      issueR && onUpdateIssue(issueR.id, { status });
+      issue && onUpdateIssue(issue.id, { status });
     },
-    [onUpdateIssue, issueR]
+    [onUpdateIssue, issue]
   );
 
   const handleChangeDescription = useCallback(
     (description: string) => {
-      issueR && onUpdateIssue(issueR.id, { description });
+      issue && onUpdateIssue(issue.id, {}, description);
     },
-    [onUpdateIssue, issueR]
+    [onUpdateIssue, issue]
   );
 
   const handleChangeTitle = useCallback(
     (title: string) => {
-      issueR && onUpdateIssue(issueR.id, { title });
+      issue && onUpdateIssue(issue.id, { title });
     },
-    [onUpdateIssue, issueR]
+    [onUpdateIssue, issue]
   );
 
   const handleAddComment = useCallback(() => {
     if (commentText !== "") {
       onAddComment({
         id: nanoid(),
-        issueID: issueR?.id as string,
+        issueID: issue?.id as string,
         created: Date.now(),
         creator: "Me",
         body: commentText,
@@ -150,8 +153,8 @@ export default function IssueDetail({
   };
 
   const handleSave = () => {
-    handleChangeDescription(description);
-    handleChangeTitle(title);
+    handleChangeDescription(descriptionText);
+    handleChangeTitle(titleText);
     setEditMode(false);
   };
 
@@ -204,7 +207,7 @@ export default function IssueDetail({
                   <input
                     className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 placeholder-gray-100 placeholder:text-sm"
                     onChange={(e) => setTitle(e.target.value)}
-                    defaultValue={issueR?.title}
+                    defaultValue={issue?.title}
                   />
                 ) : (
                   issue?.title
@@ -215,10 +218,10 @@ export default function IssueDetail({
                   <textarea
                     className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
                     onChange={(e) => setDescription(e.target.value)}
-                    defaultValue={issueR?.description}
+                    defaultValue={description}
                   />
                 ) : (
-                  <Remark>{issue?.description as string}</Remark>
+                  <Remark>{description}</Remark>
                 )}
               </div>
               <div className=" pb-4">
@@ -261,7 +264,7 @@ export default function IssueDetail({
               <div className="flex-initial p-4">
                 <StatusMenu
                   onSelect={handleChangeStatus}
-                  status={issueR?.status || Status.BACKLOG}
+                  status={issue?.status || Status.BACKLOG}
                   labelVisible={true}
                   wideMode={true}
                 />
@@ -276,7 +279,7 @@ export default function IssueDetail({
                 <PriorityMenu
                   onSelect={handleChangePriority}
                   labelVisible={true}
-                  priority={issueR?.priority || Priority.NONE}
+                  priority={issue?.priority || Priority.NONE}
                   wideMode={true}
                 />
               </div>
