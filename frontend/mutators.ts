@@ -7,11 +7,14 @@ import {
   putIssueDescription,
   putIssueComment,
   Issue,
+  putComment
 } from "./issue";
 import type { IssueValue } from "./issue";
 
 export type M = typeof mutators;
 export const mutators = {
+  putComment,
+  getIssue,
   putIssue: async (
     tx: WriteTransaction,
     {

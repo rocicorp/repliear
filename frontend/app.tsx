@@ -14,6 +14,7 @@ import {
   Status,
   statusEnumSchema,
   Description,
+  CommentValue,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -282,14 +283,27 @@ interface LayoutProps {
   state: State;
   rep: Replicache<M>;
   handleUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
+  handleCreateComment: (comment: CommentValue) => void;
 }
 
-const Layout = ({ view, state, rep, handleUpdateIssue }: LayoutProps) => {
+const Layout = ({
+  view,
+  state,
+  rep,
+  handleUpdateIssue,
+  handleCreateComment,
+}: LayoutProps) => {
   switch (view) {
     case "board":
       return <IssueBoard issues={state.filteredIssues} />;
     case "detail":
-      return <IssueDetail rep={rep} />;
+      return (
+        <IssueDetail
+          rep={rep}
+          onUpdateIssue={handleUpdateIssue}
+          onAddComment={handleCreateComment}
+        />
+      );
     default:
       return (
         <IssueList
@@ -343,6 +357,8 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
 
   const handleCreateIssue = (issue: Issue, description: Description) =>
     rep.mutate.putIssue({ issue, description });
+  const handleCreateComment = (comment: CommentValue) =>
+    rep.mutate.putComment(comment);
   const handleUpdateIssue = useCallback(
     (id: string, changes: Partial<IssueValue>) =>
       rep.mutate.updateIssue({
@@ -378,6 +394,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             state={state}
             rep={rep}
             handleUpdateIssue={handleUpdateIssue}
+            handleCreateComment={handleCreateComment}
           />
         </div>
       </div>

@@ -29,7 +29,7 @@ const PriorityMenu = ({
   labelVisible,
   wideMode,
   onSelect,
-  priority,
+  priority = Priority.NONE,
 }: Props) => {
   const [priorityRef, setPriorityRef] = useState<HTMLButtonElement | null>(
     null
@@ -84,7 +84,7 @@ const PriorityMenu = ({
     return (
       <div
         key={idx}
-        className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-2"
+        className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-2 z-100"
         onClick={() => {
           onSelect(priority);
           setPriorityDropDownVisible(false);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback } from "react";
 import CloseIcon from "./assets/icons/close.svg";
 import EditIcon from "@mui/icons-material/Edit";
 import PriorityMenu from "./priority-menu";
@@ -6,9 +6,11 @@ import {
   Comment,
   getIssueComments,
   Description,
+  CommentValue,
   getIssue,
   getIssueDescription,
   Issue,
+  IssueValue,
   Priority,
   Status,
 } from "./issue";
@@ -20,6 +22,8 @@ import type { M } from "./mutators";
 import { useSubscribe } from "replicache-react";
 
 interface Props {
+  onUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
+  onAddComment: (comment: CommentValue) => void;
   rep: Replicache<M>;
 }
 
@@ -35,9 +39,11 @@ const commentsList = (comments: Comment[]) => {
   ));
 };
 
-export default function IssueDetail({ rep }: Props) {
-  const [priority, setPriority] = useState(Priority.NONE);
-  const [status, setStatus] = useState(Status.BACKLOG);
+export default function IssueDetail({
+  rep,
+  onUpdateIssue,
+  onAddComment,
+}: Props) {
   const [detailView, setDetailView] = useQueryStates({
     view: queryTypes.string,
     iss: queryTypes.string,
@@ -76,6 +82,42 @@ export default function IssueDetail({ rep }: Props) {
     },
     [],
     [iss]
+  );
+
+  const handleChangePriority = useCallback(
+    (priority: Priority) => {
+      issueR && onUpdateIssue(issueR.id, { priority });
+    },
+    [onUpdateIssue]
+  );
+
+  const handleChangeStatus = useCallback(
+    (status: Status) => {
+      console.log("status", status);
+      issueR && onUpdateIssue(issueR.id, { status });
+    },
+    [onUpdateIssue]
+  );
+
+  const handleChangeDescription = useCallback(
+    (description: string) => {
+      issueR && onUpdateIssue(issueR.id, { description });
+    },
+    [onUpdateIssue]
+  );
+
+  const handleChangeTitle = useCallback(
+    (title: string) => {
+      issueR && onUpdateIssue(issueR.id, { title });
+    },
+    [onUpdateIssue]
+  );
+
+  const handleAddComment = useCallback(
+    (comment: CommentValue) => {
+      onAddComment(comment);
+    },
+    [onAddComment]
   );
 
   const handleClickCloseBtn = async () => {
@@ -143,8 +185,8 @@ export default function IssueDetail({ rep }: Props) {
               </div>
               <div className="flex-initial p-4">
                 <StatusMenu
-                  onSelect={setStatus}
-                  status={status}
+                  onSelect={handleChangeStatus}
+                  status={issueR?.status || Status.BACKLOG}
                   labelVisible={true}
                   wideMode={true}
                 />
@@ -157,9 +199,9 @@ export default function IssueDetail({ rep }: Props) {
               </div>
               <div className="flex-initial p-4">
                 <PriorityMenu
-                  onSelect={setPriority}
+                  onSelect={handleChangePriority}
                   labelVisible={true}
-                  priority={priority}
+                  priority={issueR?.priority || Priority.NONE}
                   wideMode={true}
                 />
               </div>
