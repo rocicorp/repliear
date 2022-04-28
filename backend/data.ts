@@ -265,14 +265,12 @@ export async function getIssueMeta(
   executor: Executor,
   spaceID: string
 ): Promise<[key: string, value: JSONValue][]> {
-  const start = Date.now();
   const {
     rows,
   } = await executor(
     `select key, value from entry where spaceid = $1 and key > 'issue/' and key < 'issue0' and deleted = false`,
     [spaceID]
   );
-  console.log("getIssueMeta took", Date.now() - start, "ms");
   return rows.map((row) => [row.key, JSON.parse(row.value)]);
 }
 
@@ -309,11 +307,9 @@ export async function getVersion(
   executor: Executor,
   spaceID: string
 ): Promise<number | undefined> {
-  const start = Date.now();
   const { rows } = await executor(`select version from space where id = $1`, [
     spaceID,
   ]);
-  console.log("getVersion took", Date.now() - start, "ms");
   const value = rows[0]?.version;
   if (value === undefined) {
     return undefined;
@@ -326,25 +322,21 @@ export async function setVersion(
   spaceID: string,
   version: number
 ): Promise<void> {
-  const start = Date.now();
   await executor(
     `update space set version = $2, lastmodified = now() where id = $1`,
     [spaceID, version]
   );
-  console.log("setVersion took", Date.now() - start, "ms");
 }
 
 export async function getLastMutationID(
   executor: Executor,
   clientID: string
 ): Promise<number | undefined> {
-  const start = Date.now();
   const {
     rows,
   } = await executor(`select lastmutationid from client where id = $1`, [
     clientID,
   ]);
-  console.log("getLastMutationID took", Date.now() - start, "ms");
   const value = rows[0]?.lastmutationid;
   if (value === undefined) {
     return undefined;

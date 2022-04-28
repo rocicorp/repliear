@@ -32,7 +32,14 @@ export async function withExecutor<R>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const executor = async (sql: string, params?: any[]) => {
     try {
+      const start = Date.now();
       return await client.query(sql, params);
+      console.log(
+        "Db query took " +
+          (Date.now() - start) +
+          "ms. SQL: " +
+          sql.substring(0, Math.min(sql.length, 150))
+      );
     } catch (e) {
       throw new Error(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
