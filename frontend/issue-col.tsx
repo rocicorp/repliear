@@ -5,6 +5,7 @@ import type { Issue, Status } from "./issue";
 import IssueItem from "./issue-item";
 import { FixedSizeList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
+import IssueItemBase from "./issue-item-base";
 
 interface Props {
   status: Status;
@@ -18,19 +19,19 @@ interface RowProps {
   style: CSSProperties;
 }
 
+const Row = ({ data: items, index, style }: RowProps) => (
+  <div
+    style={{
+      ...style,
+      top: `${parseFloat(style.top as string) + 10}px`,
+    }}
+  >
+    <IssueItem issue={items[index]} index={index} key={index} />
+  </div>
+);
+
 function IssueCol({ title, status, issues }: Props) {
   const statusIcon = <StatusIcon status={status} />;
-
-  const Row = ({ data: items, index, style }: RowProps) => (
-    <div
-      style={{
-        ...style,
-        top: `${parseFloat(style.top as string) + 10}px`,
-      }}
-    >
-      <IssueItem issue={items[index]} index={index} key={index} />
-    </div>
-  );
 
   const innerElementType = forwardRef<
     HTMLDivElement,
@@ -48,7 +49,21 @@ function IssueCol({ title, status, issues }: Props) {
   innerElementType.displayName = "innerElementType";
 
   return (
-    <Droppable droppableId={status.toString()} key={status} type="category">
+    <Droppable
+      droppableId={status.toString()}
+      key={status}
+      type="category"
+      renderClone={(provided, snapshot, rubric) => {
+        const issue = issues[rubric.source.index];
+        return (
+          <IssueItemBase
+            issue={issue}
+            provided={provided}
+            snapshot={snapshot}
+          />
+        );
+      }}
+    >
       {(provided: DroppableProvided) => {
         return (
           <div
