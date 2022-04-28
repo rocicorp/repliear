@@ -360,11 +360,12 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   const handleCreateComment = (comment: CommentValue) =>
     rep.mutate.putComment(comment);
   const handleUpdateIssue = useCallback(
-    (id: string, changes: Partial<IssueValue>) =>
-      rep.mutate.updateIssue({
+    async (id: string, changes: Partial<IssueValue>) => {
+      await rep.mutate.updateIssue({
         id,
         changes,
-      }),
+      });
+    },
     [rep]
   );
 

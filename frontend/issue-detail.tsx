@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import CloseIcon from "./assets/icons/close.svg";
 import EditIcon from "@mui/icons-material/Edit";
 import PriorityMenu from "./priority-menu";
@@ -20,10 +20,12 @@ import { queryTypes, useQueryStates } from "next-usequerystate";
 import type { Replicache } from "replicache";
 import type { M } from "./mutators";
 import { useSubscribe } from "replicache-react";
+import { Remark } from "react-remark";
+import { nanoid } from "nanoid";
 
 interface Props {
   onUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
-  onAddComment: (comment: CommentValue) => void;
+  onAddComment: (comment: Comment) => void;
   rep: Replicache<M>;
 }
 
@@ -34,7 +36,9 @@ const commentsList = (comments: Comment[]) => {
       className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap "
     >
       <div className="h-6 mb-1 -mt-px relative">{comment.creator}</div>
-      <div className="block flex-1 whitespace-pre-wrap">{comment.body}</div>
+      <div className="block flex-1 whitespace-pre-wrap">
+        <Remark>{comment.body}</Remark>
+      </div>
     </div>
   ));
 };
@@ -48,6 +52,12 @@ export default function IssueDetail({
     view: queryTypes.string,
     iss: queryTypes.string,
   });
+
+  const [editMode, setEditMode] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
   const { iss } = detailView;
   const issue = useSubscribe<Issue | null>(
     rep,
@@ -88,37 +98,42 @@ export default function IssueDetail({
     (priority: Priority) => {
       issueR && onUpdateIssue(issueR.id, { priority });
     },
-    [onUpdateIssue]
+    [onUpdateIssue, issueR]
   );
 
   const handleChangeStatus = useCallback(
     (status: Status) => {
-      console.log("status", status);
       issueR && onUpdateIssue(issueR.id, { status });
     },
-    [onUpdateIssue]
+    [onUpdateIssue, issueR]
   );
 
   const handleChangeDescription = useCallback(
     (description: string) => {
       issueR && onUpdateIssue(issueR.id, { description });
     },
-    [onUpdateIssue]
+    [onUpdateIssue, issueR]
   );
 
   const handleChangeTitle = useCallback(
     (title: string) => {
       issueR && onUpdateIssue(issueR.id, { title });
     },
-    [onUpdateIssue]
+    [onUpdateIssue, issueR]
   );
 
-  const handleAddComment = useCallback(
-    (comment: CommentValue) => {
-      onAddComment(comment);
-    },
-    [onAddComment]
-  );
+  const handleAddComment = useCallback(() => {
+    if (commentText !== "") {
+      onAddComment({
+        id: nanoid(),
+        issueID: issueR?.id as string,
+        created: Date.now(),
+        creator: "Me",
+        body: commentText,
+      });
+      setCommentText("");
+    }
+  }, [onAddComment, commentText]);
 
   const handleClickCloseBtn = async () => {
     await setDetailView(
@@ -128,6 +143,16 @@ export default function IssueDetail({
         shallow: true,
       }
     );
+  };
+
+  const handleCancel = () => {
+    setEditMode(false);
+  };
+
+  const handleSave = () => {
+    handleChangeDescription(description);
+    handleChangeTitle(title);
+    setEditMode(false);
   };
 
   return (
@@ -147,14 +172,55 @@ export default function IssueDetail({
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5 justify-between">
               <div className="text-md pb-4">{issue?.id}</div>
-              <div className="text-sm">
-                <EditIcon className="!w-4 mx-4 cursor-pointer" />
-                &#8230;
-              </div>
+              {editMode ? (
+                <div className="text-sm">
+                  <button
+                    className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-400 text-white"
+                    onClick={handleSave}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-300 text-white"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="text-sm">
+                  <EditIcon
+                    className="!w-4 mx-4 cursor-pointer"
+                    onClick={() => {
+                      setEditMode(true);
+                    }}
+                  />
+                </div>
+              )}
             </div>
             <div className="flex flex-col border-solid border-b my-0 mx-auto px-5">
-              <div className="text-md py-4">{issue?.title}</div>
-              <div className="text-sm pb-4 text-gray-1">{description}</div>
+              <div className="text-md py-4">
+                {editMode ? (
+                  <input
+                    className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 placeholder-gray-100 placeholder:text-sm"
+                    onChange={(e) => setTitle(e.target.value)}
+                    defaultValue={issueR?.title}
+                  />
+                ) : (
+                  issue?.title
+                )}
+              </div>
+              <div className="text-sm pb-4 text-gray-1">
+                {editMode ? (
+                  <textarea
+                    className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
+                    onChange={(e) => setDescription(e.target.value)}
+                    defaultValue={issueR?.description}
+                  />
+                ) : (
+                  <Remark>{issue?.description as string}</Remark>
+                )}
+              </div>
               <div className=" pb-4">
                 <a
                   href=""
@@ -170,7 +236,16 @@ export default function IssueDetail({
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
                 placeholder="Leave a comment ..."
+                onChange={(e) => setCommentText(e.target.value)}
               />
+              <div className="flex justify-end">
+                <button
+                  className="px-3 ml-2 mt-3 rounded h-8 focus:outline-none bg-gray-500 text-white "
+                  onClick={handleAddComment}
+                >
+                  Comment
+                </button>
+              </div>
             </div>
           </div>
         </div>
