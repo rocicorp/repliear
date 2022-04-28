@@ -5,7 +5,7 @@ import ZoomIcon from "./assets/icons/zoom.svg";
 import Modal from "./modal";
 import Toggle from "./toggle";
 import React, { useState } from "react";
-import { Issue, Priority, Status } from "./issue";
+import { Description, Issue, Priority, Status } from "./issue";
 import { nanoid } from "nanoid";
 
 import PriorityMenu from "./priority-menu";
@@ -16,7 +16,7 @@ import StatusMenu from "./status-menu";
 interface Props {
   isOpen: boolean;
   onDismiss?: () => void;
-  onCreateIssue: (i: Issue) => void;
+  onCreateIssue: (i: Issue, description: Description) => void;
 }
 
 export default function IssueModal({
@@ -34,16 +34,18 @@ export default function IssueModal({
       //   showWarning("Please enter a title before submiting", "Title required");
       return;
     }
-    onCreateIssue({
-      id: nanoid(),
-      title,
-      description,
-      priority,
-      status,
-      modified: new Date().getTime(),
-      created: new Date().getTime(),
-      creator: "Me",
-    });
+    onCreateIssue(
+      {
+        id: nanoid(),
+        title,
+        priority,
+        status,
+        modified: new Date().getTime(),
+        created: new Date().getTime(),
+        creator: "Me",
+      },
+      description
+    );
     if (onDismiss) onDismiss();
     resetModalState();
   };

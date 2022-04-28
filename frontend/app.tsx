@@ -13,6 +13,7 @@ import {
   priorityEnumSchema,
   Status,
   statusEnumSchema,
+  Description,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -195,7 +196,6 @@ function reducer(
       let newViewIssueCount = state.viewIssueCount;
       const newFilteredIssues = [...state.filteredIssues];
       for (const diffOp of action.diff) {
-        console.log(diffOp);
         switch (diffOp.op) {
           case "add": {
             const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
@@ -341,7 +341,8 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     });
   }, [orderBy]);
 
-  const handleCreateIssue = (issue: IssueValue) => rep.mutate.putIssue(issue);
+  const handleCreateIssue = (issue: Issue, description: Description) =>
+    rep.mutate.putIssue({ issue, description });
   const handleUpdateIssue = useCallback(
     (id: string, changes: Partial<IssueValue>) =>
       rep.mutate.updateIssue({

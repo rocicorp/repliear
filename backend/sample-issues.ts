@@ -1,25 +1,38 @@
-import { Issue, Priority, Status } from "../frontend/issue";
+import { Priority, Status } from "../frontend/issue";
+import type { SampleData } from "./data";
 
-export async function getReactIssues(): Promise<Issue[]> {
+export async function getReactSampleData(): Promise<SampleData> {
   const issues = (await import("./issues-react.js.gz")).default
     // remove this data set truncation when we have partial sync
-    .slice(0, 1000)
     .map((reactIssue) => ({
-      id: reactIssue.number.toString(),
-      title: reactIssue.title.substring(0, 100),
+      issue: {
+        id: reactIssue.number.toString(),
+        title: reactIssue.title,
+        priority: getPriority(reactIssue),
+        status: getStatus(reactIssue),
+        modified: Date.parse(reactIssue.updated_at),
+        created: Date.parse(reactIssue.created_at),
+        creator: reactIssue.creator_user_login,
+      },
       description: reactIssue.body || "",
-      priority: getPriority(reactIssue),
-      status: getStatus(reactIssue),
-      modified: Date.parse(reactIssue.updated_at),
-      created: Date.parse(reactIssue.created_at),
-      creator: reactIssue.creator_user_login,
     }));
-  return issues;
+  const comments = (await import("./comments-react.js.gz")).default.map(
+    (reactComment) => ({
+      id: reactComment.comment_id,
+      issueID: reactComment.number.toString(),
+      created: Date.parse(reactComment.created_at),
+      body: reactComment.body || "",
+      creator: reactComment.creator_user_login,
+    })
+  );
+  return {
+    issues,
+    comments,
+  };
 }
 
 function getStatus({
   number,
-  state,
   created_at,
 }: {
   number: number;
@@ -28,7 +41,8 @@ function getStatus({
   created_at: string;
 }): Status {
   const stableRandom = number + Date.parse(created_at);
-  if (state === "closed") {
+  // 90% closed, 10% open
+  if (stableRandom % 10 < 8) {
     // 2/3's done, 1/3 cancelled
     switch (stableRandom % 3) {
       case 0:

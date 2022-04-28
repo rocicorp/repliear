@@ -1,15 +1,16 @@
 import { expect } from "chai";
-import { Issue, Priority, Status } from "../frontend/issue";
+import { Issue, Priority, Status, Comment } from "../frontend/issue";
 import { setup, teardown, test } from "mocha";
 import type { JSONValue } from "replicache";
 import {
   createDatabase,
   delEntries,
   getChangedEntries,
-  getCookie,
   getEntry,
+  getVersion,
   initSpace,
   putEntries,
+  SampleData,
   SAMPLE_SPACE_ID,
 } from "./data";
 import { transact, withExecutor } from "./pg";
@@ -18,36 +19,64 @@ const i1: Issue = {
   priority: Priority.HIGH,
   id: "1",
   title: "Issue 1",
-  description: "",
   status: Status.IN_PROGRESS,
   modified: 0,
   created: 0,
   creator: "testUser1",
 };
 
+const comment1i1: Comment = {
+  id: "1",
+  issueID: "1",
+  created: 0,
+  body: "Comment 1",
+  creator: "testUser1",
+};
+
+const comment2i1: Comment = {
+  id: "2",
+  issueID: "1",
+  created: 0,
+  body: "Comment 2",
+  creator: "testUser2",
+};
+
 const i2: Issue = {
   priority: Priority.MEDIUM,
   id: "2",
   title: "Issue 2",
-  description: "",
   status: Status.IN_PROGRESS,
   modified: 0,
   created: 0,
   creator: "testUser2",
 };
 
+const comment1i2: Comment = {
+  id: "1",
+  issueID: "2",
+  created: 0,
+  body: "Comment 1",
+  creator: "testUser1",
+};
+
 const i3: Issue = {
   priority: Priority.LOW,
   id: "3",
   title: "Issue 3",
-  description: "",
   status: Status.TODO,
   modified: 0,
   created: 0,
   creator: "testUser3",
 };
 
-export const SampleIssues: Issue[] = [i1, i2, i3];
+export const testSampleData: SampleData = {
+  issues: [
+    { issue: i1, description: "Description 1" },
+    { issue: i2, description: "Description 2" },
+    { issue: i3, description: "Description 3" },
+  ],
+  comments: [comment1i1, comment1i2, comment2i1],
+};
 
 setup(async () => {
   // TODO: This is a very expensive way to unit test :).
@@ -317,32 +346,19 @@ test("initSpace", async () => {
     await executor(`delete from space where id = $1`, [SAMPLE_SPACE_ID]);
     const testSpaceID1 = "test-s-i1";
     const testSpaceID2 = "test-s-i2";
-    expect(await getCookie(executor, testSpaceID1)).undefined;
-    await initSpace(
-      executor,
-      testSpaceID1,
-      () => Promise.resolve(SampleIssues),
-      () => Promise.resolve([])
+    expect(await getVersion(executor, testSpaceID1)).undefined;
+    await initSpace(executor, testSpaceID1, () =>
+      Promise.resolve(testSampleData)
     );
-    expect(await getCookie(executor, testSpaceID1)).eq(1);
-    expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(
-      SampleIssues.length
-    );
-    expect(await getCookie(executor, testSpaceID2)).undefined;
-    await initSpace(
-      executor,
-      testSpaceID2,
-      () => {
-        throw new Error(
-          "unexpected call to getSampleIssues on subsequent calls"
-        );
-      },
-      () => Promise.resolve([])
-    );
-    expect(await getCookie(executor, testSpaceID2)).eq(1);
-
-    expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(
-      SampleIssues.length
-    );
+    expect(await getVersion(executor, testSpaceID1)).eq(1);
+    // 3 issues, 3 descriptions, and 3 comments
+    expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(9);
+    expect(await getVersion(executor, testSpaceID2)).undefined;
+    await initSpace(executor, testSpaceID2, () => {
+      throw new Error("unexpected call to getSampleIssues on subsequent calls");
+    });
+    expect(await getVersion(executor, testSpaceID2)).eq(1);
+    // 3 issues, 3 descriptions, and 3 comments
+    expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(9);
   });
 });

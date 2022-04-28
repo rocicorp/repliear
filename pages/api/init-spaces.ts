@@ -1,8 +1,7 @@
 import { createDatabase, initSpaces } from "../../backend/data";
 import { transact } from "../../backend/pg";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getReactIssues } from "backend/sample-issues";
-import { getReactComments } from "backend/sample-comments";
+import { getReactSampleData } from "backend/sample-issues";
 
 const init = async (req: NextApiRequest, res: NextApiResponse) => {
   let count = 10;
@@ -16,7 +15,7 @@ const init = async (req: NextApiRequest, res: NextApiResponse) => {
   }
   await transact(async (executor) => {
     await createDatabase(executor);
-    await initSpaces(executor, count, getReactIssues, getReactComments);
+    await initSpaces(executor, count, getReactSampleData);
   });
   res.end();
 };

@@ -4,8 +4,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import PriorityMenu from "./priority-menu";
 import {
   Comment,
-  getCommentsOfIssue,
+  getIssueComments,
+  Description,
   getIssue,
+  getIssueDescription,
   Issue,
   Priority,
   Status,
@@ -41,16 +43,26 @@ export default function IssueDetail({ rep }: Props) {
     iss: queryTypes.string,
   });
   const { iss } = detailView;
-
-  const issueR = useSubscribe<Issue | null>(
+  const issue = useSubscribe<Issue | null>(
     rep,
     async (tx) => {
       if (iss) {
-        return (await getIssue(tx, iss as string)) || null;
+        return (await getIssue(tx, iss)) || null;
       }
       return null;
     },
     null,
+    [iss]
+  );
+  const description = useSubscribe<Description>(
+    rep,
+    async (tx) => {
+      if (iss) {
+        return (await getIssueDescription(tx, iss)) || "";
+      }
+      return "";
+    },
+    "",
     [iss]
   );
 
@@ -58,7 +70,7 @@ export default function IssueDetail({ rep }: Props) {
     rep,
     async (tx) => {
       if (iss) {
-        return (await getCommentsOfIssue(tx, iss as string)) || [];
+        return (await getIssueComments(tx, iss)) || [];
       }
       return [];
     },
@@ -92,17 +104,15 @@ export default function IssueDetail({ rep }: Props) {
         <div className=" flex-row w-3/4 p-8 border-gray-300 border-r my-2 overflow-auto h-[calc(100vh-140px)] ">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5 justify-between">
-              <div className="text-md pb-4">{issueR?.id}</div>
+              <div className="text-md pb-4">{issue?.id}</div>
               <div className="text-sm">
                 <EditIcon className="!w-4 mx-4 cursor-pointer" />
                 &#8230;
               </div>
             </div>
             <div className="flex flex-col border-solid border-b my-0 mx-auto px-5">
-              <div className="text-md py-4">{issueR?.title}</div>
-              <div className="text-sm pb-4 text-gray-1">
-                {issueR?.description}
-              </div>
+              <div className="text-md py-4">{issue?.title}</div>
+              <div className="text-sm pb-4 text-gray-1">{description}</div>
               <div className=" pb-4">
                 <a
                   href=""
@@ -125,7 +135,7 @@ export default function IssueDetail({ rep }: Props) {
         <div className="flex-row w-1/4 p-8 my-2">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5">
-              <div className="text-md pb-4">{issueR?.id}</div>
+              <div className="text-md pb-4">{issue?.id}</div>
             </div>
             <div className="flex flex-row">
               <div className="flex-initial p-4">
