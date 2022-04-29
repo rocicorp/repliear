@@ -37,8 +37,8 @@ async function getSchemaVersion(executor: Executor) {
 }
 
 export async function createSchemaVersion1(executor: Executor) {
-  await executor("create table meta (key text primary key, value json)");
-  await executor("insert into meta (key, value) values ('schemaVersion', '1')");
+  await executor(`create table meta (key text primary key, value json)`);
+  await executor(`insert into meta (key, value) values ('schemaVersion', '1')`);
 
   await executor(`create table space (
       id text primary key not null,
@@ -52,10 +52,10 @@ export async function createSchemaVersion1(executor: Executor) {
       (publish = 'insert, update, delete');`);
 
   await executor(`create table client (
-        id text primary key not null,
-        lastmutationid integer not null,
-        lastmodified timestamp(6) not null
-        )`);
+      id text primary key not null,
+      lastmutationid integer not null,
+      lastmodified timestamp(6) not null
+      )`);
 
   await executor(`create table entry (
       spaceid text not null,
@@ -66,7 +66,13 @@ export async function createSchemaVersion1(executor: Executor) {
       lastmodified timestamp(6) not null
       )`);
 
-  await executor(`create unique index on entry (spaceid, key)`);
+  await executor(
+    `create unique index idx_entry_spaceid_key on entry (spaceid, key)`
+  );
+  await executor(`create unique index 
+      on entry (spaceid, key text_pattern_ops, deleted)
+      include (value)
+      where key like 'issue/%'`);
   await executor(`create index on entry (spaceid)`);
   await executor(`create index on entry (deleted)`);
   await executor(`create index on entry (version)`);
@@ -113,6 +119,7 @@ export async function initSpaces(
   for (let i = 0; i < count; i++) {
     await initSpace(executor, nanoid(6), getSampleData);
   }
+  await executor(`cluster entry using idx_entry_spaceid_key`);
 }
 
 export async function initSpace(
