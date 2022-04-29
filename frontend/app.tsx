@@ -282,7 +282,7 @@ interface LayoutProps {
   view: string | null;
   state: State;
   rep: Replicache<M>;
-  handleUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
+  handleUpdateIssue: (id: string, changes: Partial<IssueValue>, description?: Description) => void;
   handleCreateComment: (comment: Comment) => void;
 }
 
@@ -360,10 +360,11 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   const handleCreateComment = (comment: Comment) =>
     rep.mutate.putIssueComment(comment);
   const handleUpdateIssue = useCallback(
-    async (id: string, changes: Partial<IssueValue>) => {
+    async (id: string, changes: Partial<IssueValue>, description?: Description) => {
       await rep.mutate.updateIssue({
         id,
         changes,
+        description
       });
     },
     [rep]
