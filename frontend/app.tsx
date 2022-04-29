@@ -99,7 +99,10 @@ function getFilters(
   };
 }
 
-function getIssueOrder(orderBy: string | null): Order {
+function getIssueOrder(view: string | null, orderBy: string | null): Order {
+  if (view === "board") {
+    return Order.KANBAN;
+  }
   const parseResult = orderEnumSchema.safeParse(orderBy);
   return parseResult.success ? parseResult.data : Order.MODIFIED;
 }
@@ -167,16 +170,19 @@ function reducer(
     action.type === "setIssueOrder" ? action.issueOrder : state.issueOrder;
 
   function order(issue: Issue): string {
-    let orderValue: number;
+    let orderValue: string;
     switch (issueOrder) {
       case Order.CREATED:
-        orderValue = issue.created;
+        orderValue = Number.MAX_SAFE_INTEGER - issue.created + "-" + issue.id;
         break;
       case Order.MODIFIED:
-        orderValue = issue.modified;
+        orderValue = Number.MAX_SAFE_INTEGER - issue.modified + "-" + issue.id;
+        break;
+      case Order.KANBAN:
+        orderValue = issue.kanbanOrder + "-" + issue.id;
         break;
     }
-    return Number.MAX_SAFE_INTEGER - orderValue + "-" + issue.id;
+    return orderValue;
   }
   function filterAndSort(issues: Issue[]): Issue[] {
     return sortBy(issues.filter(filters.issuesFilter), order);
@@ -355,9 +361,9 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   useEffect(() => {
     dispatch({
       type: "setIssueOrder",
-      issueOrder: getIssueOrder(orderBy),
+      issueOrder: getIssueOrder(view, orderBy),
     });
-  }, [orderBy]);
+  }, [view, orderBy]);
 
   const handleCreateIssue = (issue: Issue, description: Description) =>
     rep.mutate.putIssue({ issue, description });

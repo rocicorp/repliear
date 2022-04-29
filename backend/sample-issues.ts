@@ -1,21 +1,30 @@
 import { Priority, Status } from "../frontend/issue";
 import type { SampleData } from "./data";
+import { generateNKeysBetween } from "fractional-indexing";
+import { sortBy } from "lodash";
 
 export async function getReactSampleData(): Promise<SampleData> {
-  const issues = (await import("./issues-react.js.gz")).default
-    // remove this data set truncation when we have partial sync
-    .map((reactIssue) => ({
-      issue: {
-        id: reactIssue.number.toString(),
-        title: reactIssue.title,
-        priority: getPriority(reactIssue),
-        status: getStatus(reactIssue),
-        modified: Date.parse(reactIssue.updated_at),
-        created: Date.parse(reactIssue.created_at),
-        creator: reactIssue.creator_user_login,
-      },
-      description: reactIssue.body || "",
-    }));
+  const issuesDefault = (await import("./issues-react.js.gz")).default;
+  const sortedIssues = sortBy(issuesDefault, (reactIssue) =>
+    Date.parse(reactIssue.updated_at)
+  );
+
+  const issuesCount = issuesDefault.length;
+  const kanbanOrderKeys = generateNKeysBetween(null, null, issuesCount);
+  const issues = sortedIssues.map((reactIssue, idx) => ({
+    issue: {
+      id: reactIssue.number.toString(),
+      title: reactIssue.title,
+      priority: getPriority(reactIssue),
+      status: getStatus(reactIssue),
+      modified: Date.parse(reactIssue.updated_at),
+      created: Date.parse(reactIssue.created_at),
+      creator: reactIssue.creator_user_login,
+      kanbanOrder: kanbanOrderKeys[idx],
+    },
+    description: reactIssue.body || "",
+  }));
+
   const comments = (await import("./comments-react.js.gz")).default.map(
     (reactComment) => ({
       id: reactComment.comment_id,
