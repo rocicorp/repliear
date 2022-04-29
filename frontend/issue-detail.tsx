@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import CloseIcon from "./assets/icons/close.svg";
 import EditIcon from "@mui/icons-material/Edit";
 import PriorityMenu from "./priority-menu";
@@ -6,11 +6,12 @@ import {
   Comment,
   getIssueComments,
   Description,
-  getIssue,
   getIssueDescription,
   Issue,
+  IssueValue,
   Priority,
   Status,
+  getIssue,
 } from "./issue";
 import StatusMenu from "./status-menu";
 import { queryTypes, useQueryStates } from "next-usequerystate";
@@ -18,8 +19,16 @@ import { queryTypes, useQueryStates } from "next-usequerystate";
 import type { Replicache } from "replicache";
 import type { M } from "./mutators";
 import { useSubscribe } from "replicache-react";
+import { Remark } from "react-remark";
+import { nanoid } from "nanoid";
 
 interface Props {
+  onUpdateIssue: (
+    id: string,
+    changes: Partial<IssueValue>,
+    description?: Description
+  ) => void;
+  onAddComment: (comment: Comment) => void;
   rep: Replicache<M>;
 }
 
@@ -30,18 +39,28 @@ const commentsList = (comments: Comment[]) => {
       className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap "
     >
       <div className="h-6 mb-1 -mt-px relative">{comment.creator}</div>
-      <div className="block flex-1 whitespace-pre-wrap">{comment.body}</div>
+      <div className="block flex-1 whitespace-pre-wrap">
+        <Remark>{comment.body}</Remark>
+      </div>
     </div>
   ));
 };
 
-export default function IssueDetail({ rep }: Props) {
-  const [priority, setPriority] = useState(Priority.NONE);
-  const [status, setStatus] = useState(Status.BACKLOG);
+export default function IssueDetail({
+  rep,
+  onUpdateIssue,
+  onAddComment,
+}: Props) {
   const [detailView, setDetailView] = useQueryStates({
     view: queryTypes.string,
     iss: queryTypes.string,
   });
+
+  const [editMode, setEditMode] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [titleText, setTitle] = useState("");
+  const [descriptionText, setDescription] = useState("");
+
   const { iss } = detailView;
   const issue = useSubscribe<Issue | null>(
     rep,
@@ -78,6 +97,47 @@ export default function IssueDetail({ rep }: Props) {
     [iss]
   );
 
+  const handleChangePriority = useCallback(
+    (priority: Priority) => {
+      issue && onUpdateIssue(issue.id, { priority });
+    },
+    [onUpdateIssue, issue]
+  );
+
+  const handleChangeStatus = useCallback(
+    (status: Status) => {
+      issue && onUpdateIssue(issue.id, { status });
+    },
+    [onUpdateIssue, issue]
+  );
+
+  const handleChangeDescription = useCallback(
+    (description: string) => {
+      issue && onUpdateIssue(issue.id, {}, description);
+    },
+    [onUpdateIssue, issue]
+  );
+
+  const handleChangeTitle = useCallback(
+    (title: string) => {
+      issue && onUpdateIssue(issue.id, { title });
+    },
+    [onUpdateIssue, issue]
+  );
+
+  const handleAddComment = useCallback(() => {
+    if (commentText !== "") {
+      onAddComment({
+        id: nanoid(),
+        issueID: issue?.id as string,
+        created: Date.now(),
+        creator: "Me",
+        body: commentText,
+      });
+      setCommentText("");
+    }
+  }, [onAddComment, commentText]);
+
   const handleClickCloseBtn = async () => {
     await setDetailView(
       { view: null, iss: null },
@@ -86,6 +146,16 @@ export default function IssueDetail({ rep }: Props) {
         shallow: true,
       }
     );
+  };
+
+  const handleCancel = () => {
+    setEditMode(false);
+  };
+
+  const handleSave = () => {
+    handleChangeDescription(descriptionText);
+    handleChangeTitle(titleText);
+    setEditMode(false);
   };
 
   return (
@@ -105,14 +175,55 @@ export default function IssueDetail({ rep }: Props) {
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5 justify-between">
               <div className="text-md pb-4">{issue?.id}</div>
-              <div className="text-sm">
-                <EditIcon className="!w-4 mx-4 cursor-pointer" />
-                &#8230;
-              </div>
+              {editMode ? (
+                <div className="text-sm">
+                  <button
+                    className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-400 text-white"
+                    onClick={handleSave}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-300 text-white"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="text-sm">
+                  <EditIcon
+                    className="!w-4 mx-4 cursor-pointer"
+                    onClick={() => {
+                      setEditMode(true);
+                    }}
+                  />
+                </div>
+              )}
             </div>
             <div className="flex flex-col border-solid border-b my-0 mx-auto px-5">
-              <div className="text-md py-4">{issue?.title}</div>
-              <div className="text-sm pb-4 text-gray-1">{description}</div>
+              <div className="text-md py-4">
+                {editMode ? (
+                  <input
+                    className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 placeholder-gray-100 placeholder:text-sm"
+                    onChange={(e) => setTitle(e.target.value)}
+                    defaultValue={issue?.title}
+                  />
+                ) : (
+                  issue?.title
+                )}
+              </div>
+              <div className="text-sm pb-4 text-gray-1">
+                {editMode ? (
+                  <textarea
+                    className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
+                    onChange={(e) => setDescription(e.target.value)}
+                    defaultValue={description}
+                  />
+                ) : (
+                  <Remark>{description}</Remark>
+                )}
+              </div>
               <div className=" pb-4">
                 <a
                   href=""
@@ -128,7 +239,16 @@ export default function IssueDetail({ rep }: Props) {
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
                 placeholder="Leave a comment ..."
+                onChange={(e) => setCommentText(e.target.value)}
               />
+              <div className="flex justify-end">
+                <button
+                  className="px-3 ml-2 mt-3 rounded h-8 focus:outline-none bg-gray-500 text-white "
+                  onClick={handleAddComment}
+                >
+                  Comment
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -143,8 +263,8 @@ export default function IssueDetail({ rep }: Props) {
               </div>
               <div className="flex-initial p-4">
                 <StatusMenu
-                  onSelect={setStatus}
-                  status={status}
+                  onSelect={handleChangeStatus}
+                  status={issue?.status || Status.BACKLOG}
                   labelVisible={true}
                   wideMode={true}
                 />
@@ -157,9 +277,9 @@ export default function IssueDetail({ rep }: Props) {
               </div>
               <div className="flex-initial p-4">
                 <PriorityMenu
-                  onSelect={setPriority}
+                  onSelect={handleChangePriority}
                   labelVisible={true}
-                  priority={priority}
+                  priority={issue?.priority || Priority.NONE}
                   wideMode={true}
                 />
               </div>

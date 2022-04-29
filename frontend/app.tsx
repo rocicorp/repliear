@@ -14,6 +14,7 @@ import {
   Status,
   statusEnumSchema,
   Description,
+  Comment,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -281,15 +282,32 @@ interface LayoutProps {
   view: string | null;
   state: State;
   rep: Replicache<M>;
-  handleUpdateIssue: (id: string, changes: Partial<IssueValue>) => void;
+  handleUpdateIssue: (
+    id: string,
+    changes: Partial<IssueValue>,
+    description?: Description
+  ) => void;
+  handleCreateComment: (comment: Comment) => void;
 }
 
-const Layout = ({ view, state, rep, handleUpdateIssue }: LayoutProps) => {
+const Layout = ({
+  view,
+  state,
+  rep,
+  handleUpdateIssue,
+  handleCreateComment,
+}: LayoutProps) => {
   switch (view) {
     case "board":
       return <IssueBoard issues={state.filteredIssues} />;
     case "detail":
-      return <IssueDetail rep={rep} />;
+      return (
+        <IssueDetail
+          rep={rep}
+          onUpdateIssue={handleUpdateIssue}
+          onAddComment={handleCreateComment}
+        />
+      );
     default:
       return (
         <IssueList
@@ -343,12 +361,20 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
 
   const handleCreateIssue = (issue: Issue, description: Description) =>
     rep.mutate.putIssue({ issue, description });
+  const handleCreateComment = (comment: Comment) =>
+    rep.mutate.putIssueComment(comment);
   const handleUpdateIssue = useCallback(
-    (id: string, changes: Partial<IssueValue>) =>
-      rep.mutate.updateIssue({
+    async (
+      id: string,
+      changes: Partial<IssueValue>,
+      description?: Description
+    ) => {
+      await rep.mutate.updateIssue({
         id,
         changes,
-      }),
+        description,
+      });
+    },
     [rep]
   );
 
@@ -378,6 +404,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             state={state}
             rep={rep}
             handleUpdateIssue={handleUpdateIssue}
+            handleCreateComment={handleCreateComment}
           />
         </div>
       </div>
