@@ -11,6 +11,7 @@ interface Props {
   onToggleMenu?: () => void;
   filteredIssuesCount?: number;
   issuesCount: number;
+  showSortOrderMenu: boolean;
 }
 
 interface FilterStatusProps {
@@ -42,6 +43,7 @@ const TopFilter = ({
   onToggleMenu,
   filteredIssuesCount,
   issuesCount,
+  showSortOrderMenu,
 }: Props) => {
   const [orderBy, setOrderByParam] = useQueryState(
     "orderBy",
@@ -100,11 +102,13 @@ const TopFilter = ({
 
         {/* right section */}
         <div className="flex items-center">
-          <SortOrderMenu
-            onSelect={(orderBy) => setOrderByParam(orderBy)}
-            onCancelOrder={() => setOrderByParam(null)}
-            order={orderBy}
-          />
+          {showSortOrderMenu && (
+            <SortOrderMenu
+              onSelect={(orderBy) => setOrderByParam(orderBy)}
+              onCancelOrder={() => setOrderByParam(null)}
+              order={orderBy}
+            />
+          )}
         </div>
       </div>
       {statusFilters || priorityFilters ? (

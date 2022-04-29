@@ -403,6 +403,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
                   : undefined
               }
               issuesCount={state.viewIssueCount}
+              showSortOrderMenu={view !== "board"}
             />
           )}
           <Layout

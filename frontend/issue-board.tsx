@@ -27,11 +27,6 @@ export const getIssueByType = (allIssues: Issue[]): IssuesByStatusType => {
   return result;
 };
 
-interface Props {
-  issues: Issue[];
-  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
-}
-
 export function getKanbanOrderIssueUpdates(
   issueToMove: Issue,
   issueToInsertBefore: Issue,
@@ -73,6 +68,11 @@ export function getKanbanOrderIssueUpdates(
     });
   }
   return issueUpdates;
+}
+
+interface Props {
+  issues: Issue[];
+  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
 }
 
 export default function IssueBoard({ issues, onUpdateIssues }: Props) {
