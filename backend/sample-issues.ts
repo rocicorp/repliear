@@ -5,8 +5,13 @@ import { sortBy } from "lodash";
 
 export async function getReactSampleData(): Promise<SampleData> {
   const issuesDefault = (await import("./issues-react.js.gz")).default;
-  const sortedIssues = sortBy(issuesDefault, (reactIssue) =>
-    Date.parse(reactIssue.updated_at)
+  const sortedIssues = sortBy(
+    issuesDefault,
+    (reactIssue) =>
+      Number.MAX_SAFE_INTEGER -
+      Date.parse(reactIssue.updated_at) +
+      "-" +
+      reactIssue.number
   );
 
   const issuesCount = issuesDefault.length;

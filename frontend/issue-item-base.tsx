@@ -44,7 +44,7 @@ const IssueItemBase = ({
       {...provided.dragHandleProps}
     >
       <div
-        className="flex justify-between w-full cursor-pointer"
+        className="flex justify-between w-full cursor-pointer overflow-x-clip"
         onClick={handleIssueItemClick}
       >
         <div className="flex flex-col">

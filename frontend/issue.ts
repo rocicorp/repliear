@@ -70,6 +70,12 @@ export const issueValueSchema = issueSchema.omit({
   id: true,
 });
 
+export type IssueUpdate = {
+  id: string;
+  changes: Partial<IssueValue>;
+  description?: Description;
+};
+
 export async function getIssue(
   tx: ReadTransaction,
   id: string

@@ -5,10 +5,12 @@ import { FixedSizeList } from "react-window";
 import type { Description, Issue, IssueValue, Priority, Status } from "./issue";
 
 interface Props {
-  onUpdateIssue: (
-    id: string,
-    changes: Partial<IssueValue>,
-    description?: Description
+  onUpdateIssues: (
+    issueUpdates: {
+      id: string;
+      changes: Partial<IssueValue>;
+      description?: Description;
+    }[]
   ) => void;
   issues: Issue[];
 }
@@ -39,26 +41,21 @@ const Row = ({
   </div>
 );
 
-const IssueList = ({ onUpdateIssue, issues }: Props) => {
+const IssueList = ({ onUpdateIssues, issues }: Props) => {
   const fixedSizeListRef = useRef<FixedSizeList>(null);
-  // useEffect(() => {
-  //   if (fixedSizeListRef.current) {
-  //     fixedSizeListRef.current.scrollTo(0);
-  //   }
-  // }, [issueFilter]);
 
   const handleChangePriority = useCallback(
     (issue: Issue, priority: Priority) => {
-      onUpdateIssue(issue.id, { priority });
+      onUpdateIssues([{ id: issue.id, changes: { priority } }]);
     },
-    [onUpdateIssue]
+    [onUpdateIssues]
   );
 
   const handleChangeStatus = useCallback(
     (issue: Issue, status: Status) => {
-      onUpdateIssue(issue.id, { status });
+      onUpdateIssues([{ id: issue.id, changes: { status } }]);
     },
-    [onUpdateIssue]
+    [onUpdateIssues]
   );
 
   return (

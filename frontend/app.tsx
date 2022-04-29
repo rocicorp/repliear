@@ -15,6 +15,7 @@ import {
   statusEnumSchema,
   Description,
   Comment,
+  IssueUpdate,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -288,37 +289,38 @@ interface LayoutProps {
   view: string | null;
   state: State;
   rep: Replicache<M>;
-  handleUpdateIssue: (
-    id: string,
-    changes: Partial<IssueValue>,
-    description?: Description
-  ) => void;
-  handleCreateComment: (comment: Comment) => void;
+  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
+  onCreateComment: (comment: Comment) => void;
 }
 
 const Layout = ({
   view,
   state,
   rep,
-  handleUpdateIssue,
-  handleCreateComment,
+  onUpdateIssues,
+  onCreateComment,
 }: LayoutProps) => {
   switch (view) {
     case "board":
-      return <IssueBoard issues={state.filteredIssues} />;
+      return (
+        <IssueBoard
+          issues={state.filteredIssues}
+          onUpdateIssues={onUpdateIssues}
+        />
+      );
     case "detail":
       return (
         <IssueDetail
           rep={rep}
-          onUpdateIssue={handleUpdateIssue}
-          onAddComment={handleCreateComment}
+          onUpdateIssues={onUpdateIssues}
+          onAddComment={onCreateComment}
         />
       );
     default:
       return (
         <IssueList
           issues={state.filteredIssues}
-          onUpdateIssue={handleUpdateIssue}
+          onUpdateIssues={onUpdateIssues}
         />
       );
   }
@@ -336,7 +338,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     viewIssueCount: 0,
     filteredIssues: [],
     filters: getFilters(view, priorityFilter, statusFilter),
-    issueOrder: getIssueOrder(orderBy),
+    issueOrder: getIssueOrder(view, orderBy),
   });
 
   useEffect(() => {
@@ -369,17 +371,15 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     rep.mutate.putIssue({ issue, description });
   const handleCreateComment = (comment: Comment) =>
     rep.mutate.putIssueComment(comment);
-  const handleUpdateIssue = useCallback(
+  const handleUpdateIssues = useCallback(
     async (
-      id: string,
-      changes: Partial<IssueValue>,
-      description?: Description
+      issueUpdates: {
+        id: string;
+        changes: Partial<IssueValue>;
+        description?: Description;
+      }[]
     ) => {
-      await rep.mutate.updateIssue({
-        id,
-        changes,
-        description,
-      });
+      await rep.mutate.updateIssues(issueUpdates);
     },
     [rep]
   );
@@ -409,8 +409,8 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
             view={view}
             state={state}
             rep={rep}
-            handleUpdateIssue={handleUpdateIssue}
-            handleCreateComment={handleCreateComment}
+            onUpdateIssues={handleUpdateIssues}
+            onCreateComment={handleCreateComment}
           />
         </div>
       </div>
