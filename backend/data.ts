@@ -119,7 +119,6 @@ export async function initSpaces(
   for (let i = 0; i < count; i++) {
     await initSpace(executor, nanoid(6), getSampleData);
   }
-  await executor(`cluster entry using idx_entry_spaceid_key`);
 }
 
 export async function initSpace(
