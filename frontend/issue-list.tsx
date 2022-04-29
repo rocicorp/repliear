@@ -5,7 +5,11 @@ import { FixedSizeList } from "react-window";
 import type { Description, Issue, IssueValue, Priority, Status } from "./issue";
 
 interface Props {
-  onUpdateIssue: (id: string, changes: Partial<IssueValue>, description?: Description) => void;
+  onUpdateIssue: (
+    id: string,
+    changes: Partial<IssueValue>,
+    description?: Description
+  ) => void;
   issues: Issue[];
 }
 
