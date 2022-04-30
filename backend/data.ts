@@ -78,7 +78,7 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (version)`);
 }
 
-export const SAMPLE_SPACE_ID = "sampleSpaceID-12";
+export const SAMPLE_SPACE_ID = "sampleSpaceID-13";
 
 export async function getUnusedSpace(
   executor: Executor,
