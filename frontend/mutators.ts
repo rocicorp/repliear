@@ -7,8 +7,8 @@ import {
   putIssueDescription,
   putIssueComment,
   Issue,
+  IssueUpdate,
 } from "./issue";
-import type { IssueValue } from "./issue";
 
 export type M = typeof mutators;
 export const mutators = {
@@ -25,27 +25,21 @@ export const mutators = {
     await putIssue(tx, issue);
     await putIssueDescription(tx, issue.id, description);
   },
-  updateIssue: async (
+  updateIssues: async (
     tx: WriteTransaction,
-    {
-      id,
-      changes,
-      description,
-    }: {
-      id: string;
-      changes: Partial<IssueValue>;
-      description?: Description;
-    }
+    issueUpdates: IssueUpdate[]
   ): Promise<void> => {
-    const issue = await getIssue(tx, id);
-    if (issue === undefined) {
-      console.info(`Issue ${id} not found`);
-      return;
-    }
-    const changed = { ...issue, ...changes };
-    await putIssue(tx, changed);
-    if (description) {
-      await putIssueDescription(tx, id, description);
+    for (const { id, changes, description } of issueUpdates) {
+      const issue = await getIssue(tx, id);
+      if (issue === undefined) {
+        console.info(`Issue ${id} not found`);
+        return;
+      }
+      const changed = { ...issue, ...changes };
+      await putIssue(tx, changed);
+      if (description) {
+        await putIssueDescription(tx, id, description);
+      }
     }
   },
   deleteIssues: async (tx: WriteTransaction, ids: string[]): Promise<void> => {

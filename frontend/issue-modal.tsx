@@ -16,7 +16,10 @@ import StatusMenu from "./status-menu";
 interface Props {
   isOpen: boolean;
   onDismiss?: () => void;
-  onCreateIssue: (i: Issue, description: Description) => void;
+  onCreateIssue: (
+    i: Omit<Issue, "kanbanOrder">,
+    description: Description
+  ) => void;
 }
 
 export default function IssueModal({

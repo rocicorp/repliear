@@ -1,8 +1,9 @@
-import { groupBy } from "lodash";
-import React from "react";
+import { generateNKeysBetween } from "fractional-indexing";
+import { groupBy, indexOf } from "lodash";
+import React, { useCallback } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
-import { Status, Issue } from "./issue";
+import { Status, Issue, IssueUpdate } from "./issue";
 import IssueCol from "./issue-col";
 
 export type IssuesByStatusType = {
@@ -26,18 +27,83 @@ export const getIssueByType = (allIssues: Issue[]): IssuesByStatusType => {
   return result;
 };
 
-interface Props {
-  issues: Issue[];
-  // todo: implement this later
-  //onUpdateIssue?: (id: string, changes: Partial<IssueValue>) => void;
+export function getKanbanOrderIssueUpdates(
+  issueToMove: Issue,
+  issueToInsertBefore: Issue,
+  issues: Issue[]
+): IssueUpdate[] {
+  const indexInKanbanOrder = indexOf(issues, issueToInsertBefore);
+  let beforeKey: string | null = null;
+  if (indexInKanbanOrder > 0) {
+    beforeKey = issues[indexInKanbanOrder - 1].kanbanOrder;
+  }
+  let afterKey: string | null = null;
+  const issueIDsToRekey: string[] = [];
+  // If the issues we are trying to move between
+  // have identical kanbanOrder values, we need to fix up the
+  // collision by re-keying the issues.
+  for (let i = indexInKanbanOrder; i < issues.length; i++) {
+    if (issues[i].kanbanOrder !== beforeKey) {
+      afterKey = issues[i].kanbanOrder;
+      break;
+    }
+    issueIDsToRekey.push(issues[i].id);
+  }
+  const newKanbanOrderKeys = generateNKeysBetween(
+    beforeKey,
+    afterKey,
+    issueIDsToRekey.length + 1 // +1 for the dragged issue
+  );
+
+  const issueUpdates = [
+    {
+      id: issueToMove.id,
+      changes: { kanbanOrder: newKanbanOrderKeys[0] },
+    },
+  ];
+  for (let i = 0; i < issueIDsToRekey.length; i++) {
+    issueUpdates.push({
+      id: issueIDsToRekey[i],
+      changes: { kanbanOrder: newKanbanOrderKeys[i + 1] },
+    });
+  }
+  return issueUpdates;
 }
 
-export default function IssueBoard({ issues }: Props) {
+interface Props {
+  issues: Issue[];
+  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
+}
+
+export default function IssueBoard({ issues, onUpdateIssues }: Props) {
   const issuesByType = getIssueByType(issues);
 
-  const onDragEnd = ({ source, destination }: DropResult) => {
-    if (!source || !destination) return;
-  };
+  const onDragEnd = useCallback(
+    ({ source, destination }: DropResult) => {
+      if (!destination) {
+        return;
+      }
+      const sourceStatus = source?.droppableId as Status;
+      const draggedIssue = issuesByType[sourceStatus][source.index];
+      if (!draggedIssue) {
+        return;
+      }
+      const newStatus = destination.droppableId as Status;
+      const newIndex = destination?.index;
+      const issueToInsertBefore = issuesByType[newStatus][newIndex];
+      if (draggedIssue === issueToInsertBefore) {
+        return;
+      }
+      const issueUpdates = issueToInsertBefore
+        ? getKanbanOrderIssueUpdates(draggedIssue, issueToInsertBefore, issues)
+        : [{ id: draggedIssue.id, changes: {} }];
+      if (newStatus !== sourceStatus) {
+        issueUpdates[0].changes.status = newStatus;
+      }
+      onUpdateIssues(issueUpdates);
+    },
+    [issues, issuesByType, onUpdateIssues]
+  );
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>

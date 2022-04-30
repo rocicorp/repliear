@@ -39,6 +39,7 @@ export type StatusEnum = z.infer<typeof statusEnumSchema>;
 export enum Order {
   CREATED = "CREATED",
   MODIFIED = "MODIFIED",
+  KANBAN = "KANBAN",
 }
 
 export const orderEnumSchema = z.nativeEnum(Order);
@@ -60,6 +61,7 @@ export const issueSchema = z.object({
   modified: z.number(),
   created: z.number(),
   creator: z.string(),
+  kanbanOrder: z.string(),
 });
 
 export type Issue = z.TypeOf<typeof issueSchema>;
@@ -67,6 +69,12 @@ export type IssueValue = z.TypeOf<typeof issueValueSchema>;
 export const issueValueSchema = issueSchema.omit({
   id: true,
 });
+
+export type IssueUpdate = {
+  id: string;
+  changes: Partial<IssueValue>;
+  description?: Description;
+};
 
 export async function getIssue(
   tx: ReadTransaction,

@@ -15,14 +15,16 @@ import {
   statusEnumSchema,
   Description,
   Comment,
+  IssueUpdate,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
-import { sortBy, sortedIndexBy } from "lodash";
+import { minBy, sortBy, sortedIndexBy } from "lodash";
 import IssueDetail from "./issue-detail";
+import { generateKeyBetween } from "fractional-indexing";
 
 type Filters = {
   readonly viewFilter: (issue: Issue) => boolean;
@@ -99,7 +101,10 @@ function getFilters(
   };
 }
 
-function getIssueOrder(orderBy: string | null): Order {
+function getIssueOrder(view: string | null, orderBy: string | null): Order {
+  if (view === "board") {
+    return Order.KANBAN;
+  }
   const parseResult = orderEnumSchema.safeParse(orderBy);
   return parseResult.success ? parseResult.data : Order.MODIFIED;
 }
@@ -167,16 +172,19 @@ function reducer(
     action.type === "setIssueOrder" ? action.issueOrder : state.issueOrder;
 
   function order(issue: Issue): string {
-    let orderValue: number;
+    let orderValue: string;
     switch (issueOrder) {
       case Order.CREATED:
-        orderValue = issue.created;
+        orderValue = Number.MAX_SAFE_INTEGER - issue.created + "-" + issue.id;
         break;
       case Order.MODIFIED:
-        orderValue = issue.modified;
+        orderValue = Number.MAX_SAFE_INTEGER - issue.modified + "-" + issue.id;
+        break;
+      case Order.KANBAN:
+        orderValue = issue.kanbanOrder + "-" + issue.id;
         break;
     }
-    return Number.MAX_SAFE_INTEGER - orderValue + "-" + issue.id;
+    return orderValue;
   }
   function filterAndSort(issues: Issue[]): Issue[] {
     return sortBy(issues.filter(filters.issuesFilter), order);
@@ -193,6 +201,9 @@ function reducer(
 
   switch (action.type) {
     case "diff": {
+      if (action.diff.length === 0) {
+        return state;
+      }
       const newAllIssuesMap = new Map(state.allIssuesMap);
       let newViewIssueCount = state.viewIssueCount;
       const newFilteredIssues = [...state.filteredIssues];
@@ -211,6 +222,7 @@ function reducer(
                 newIssue
               );
             }
+
             break;
           }
           case "del": {
@@ -282,37 +294,38 @@ interface LayoutProps {
   view: string | null;
   state: State;
   rep: Replicache<M>;
-  handleUpdateIssue: (
-    id: string,
-    changes: Partial<IssueValue>,
-    description?: Description
-  ) => void;
-  handleCreateComment: (comment: Comment) => void;
+  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
+  onCreateComment: (comment: Comment) => void;
 }
 
 const Layout = ({
   view,
   state,
   rep,
-  handleUpdateIssue,
-  handleCreateComment,
+  onUpdateIssues,
+  onCreateComment,
 }: LayoutProps) => {
   switch (view) {
     case "board":
-      return <IssueBoard issues={state.filteredIssues} />;
+      return (
+        <IssueBoard
+          issues={state.filteredIssues}
+          onUpdateIssues={onUpdateIssues}
+        />
+      );
     case "detail":
       return (
         <IssueDetail
           rep={rep}
-          onUpdateIssue={handleUpdateIssue}
-          onAddComment={handleCreateComment}
+          onUpdateIssues={onUpdateIssues}
+          onAddComment={onCreateComment}
         />
       );
     default:
       return (
         <IssueList
           issues={state.filteredIssues}
-          onUpdateIssue={handleUpdateIssue}
+          onUpdateIssues={onUpdateIssues}
         />
       );
   }
@@ -330,7 +343,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     viewIssueCount: 0,
     filteredIssues: [],
     filters: getFilters(view, priorityFilter, statusFilter),
-    issueOrder: getIssueOrder(orderBy),
+    issueOrder: getIssueOrder(view, orderBy),
   });
 
   useEffect(() => {
@@ -355,25 +368,42 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   useEffect(() => {
     dispatch({
       type: "setIssueOrder",
-      issueOrder: getIssueOrder(orderBy),
+      issueOrder: getIssueOrder(view, orderBy),
     });
-  }, [orderBy]);
+  }, [view, orderBy]);
 
-  const handleCreateIssue = (issue: Issue, description: Description) =>
-    rep.mutate.putIssue({ issue, description });
-  const handleCreateComment = (comment: Comment) =>
-    rep.mutate.putIssueComment(comment);
-  const handleUpdateIssue = useCallback(
-    async (
-      id: string,
-      changes: Partial<IssueValue>,
-      description?: Description
-    ) => {
-      await rep.mutate.updateIssue({
-        id,
-        changes,
+  const handleCreateIssue = useCallback(
+    async (issue: Omit<Issue, "kanbanOrder">, description: Description) => {
+      const minKanbanOrderIssue = minBy(
+        [...state.allIssuesMap.values()],
+        (issue) => issue.kanbanOrder
+      );
+      const minKanbanOrder = minKanbanOrderIssue
+        ? minKanbanOrderIssue.kanbanOrder
+        : null;
+      await rep.mutate.putIssue({
+        issue: {
+          ...issue,
+          kanbanOrder: generateKeyBetween(null, minKanbanOrder),
+        },
         description,
       });
+    },
+    [rep, state.allIssuesMap]
+  );
+  const handleCreateComment = useCallback(
+    (comment: Comment) => rep.mutate.putIssueComment(comment),
+    [rep]
+  );
+  const handleUpdateIssues = useCallback(
+    async (
+      issueUpdates: {
+        id: string;
+        changes: Partial<IssueValue>;
+        description?: Description;
+      }[]
+    ) => {
+      await rep.mutate.updateIssues(issueUpdates);
     },
     [rep]
   );
@@ -397,14 +427,15 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
                   : undefined
               }
               issuesCount={state.viewIssueCount}
+              showSortOrderMenu={view !== "board"}
             />
           )}
           <Layout
             view={view}
             state={state}
             rep={rep}
-            handleUpdateIssue={handleUpdateIssue}
-            handleCreateComment={handleCreateComment}
+            onUpdateIssues={handleUpdateIssues}
+            onCreateComment={handleCreateComment}
           />
         </div>
       </div>

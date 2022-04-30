@@ -8,10 +8,10 @@ import {
   Description,
   getIssueDescription,
   Issue,
-  IssueValue,
   Priority,
   Status,
   getIssue,
+  IssueUpdate,
 } from "./issue";
 import StatusMenu from "./status-menu";
 import { queryTypes, useQueryStates } from "next-usequerystate";
@@ -23,11 +23,7 @@ import { Remark } from "react-remark";
 import { nanoid } from "nanoid";
 
 interface Props {
-  onUpdateIssue: (
-    id: string,
-    changes: Partial<IssueValue>,
-    description?: Description
-  ) => void;
+  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onAddComment: (comment: Comment) => void;
   rep: Replicache<M>;
 }
@@ -48,7 +44,7 @@ const commentsList = (comments: Comment[]) => {
 
 export default function IssueDetail({
   rep,
-  onUpdateIssue,
+  onUpdateIssues,
   onAddComment,
 }: Props) {
   const [detailView, setDetailView] = useQueryStates({
@@ -99,30 +95,30 @@ export default function IssueDetail({
 
   const handleChangePriority = useCallback(
     (priority: Priority) => {
-      issue && onUpdateIssue(issue.id, { priority });
+      issue && onUpdateIssues([{ id: issue.id, changes: { priority } }]);
     },
-    [onUpdateIssue, issue]
+    [onUpdateIssues, issue]
   );
 
   const handleChangeStatus = useCallback(
     (status: Status) => {
-      issue && onUpdateIssue(issue.id, { status });
+      issue && onUpdateIssues([{ id: issue.id, changes: { status } }]);
     },
-    [onUpdateIssue, issue]
+    [onUpdateIssues, issue]
   );
 
   const handleChangeDescription = useCallback(
     (description: string) => {
-      issue && onUpdateIssue(issue.id, {}, description);
+      issue && onUpdateIssues([{ id: issue.id, changes: {}, description }]);
     },
-    [onUpdateIssue, issue]
+    [onUpdateIssues, issue]
   );
 
   const handleChangeTitle = useCallback(
     (title: string) => {
-      issue && onUpdateIssue(issue.id, { title });
+      issue && onUpdateIssues([{ id: issue.id, changes: { title } }]);
     },
-    [onUpdateIssue, issue]
+    [onUpdateIssues, issue]
   );
 
   const handleAddComment = useCallback(() => {
@@ -136,7 +132,7 @@ export default function IssueDetail({
       });
       setCommentText("");
     }
-  }, [onAddComment, commentText]);
+  }, [onAddComment, commentText, issue]);
 
   const handleClickCloseBtn = async () => {
     await setDetailView(
