@@ -17,7 +17,10 @@ interface Props {
   // Show menu (for small screen only)
   menuVisible: boolean;
   onCloseMenu?: () => void;
-  onCreateIssue: (i: Issue, description: Description) => void;
+  onCreateIssue: (
+    i: Omit<Issue, "kanbanOrder">,
+    description: Description
+  ) => void;
 }
 
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {

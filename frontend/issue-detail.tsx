@@ -8,10 +8,10 @@ import {
   Description,
   getIssueDescription,
   Issue,
-  IssueValue,
   Priority,
   Status,
   getIssue,
+  IssueUpdate,
 } from "./issue";
 import StatusMenu from "./status-menu";
 import { queryTypes, useQueryStates } from "next-usequerystate";
@@ -23,13 +23,7 @@ import { Remark } from "react-remark";
 import { nanoid } from "nanoid";
 
 interface Props {
-  onUpdateIssues: (
-    issueUpdates: {
-      id: string;
-      changes: Partial<IssueValue>;
-      description?: Description;
-    }[]
-  ) => void;
+  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onAddComment: (comment: Comment) => void;
   rep: Replicache<M>;
 }

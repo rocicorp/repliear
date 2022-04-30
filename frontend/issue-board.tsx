@@ -3,7 +3,7 @@ import { groupBy, indexOf } from "lodash";
 import React, { useCallback } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
-import { Status, Issue, IssueValue, Description, IssueUpdate } from "./issue";
+import { Status, Issue, IssueUpdate } from "./issue";
 import IssueCol from "./issue-col";
 
 export type IssuesByStatusType = {

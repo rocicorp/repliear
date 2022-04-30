@@ -2,16 +2,10 @@ import React, { CSSProperties, useCallback, useRef } from "react";
 import IssueRow from "./issue-row";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
-import type { Description, Issue, IssueValue, Priority, Status } from "./issue";
+import type { Issue, IssueUpdate, Priority, Status } from "./issue";
 
 interface Props {
-  onUpdateIssues: (
-    issueUpdates: {
-      id: string;
-      changes: Partial<IssueValue>;
-      description?: Description;
-    }[]
-  ) => void;
+  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   issues: Issue[];
 }
 

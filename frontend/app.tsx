@@ -22,8 +22,9 @@ import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
-import { sortBy, sortedIndexBy } from "lodash";
+import { minBy, sortBy, sortedIndexBy } from "lodash";
 import IssueDetail from "./issue-detail";
+import { generateKeyBetween } from "fractional-indexing";
 
 type Filters = {
   readonly viewFilter: (issue: Issue) => boolean;
@@ -200,6 +201,9 @@ function reducer(
 
   switch (action.type) {
     case "diff": {
+      if (action.diff.length === 0) {
+        return state;
+      }
       const newAllIssuesMap = new Map(state.allIssuesMap);
       let newViewIssueCount = state.viewIssueCount;
       const newFilteredIssues = [...state.filteredIssues];
@@ -218,6 +222,7 @@ function reducer(
                 newIssue
               );
             }
+
             break;
           }
           case "del": {
@@ -367,10 +372,29 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     });
   }, [view, orderBy]);
 
-  const handleCreateIssue = (issue: Issue, description: Description) =>
-    rep.mutate.putIssue({ issue, description });
-  const handleCreateComment = (comment: Comment) =>
-    rep.mutate.putIssueComment(comment);
+  const handleCreateIssue = useCallback(
+    async (issue: Omit<Issue, "kanbanOrder">, description: Description) => {
+      const minKanbanOrderIssue = minBy(
+        [...state.allIssuesMap.values()],
+        (issue) => issue.kanbanOrder
+      );
+      const minKanbanOrder = minKanbanOrderIssue
+        ? minKanbanOrderIssue.kanbanOrder
+        : null;
+      await rep.mutate.putIssue({
+        issue: {
+          ...issue,
+          kanbanOrder: generateKeyBetween(null, minKanbanOrder),
+        },
+        description,
+      });
+    },
+    [rep, state.allIssuesMap]
+  );
+  const handleCreateComment = useCallback(
+    (comment: Comment) => rep.mutate.putIssueComment(comment),
+    [rep]
+  );
   const handleUpdateIssues = useCallback(
     async (
       issueUpdates: {
