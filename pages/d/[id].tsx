@@ -23,7 +23,8 @@ export default function Home() {
         name: spaceID,
         mutators,
         pullInterval: 30000,
-        licenseKey: TEST_LICENSE_KEY,
+        licenseKey:
+          process.env.NEXT_PUBLIC_REPLICACHE_LICENSE_KEY || TEST_LICENSE_KEY,
       });
       const unsub = r.subscribe(
         (tx) => {
