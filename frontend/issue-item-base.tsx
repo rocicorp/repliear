@@ -48,7 +48,7 @@ const IssueItemBase = ({
         onClick={handleIssueItemClick}
       >
         <div className="flex flex-col">
-          <span className="text-xs font-normal uppercase">{issue.id}</span>
+          <span className="text-xs font-normal uppercase"></span>
           <span className="mt-1 text-sm font-medium text-gray-2 line-clamp-2 overflow-ellipsis h-10">
             {issue.title}
           </span>
