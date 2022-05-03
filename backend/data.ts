@@ -121,6 +121,7 @@ export async function createSchemaVersion1(executor: Executor) {
         select id from space 
           where used = true and id <> '${TEMPLATE_SPACE_ID}' 
           and lastmodified < now() - interval '1 hour' * max_inactive_hours
+          order by lastmodified asc
           limit cleanupLimit
       );
       delete from space where id = any(spaceids);
