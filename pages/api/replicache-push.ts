@@ -3,7 +3,6 @@ import {
   createDatabase,
   getLastMutationID,
   getVersion,
-  initSpace,
   setLastMutationID,
   setVersion,
 } from "../../backend/data";
@@ -12,8 +11,6 @@ import { ReplicacheTransaction } from "../../backend/replicache-transaction";
 import { mutators } from "../../frontend/mutators";
 import { z } from "zod";
 import { jsonSchema } from "../../util/json";
-import { assertNotUndefined } from "../../util/asserts";
-import { getReactSampleData } from "../../backend/sample-issues";
 import type { MutatorDefs } from "replicache";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
@@ -36,12 +33,13 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
   const push = pushRequestSchema.parse(req.body);
 
   const t0 = Date.now();
-  await transact(async (executor) => {
+  const result = await transact(async (executor) => {
     await createDatabase(executor);
-    await initSpace(executor, spaceID, getReactSampleData);
 
     const prevVersion = await getVersion(executor, spaceID);
-    assertNotUndefined(prevVersion);
+    if (prevVersion === undefined) {
+      return undefined;
+    }
     const nextVersion = prevVersion + 1;
     let lastMutationID =
       (await getLastMutationID(executor, push.clientID)) ?? 0;
@@ -92,12 +90,18 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
       console.log("Processed mutation in", Date.now() - t1);
     }
 
-    await Promise.all([
+    return await Promise.all([
       setLastMutationID(executor, push.clientID, lastMutationID),
       setVersion(executor, spaceID, nextVersion),
       tx.flush(),
     ]);
   });
+
+  if (!result) {
+    res.status(404);
+    res.end();
+    return;
+  }
 
   console.log("Processed all mutations in", Date.now() - t0);
 

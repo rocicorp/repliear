@@ -5,7 +5,6 @@ import { ReplicacheTransaction } from "./replicache-transaction";
 import type { Issue, Comment, Description } from "../frontend/issue";
 import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
-import { nanoid } from "nanoid";
 
 export type SampleData = {
   issues: { issue: Issue; description: Description }[];
@@ -35,6 +34,9 @@ async function getSchemaVersion(executor: Executor) {
   );
   return qr.rows[0].value;
 }
+
+export const TEMPLATE_SPACE_ID = "template-space-id";
+const INITIAL_SPACE_VERSION = 1;
 
 export async function createSchemaVersion1(executor: Executor) {
   await executor(`create table meta (key text primary key, value json)`);
@@ -76,9 +78,59 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (spaceid)`);
   await executor(`create index on entry (deleted)`);
   await executor(`create index on entry (version)`);
-}
 
-export const SAMPLE_SPACE_ID = "sampleSpaceID-13";
+  await executor(`create function gen_spaceid() 
+      returns text as $$
+      declare id text;
+      begin
+        id := encode(gen_random_bytes(6), 'base64');
+        id := replace(id, '/', '_'); -- url safe replacement
+        id := replace(id, '+', '-'); -- url safe replacement
+        return id;
+      end;
+      $$ language 'plpgsql';
+  `);
+
+  await executor(
+    `
+    create function init_spaces(count integer)
+    returns text[] as $$
+    declare spaceids text[] := array[]::text[];
+    begin
+      for i in 1..count loop
+        spaceids[i] := gen_spaceid();
+        insert into space (id, version, used, lastmodified) 
+          values (spaceids[i], ${INITIAL_SPACE_VERSION}, false, now());
+        insert into entry (spaceid, key, value, deleted, version, lastmodified)
+          select (spaceids[i]), key, value, deleted, version, lastmodified 
+          from entry where spaceid = '${TEMPLATE_SPACE_ID}';
+      end loop;
+      return spaceids;
+    end;
+    $$ language 'plpgsql' volatile;
+    `
+  );
+
+  await executor(
+    `
+    create function cleanup_spaces(cleanupLimit integer, max_inactive_hours integer)
+    returns text[] as $$
+    declare spaceids text[] := array[]::text[];
+    begin
+      spaceids := array(
+        select id from space 
+          where used = true and id <> '${TEMPLATE_SPACE_ID}' 
+          and lastmodified < now() - interval '1 hour' * max_inactive_hours
+          limit cleanupLimit
+      );
+      delete from space where id = any(spaceids);
+      delete from entry where spaceid = any(spaceids);
+      return spaceids;
+    end;
+    $$ language 'plpgsql' volatile;
+    `
+  );
+}
 
 export async function getUnusedSpace(
   executor: Executor,
@@ -115,41 +167,23 @@ export async function initSpaces(
   count: number,
   getSampleData: () => Promise<SampleData>
 ): Promise<void> {
-  console.log("Initing", count, "spaces.");
-  for (let i = 0; i < count; i++) {
-    await initSpace(executor, nanoid(6), getSampleData);
-  }
-}
-
-export async function initSpace(
-  executor: Executor,
-  spaceID: string,
-  getSampleData: () => Promise<SampleData>
-) {
-  const { rows } = await executor(`select version from space where id = $1`, [
-    spaceID,
-  ]);
-  if (rows.length !== 0) {
-    console.log("Space already initialized", spaceID);
-    return;
-  }
-  console.log("Initializing space", spaceID);
-
   const {
     rows: sampleSpaceRows,
   } = await executor(`select version from space where id = $1`, [
-    SAMPLE_SPACE_ID,
+    TEMPLATE_SPACE_ID,
   ]);
-  const initialVersion = 1;
 
   if (sampleSpaceRows.length === 0) {
-    await insertSpace(executor, SAMPLE_SPACE_ID, initialVersion, true);
-    console.log("Initializing template space", SAMPLE_SPACE_ID);
+    console.log("Initializing template space", TEMPLATE_SPACE_ID);
+    await executor(
+      `insert into space (id, version, used, lastmodified) values ($1, $2, $3, now())`,
+      [TEMPLATE_SPACE_ID, INITIAL_SPACE_VERSION, true]
+    );
     const issuesTx = new ReplicacheTransaction(
       executor,
-      SAMPLE_SPACE_ID,
+      TEMPLATE_SPACE_ID,
       "fake-client-id-for-server-init",
-      initialVersion
+      INITIAL_SPACE_VERSION
     );
     const start = Date.now();
     const sampleData = await getSampleData();
@@ -170,9 +204,9 @@ export async function initSpace(
     for (const sampleCommentGroup of sampleCommentGroups) {
       const commentTx = new ReplicacheTransaction(
         executor,
-        SAMPLE_SPACE_ID,
+        TEMPLATE_SPACE_ID,
         "fake-client-id-for-server-init",
-        initialVersion
+        INITIAL_SPACE_VERSION
       );
       for (const comment of sampleCommentGroup) {
         await mutators.putIssueComment(commentTx, comment);
@@ -183,28 +217,9 @@ export async function initSpace(
   }
   const start = Date.now();
   console.log("Copying from template space");
-  await insertSpace(executor, spaceID, initialVersion, false);
-  await executor(
-    `
-     insert into entry (spaceid, key, value, deleted, version, lastmodified)
-     select $1, key, value, deleted, version, lastmodified from entry where spaceid = $2
-    `,
-    [spaceID, SAMPLE_SPACE_ID]
-  );
+  await executor(`select init_spaces($1)`, [count]);
   console.log(
     "Copying from template space took " + (Date.now() - start) + "ms"
-  );
-}
-
-async function insertSpace(
-  executor: Executor,
-  spaceID: string,
-  version: number,
-  used: boolean
-) {
-  return await executor(
-    `insert into space (id, version, used, lastmodified) values ($1, $2, $3, now())`,
-    [spaceID, version, used]
   );
 }
 
