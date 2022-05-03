@@ -35,4 +35,4 @@ DATABASE_URL="<DB URL>" NEXT_PUBLIC_SUPABASE_URL="<API URL>" NEXT_PUBLIC_SUPABAS
 
 ## Credit
 
-Special thanks to [linear_clone](https://github.com/tuan3w/linearapp_clone) which we started with and enabled us to get the visual styling right quickly.
+We started this project by forking [linear_clone](https://github.com/tuan3w/linearapp_clone). This enabled us to get the visual styling right much faster than we otherwise could have.
