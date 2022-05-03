@@ -77,7 +77,7 @@ function IssueCol({ title, status, issues }: Props) {
               <div className="flex items-center">
                 {statusIcon}
                 <span className="ml-3 mr-3 font-medium">{title} </span>
-                <span className="mr-3 font-normal text-gray-400">
+                <span className="mr-3 font-normal text-gray-410">
                   {issues?.length || 0}
                 </span>
               </div>
