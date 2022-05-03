@@ -1,6 +1,10 @@
 # Repliear
 
-See: https://github.com/rocicorp/replicache/issues/857
+A high-performance issue tracker in the style of [Linear](https://linear.app/).
+
+Built with [Replicache](https://replicache.dev/), [Supabase](https://supabase.com/), and [Next.js](https://nextjs.org/).
+
+Running at [repliear.vercel.app](https://repliear.vercel.app/).
 
 ## Prerequisites
 
