@@ -33,10 +33,12 @@ const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
     }
   });
 
-  const orderedBys = [
+  const orderedBys: Array<[Order, string]> = [
     [Order.CREATED, "Created Date"],
     [Order.MODIFIED, "Last Modified"],
   ];
+
+  const displayOrder = new Map(orderedBys);
 
   const options = orderedBys.map(([order, label], idx) => {
     return (
@@ -57,7 +59,7 @@ const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
     <div ref={ref}>
       {order !== null && (
         <div className="text-white hover:text-gray-2 absolute top-3 right-9">
-          {order}
+          {displayOrder.get(order)}
         </div>
       )}
       <button

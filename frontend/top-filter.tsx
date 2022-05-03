@@ -20,16 +20,30 @@ interface FilterStatusProps {
   label: string;
 }
 
+const displayStrings: Record<Priority | Status, string> = {
+  [Priority.NONE]: "None",
+  [Priority.LOW]: "Low",
+  [Priority.MEDIUM]: "Medium",
+  [Priority.HIGH]: "High",
+  [Priority.URGENT]: "Urgent",
+
+  [Status.BACKLOG]: "Backlog",
+  [Status.TODO]: "To Do",
+  [Status.IN_PROGRESS]: "In Progress",
+  [Status.DONE]: "Done",
+  [Status.CANCELED]: "Canceled",
+};
+
 const FilterStatus = ({ filter, onDelete, label }: FilterStatusProps) => {
   if (!filter || filter.length === 0) return null;
   return (
-    <div className="flex items-center pl-4">
-      <span className="px-1 text-gray-2 bg-gray-400 rounded">{label} is</span>
-      <span className="px-1 text-gray-2 bg-gray-400 rounded">
-        {filter.join(", ")}
+    <div className="flex items-center pl-4 space-x-[1px]">
+      <span className="px-1 text-gray-2 bg-gray-400 rounded-l">{label} is</span>
+      <span className="px-1 text-gray-2 bg-gray-400 ">
+        {filter.map((f) => displayStrings[f]).join(", ")}
       </span>
       <span
-        className="px-1 text-gray-2 bg-gray-400 rounded cursor-pointer"
+        className="px-1 text-gray-2 bg-gray-400 rounded-r cursor-pointer"
         onClick={onDelete}
       >
         &times;
