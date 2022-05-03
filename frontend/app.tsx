@@ -373,13 +373,6 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     });
   }, [view, orderBy]);
 
-  useEffect(() => {
-    dispatch({
-      type: "setIssueOrder",
-      issueOrder: getIssueOrder(view, orderBy),
-    });
-  }, [view, orderBy]);
-
   const handleCreateIssue = useCallback(
     async (issue: Omit<Issue, "kanbanOrder">, description: Description) => {
       const minKanbanOrderIssue = minBy(
