@@ -175,7 +175,7 @@ export default function IssueDetail({
         <div className=" flex-row w-3/4 p-8 border-gray-300 border-r my-2 overflow-auto h-[calc(100vh-140px)] ">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5 justify-between">
-              <div className="text-md pb-4">{issue?.id}</div>
+              <div className="text-md pb-4"></div>
               {editMode ? (
                 <div className="text-sm">
                   <button
@@ -194,7 +194,7 @@ export default function IssueDetail({
               ) : (
                 <div className="text-sm">
                   <EditIcon
-                    className="!w-4 mx-4 cursor-pointer"
+                    className="!w-4 cursor-pointer"
                     onClick={() => {
                       setEditMode(true);
                     }}
@@ -248,7 +248,7 @@ export default function IssueDetail({
         <div className="flex-row w-1/4 p-8 my-2">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5">
-              <div className="text-md pb-4">{issue?.id}</div>
+              <div className="text-md pb-4"></div>
             </div>
             <div className="flex flex-row">
               <div className="flex-initial p-4">
