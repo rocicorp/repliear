@@ -9,13 +9,15 @@ export function formatDate(
   }).format(date);
 }
 
-export function timeAgo(timestamp?: string | number | Date): string | undefined {
+export function timeAgo(
+  timestamp?: string | number | Date
+): string | undefined {
   const second = 1000;
   const minute = 60 * 1000;
   const hour = 60 * minute;
   const day = 24 * hour;
   const month = 30 * day;
-  
+
   if (!timestamp) return undefined;
 
   if (isNaN(new Date(timestamp).getTime())) {
