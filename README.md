@@ -32,3 +32,7 @@ DATABASE_URL="<DB URL>" NEXT_PUBLIC_SUPABASE_URL="<API URL>" NEXT_PUBLIC_SUPABAS
 - Create a free account on supabase.com, and an empty project
 - Create a free account on vercel.com
 - Create a new project on vercel, configuring the environment variables using the values from your hosted Supabase project
+
+## Credit
+
+Special thanks to [linear_clone](https://github.com/tuan3w/linearapp_clone) which we started with and enabled us to get the visual styling right quickly.
