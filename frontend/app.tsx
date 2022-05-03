@@ -326,6 +326,7 @@ const Layout = ({
         <IssueList
           issues={state.filteredIssues}
           onUpdateIssues={onUpdateIssues}
+          view={view}
         />
       );
   }
