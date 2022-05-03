@@ -21,6 +21,7 @@ import type { M } from "./mutators";
 import { useSubscribe } from "replicache-react";
 import { Remark } from "react-remark";
 import { nanoid } from "nanoid";
+import { timeAgo } from "../util/date";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
@@ -34,7 +35,9 @@ const commentsList = (comments: Comment[]) => {
       key={comment.id}
       className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap "
     >
-      <div className="h-6 mb-1 -mt-px relative">{comment.creator}</div>
+      <div className="h-6 mb-1 -mt-px relative">
+        {comment.creator} {timeAgo(comment.created)}
+      </div>
       <div className="block flex-1 whitespace-pre-wrap">
         <Remark>{comment.body}</Remark>
       </div>
