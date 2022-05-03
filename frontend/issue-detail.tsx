@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
 import CloseIcon from "./assets/icons/close.svg";
+import DefaultAvatarIcon from "./assets/icons/avatar.svg";
 import EditIcon from "@mui/icons-material/Edit";
 import PriorityMenu from "./priority-menu";
 import {
@@ -21,6 +22,7 @@ import type { M } from "./mutators";
 import { useSubscribe } from "replicache-react";
 import { Remark } from "react-remark";
 import { nanoid } from "nanoid";
+import { timeAgo } from "../util/date";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
@@ -32,9 +34,12 @@ const commentsList = (comments: Comment[]) => {
   return comments.map((comment) => (
     <div
       key={comment.id}
-      className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap "
+      className="mx-5 bg-gray-400 flex-1 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap "
     >
-      <div className="h-6 mb-1 -mt-px relative">{comment.creator}</div>
+      <div className="h-6 mb-1 -mt-px relative">
+        <DefaultAvatarIcon className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 float-left mr-2" />
+        {comment.creator} {timeAgo(comment.created)}
+      </div>
       <div className="block flex-1 whitespace-pre-wrap">
         <Remark>{comment.body}</Remark>
       </div>
@@ -150,7 +155,7 @@ export default function IssueDetail({
 
   const handleSave = () => {
     handleChangeDescription(descriptionText);
-    handleChangeTitle(titleText);
+    handleChangeTitle(titleText || (issue?.title as string));
     setEditMode(false);
   };
 
@@ -220,18 +225,10 @@ export default function IssueDetail({
                   <Remark>{description}</Remark>
                 )}
               </div>
-              <div className=" pb-4">
-                <a
-                  href=""
-                  className="text-md hover:text-gray-1 visited:text-gray-100 text-gray-200"
-                >
-                  View original issue in GitHub
-                </a>
-              </div>
             </div>
             <div className="text-md py-4 px-5 text-gray-4">Comments</div>
             {commentsList(comments)}
-            <div className="mx-5 bg-gray-400 flex-1 mx-0 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap ">
+            <div className="mx-5 bg-gray-400 flex-1 mx- mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
                 placeholder="Leave a comment ..."
