@@ -1,4 +1,4 @@
-import React, { CSSProperties, useCallback, useRef } from "react";
+import React, { CSSProperties, useCallback, useEffect, useRef } from "react";
 import IssueRow from "./issue-row";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
@@ -7,6 +7,7 @@ import type { Issue, IssueUpdate, Priority, Status } from "./issue";
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   issues: Issue[];
+  view: string | null;
 }
 
 type ListData = {
@@ -35,8 +36,11 @@ const Row = ({
   </div>
 );
 
-const IssueList = ({ onUpdateIssues, issues }: Props) => {
+const IssueList = ({ onUpdateIssues, issues, view }: Props) => {
   const fixedSizeListRef = useRef<FixedSizeList>(null);
+  useEffect(() => {
+    fixedSizeListRef.current?.scrollTo(0);
+  }, [view]);
 
   const handleChangePriority = useCallback(
     (issue: Issue, priority: Priority) => {

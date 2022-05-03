@@ -24,7 +24,7 @@ interface Props {
 }
 
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
-  const [, setLayoutViewParam] = useQueryState("view");
+  const [, setLayoutViewParam] = useQueryState("view", { history: "push" });
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);

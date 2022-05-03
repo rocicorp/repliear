@@ -326,6 +326,7 @@ const Layout = ({
         <IssueList
           issues={state.filteredIssues}
           onUpdateIssues={onUpdateIssues}
+          view={view}
         />
       );
   }
@@ -364,6 +365,13 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
       filters: getFilters(view, priorityFilter, statusFilter),
     });
   }, [view, priorityFilter, statusFilter]);
+
+  useEffect(() => {
+    dispatch({
+      type: "setIssueOrder",
+      issueOrder: getIssueOrder(view, orderBy),
+    });
+  }, [view, orderBy]);
 
   useEffect(() => {
     dispatch({
