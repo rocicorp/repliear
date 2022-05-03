@@ -34,7 +34,7 @@ const commentsList = (comments: Comment[]) => {
   return comments.map((comment) => (
     <div
       key={comment.id}
-      className="mx-5 bg-gray-400 flex-1 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap "
+      className="mx-5 bg-gray-400 flex-1 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap overflow-auto"
     >
       <div className="h-6 mb-1 -mt-px relative">
         <DefaultAvatarIcon className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 float-left mr-2" />
@@ -214,7 +214,7 @@ export default function IssueDetail({
                   issue?.title
                 )}
               </div>
-              <div className="text-sm pb-4 text-gray-1">
+              <div className="text-sm pb-4 text-gray-1 overflow-auto">
                 {editMode ? (
                   <textarea
                     className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
