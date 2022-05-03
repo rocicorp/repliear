@@ -1,0 +1,146 @@
+import AttachmentIcon from "./assets/icons/attachment.svg";
+import CloseIcon from "./assets/icons/close.svg";
+import GitIssueIcon from "./assets/icons/git-issue.svg";
+import ZoomIcon from "./assets/icons/zoom.svg";
+import Modal from "./modal";
+import Toggle from "./toggle";
+import React, { useState } from "react";
+import { Description, Issue, Priority, Status } from "./issue";
+import { nanoid } from "nanoid";
+
+import PriorityMenu from "./priority-menu";
+import StatusMenu from "./status-menu";
+
+// import { showInfo, showWarning } from 'utils/notification';
+
+interface Props {
+  isOpen: boolean;
+  onDismiss?: () => void;
+  onCreateIssue: (
+    i: Omit<Issue, "kanbanOrder">,
+    description: Description
+  ) => void;
+}
+
+export default function IssueModal({
+  isOpen,
+  onDismiss,
+  onCreateIssue,
+}: Props) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState(Priority.NONE);
+  const [status, setStatus] = useState(Status.BACKLOG);
+
+  const handleSubmit = () => {
+    if (title === "") {
+      //   showWarning("Please enter a title before submiting", "Title required");
+      return;
+    }
+    onCreateIssue(
+      {
+        id: nanoid(),
+        title,
+        priority,
+        status,
+        modified: new Date().getTime(),
+        created: new Date().getTime(),
+        creator: "Me",
+      },
+      description
+    );
+    if (onDismiss) onDismiss();
+    resetModalState();
+  };
+
+  const resetModalState = () => {
+    setTitle("");
+    setDescription("");
+    setPriority(Priority.NONE);
+    setStatus(Status.BACKLOG);
+  };
+
+  const handleClickCloseBtn = () => {
+    if (onDismiss) onDismiss();
+  };
+
+  const body = (
+    <div className="flex flex-col w-full py-4">
+      {/* header */}
+      <div className="flex items-center justify-between flex-shrink-0 px-4">
+        <div className="flex items-center">
+          <span className="inline-flex items-center p-1 text-gray-400 bg-gray-2 rounded">
+            <GitIssueIcon className="w-3 mr-1" />
+            <span>GIT</span>
+          </span>
+          <span className="ml-2 font-normal text-white">› New Issue</span>
+        </div>
+        <div className="flex items-center">
+          <div className="inline-flex items-center justify-center rounded h-7 w-7 hover:bg-gray-1 hover-text-gray-1 text-white">
+            <ZoomIcon className="w-3" />
+          </div>
+          <div
+            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-1 hover-text-gray-1 text-white"
+            onClick={handleClickCloseBtn}
+          >
+            <CloseIcon className="w-4" />
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col flex-1 pb-3.5 overflow-y-auto">
+        {/* Issue title */}
+        <div className="flex items-center w-full mt-1.5 px-4">
+          <StatusMenu onSelect={setStatus} status={status} />
+          <input
+            className="w-full ml-1.5 text-lg font-semibold placeholder-white  border-none h-7 focus:outline-none bg-gray-450 text-white"
+            placeholder="Issue title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+
+        {/* Issue description editor */}
+        <div className="flex w-full px-4">
+          <textarea
+            rows={5}
+            onBlur={(e) => setDescription(e.target.value)}
+            className="w-full mt-4 ml-5 font-normal border-none appearance-none min-h-12 text-md focus:outline-none placeholder-white bg-gray-450 text-white"
+            placeholder="Add description..."
+          />
+        </div>
+      </div>
+
+      {/* Issue labels & priority */}
+      <div className="flex items-center px-4 pb-3 mt-1 border-b border-gray-200">
+        <PriorityMenu
+          onSelect={setPriority}
+          labelVisible={true}
+          priority={priority}
+        />
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between flex-shrink-0 px-4 pt-3">
+        <button className="focus:outline-none">
+          <AttachmentIcon />
+        </button>
+        <div className="flex items-center">
+          <Toggle />
+          <span className="ml-2 font-normal">Create more</span>
+          <button
+            className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-500 text-white"
+            onClick={handleSubmit}
+          >
+            Save Issue
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <Modal isOpen={isOpen} center={false} size="large" onDismiss={onDismiss}>
+      {body}
+    </Modal>
+  );
+}
