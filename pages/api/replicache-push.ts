@@ -8,7 +8,7 @@ import {
 } from "../../backend/data";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ReplicacheTransaction } from "../../backend/replicache-transaction";
-import { getPullOrder } from "../../backend/pull-order";
+import { getSyncOrder } from "../../backend/sync-order";
 import { mutators } from "../../frontend/mutators";
 import { z } from "zod";
 import { jsonSchema } from "../../util/json";
@@ -53,7 +53,7 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
       spaceID,
       push.clientID,
       nextVersion,
-      getPullOrder
+      getSyncOrder
     );
 
     for (let i = 0; i < push.mutations.length; i++) {

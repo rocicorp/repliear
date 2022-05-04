@@ -5,7 +5,7 @@ import { ReplicacheTransaction } from "./replicache-transaction";
 import type { Issue, Comment, Description } from "../frontend/issue";
 import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
-import { getPullOrder } from "./pull-order";
+import { getSyncOrder } from "./sync-order";
 
 export type SampleData = {
   issue: Issue;
@@ -65,7 +65,7 @@ export async function createSchemaVersion1(executor: Executor) {
       spaceid text not null,
       key text not null,
       value text not null,
-      pullorder text not null,
+      syncorder text not null,
       deleted boolean not null,
       version integer not null,
       lastmodified timestamp(6) not null
@@ -75,7 +75,7 @@ export async function createSchemaVersion1(executor: Executor) {
     `create unique index idx_entry_spaceid_key on entry (spaceid, key)`
   );
   await executor(
-    `create index idx_entry_spaceid_pullorder on entry (spaceid, pullorder)`
+    `create index idx_entry_spaceid_syncorder on entry (spaceid, syncorder)`
   );
   await executor(`create index 
       on entry (spaceid, deleted)
@@ -107,8 +107,8 @@ export async function createSchemaVersion1(executor: Executor) {
         spaceids[i] := gen_spaceid();
         insert into space (id, version, used, lastmodified) 
           values (spaceids[i], ${INITIAL_SPACE_VERSION}, false, now());
-        insert into entry (spaceid, key, value, pullorder, deleted, version, lastmodified)
-          select (spaceids[i]), key, value, pullorder, deleted, version, lastmodified 
+        insert into entry (spaceid, key, value, syncorder, deleted, version, lastmodified)
+          select (spaceids[i]), key, value, syncorder, deleted, version, lastmodified 
           from entry where spaceid = '${TEMPLATE_SPACE_ID}';
       end loop;
       return spaceids;
@@ -202,7 +202,7 @@ export async function initSpaces(
         TEMPLATE_SPACE_ID,
         "fake-client-id-for-server-init",
         INITIAL_SPACE_VERSION,
-        getPullOrder
+        getSyncOrder
       );
       for (const { issue, description, comments } of sampleDataBatch) {
         await mutators.putIssue(tx, { issue, description });
@@ -243,7 +243,7 @@ export async function getEntry(
 export async function putEntries(
   executor: Executor,
   spaceID: string,
-  entries: [key: string, value: JSONValue, pullOrder: string][],
+  entries: [key: string, value: JSONValue, syncOrder: string][],
   version: number
 ): Promise<void> {
   if (entries.length === 0) {
@@ -256,19 +256,19 @@ export async function putEntries(
   ).join();
   await executor(
     `
-    insert into entry (spaceid, key, value, pullOrder, deleted, version, lastmodified)
+    insert into entry (spaceid, key, value, syncOrder, deleted, version, lastmodified)
     values ${valuesSql}
     on conflict (spaceid, key) do update set
-    value = excluded.value, pullOrder = excluded.pullOrder, deleted = false, version = excluded.version, lastmodified = now()
+    value = excluded.value, syncorder = excluded.syncorder, deleted = false, version = excluded.version, lastmodified = now()
     `,
     [
       spaceID,
       version,
       ...flatten(
-        entries.map(([key, value, pullOrder]) => [
+        entries.map(([key, value, syncOrder]) => [
           key,
           JSON.stringify(value),
-          pullOrder,
+          syncOrder,
         ])
       ),
     ]
@@ -305,26 +305,26 @@ export async function getIssueEntries(
   return rows.map((row) => [row.key, JSON.parse(row.value)]);
 }
 
-export async function getNonIssueEntriesInPullOrder(
+export async function getNonIssueEntriesInSyncOrder(
   executor: Executor,
   spaceID: string,
-  startPullOrder: string,
+  startSyncOrderExclusive: string,
   limit: number
 ): Promise<{
   entries: [key: string, value: JSONValue][];
-  endPullOrder: string | undefined;
+  endSyncOrder: string | undefined;
 }> {
   const { rows } = await executor(
     `
-    select key, value, pullorder from entry 
-    where spaceid = $1 and key not like 'issue/%' and pullorder > $2 and deleted = false 
-    order by pullorder limit $3
+    select key, value, syncorder from entry 
+    where spaceid = $1 and key not like 'issue/%' and syncorder > $2 and deleted = false 
+    order by syncorder limit $3
     `,
-    [spaceID, startPullOrder, limit]
+    [spaceID, startSyncOrderExclusive, limit]
   );
   return {
     entries: rows.map((row) => [row.key, JSON.parse(row.value)]),
-    endPullOrder: rows[rows.length - 1]?.pullorder,
+    endSyncOrder: rows[rows.length - 1]?.syncorder,
   };
 }
 

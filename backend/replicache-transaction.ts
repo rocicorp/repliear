@@ -9,7 +9,7 @@ import type {
 import { delEntries, getEntry, putEntries } from "./data";
 import type { Executor } from "./pg";
 
-export type PullOrderFn = (
+export type SyncOrderFn = (
   tx: ReadTransaction,
   entry: [key: string, value: JSONValue]
 ) => Promise<string>;
@@ -23,7 +23,7 @@ export class ReplicacheTransaction implements WriteTransaction {
   private readonly _clientID: string;
   private readonly _version: number;
   private readonly _executor: Executor;
-  private readonly _getPullOrder: PullOrderFn;
+  private readonly _getSyncOrder: SyncOrderFn;
   private readonly _cache: Map<
     string,
     { value: JSONValue | undefined; dirty: boolean }
@@ -34,13 +34,13 @@ export class ReplicacheTransaction implements WriteTransaction {
     spaceID: string,
     clientID: string,
     version: number,
-    getPullOrder: PullOrderFn
+    getSyncOrder: SyncOrderFn
   ) {
     this._spaceID = spaceID;
     this._clientID = clientID;
     this._version = version;
     this._executor = executor;
-    this._getPullOrder = getPullOrder;
+    this._getSyncOrder = getSyncOrder;
   }
 
   get clientID(): string {
@@ -90,7 +90,7 @@ export class ReplicacheTransaction implements WriteTransaction {
         entriesToPut.push([
           dirtyEntry[0],
           dirtyEntry[1].value,
-          await this._getPullOrder(this, [dirtyEntry[0], dirtyEntry[1].value]),
+          await this._getSyncOrder(this, [dirtyEntry[0], dirtyEntry[1].value]),
         ]);
       }
     }
