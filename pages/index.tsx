@@ -1,5 +1,5 @@
 import { transact } from "../backend/pg";
-import { createDatabase, getUnusedSpace } from "../backend/data";
+import { createDatabase, initSpace } from "../backend/data";
 import { getReactSampleData } from "../backend/sample-issues";
 
 function Page() {
@@ -9,7 +9,7 @@ function Page() {
 export async function getServerSideProps() {
   const spaceID = await transact(async (executor) => {
     await createDatabase(executor);
-    return getUnusedSpace(executor, getReactSampleData);
+    return initSpace(executor, getReactSampleData);
   });
   return {
     redirect: {
