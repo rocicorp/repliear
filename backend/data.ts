@@ -7,7 +7,6 @@ import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
 import { getSyncOrder } from "./sync-order";
 import { nanoid } from "nanoid";
-import { parse } from "path";
 
 export type SampleData = {
   issue: Issue;
