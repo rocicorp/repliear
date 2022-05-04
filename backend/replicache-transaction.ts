@@ -1,6 +1,7 @@
 import type {
   JSONValue,
   KeyTypeForScanOptions,
+  ReadTransaction,
   ScanOptions,
   ScanResult,
   WriteTransaction,
@@ -8,16 +9,22 @@ import type {
 import { delEntries, getEntry, putEntries } from "./data";
 import type { Executor } from "./pg";
 
+export type PullOrderFn = (
+  tx: ReadTransaction,
+  entry: [key: string, value: JSONValue]
+) => Promise<string>;
+
 /**
  * Implements Replicache's WriteTransaction interface in terms of a Postgres
  * transaction.
  */
 export class ReplicacheTransaction implements WriteTransaction {
-  private _spaceID: string;
-  private _clientID: string;
-  private _version: number;
-  private _executor: Executor;
-  private _cache: Map<
+  private readonly _spaceID: string;
+  private readonly _clientID: string;
+  private readonly _version: number;
+  private readonly _executor: Executor;
+  private readonly _getPullOrder: PullOrderFn;
+  private readonly _cache: Map<
     string,
     { value: JSONValue | undefined; dirty: boolean }
   > = new Map();
@@ -26,12 +33,14 @@ export class ReplicacheTransaction implements WriteTransaction {
     executor: Executor,
     spaceID: string,
     clientID: string,
-    version: number
+    version: number,
+    getPullOrder: PullOrderFn
   ) {
     this._spaceID = spaceID;
     this._clientID = clientID;
     this._version = version;
     this._executor = executor;
+    this._getPullOrder = getPullOrder;
   }
 
   get clientID(): string {
@@ -75,10 +84,14 @@ export class ReplicacheTransaction implements WriteTransaction {
     const dirtyEntries = [...this._cache.entries()].filter(
       ([, { dirty }]) => dirty
     );
-    const entriesToPut: [string, JSONValue][] = [];
+    const entriesToPut: [string, JSONValue, string][] = [];
     for (const dirtyEntry of dirtyEntries) {
       if (dirtyEntry[1].value !== undefined) {
-        entriesToPut.push([dirtyEntry[0], dirtyEntry[1].value]);
+        entriesToPut.push([
+          dirtyEntry[0],
+          dirtyEntry[1].value,
+          await this._getPullOrder(this, [dirtyEntry[0], dirtyEntry[1].value]),
+        ]);
       }
     }
     const keysToDel = dirtyEntries

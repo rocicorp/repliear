@@ -111,6 +111,12 @@ export const DESCRIPTION_KEY_PREFIX = `description/`;
 export const descriptionKey = (issueID: string) =>
   `${DESCRIPTION_KEY_PREFIX}${issueID}`;
 export const descriptionSchema = z.string();
+export const getDescriptionIssueId = (key: string) => {
+  if (!key.startsWith(DESCRIPTION_KEY_PREFIX)) {
+    throw new Error(`Invalid description key: ${key}`);
+  }
+  return key.substring(DESCRIPTION_KEY_PREFIX.length);
+};
 
 export type Description = z.TypeOf<typeof descriptionSchema>;
 export async function getIssueDescription(
@@ -187,4 +193,16 @@ export async function putIssueComment(
   comment: Comment
 ): Promise<void> {
   await tx.put(commentKey(comment.issueID, comment.id), comment);
+}
+
+const REVERSE_TIMESTAMP_LENGTH = Number.MAX_SAFE_INTEGER.toString().length;
+
+export function reverseTimestampSortKey(timestamp: number, id: string): string {
+  return (
+    Math.floor(Number.MAX_SAFE_INTEGER - timestamp)
+      .toString()
+      .padStart(REVERSE_TIMESTAMP_LENGTH, "0") +
+    "-" +
+    id
+  );
 }

@@ -16,6 +16,7 @@ import {
   Description,
   Comment,
   IssueUpdate,
+  reverseTimestampSortKey,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -175,10 +176,10 @@ function reducer(
     let orderValue: string;
     switch (issueOrder) {
       case Order.CREATED:
-        orderValue = Number.MAX_SAFE_INTEGER - issue.created + "-" + issue.id;
+        orderValue = reverseTimestampSortKey(issue.created, issue.id);
         break;
       case Order.MODIFIED:
-        orderValue = Number.MAX_SAFE_INTEGER - issue.modified + "-" + issue.id;
+        orderValue = reverseTimestampSortKey(issue.modified, issue.id);
         break;
       case Order.KANBAN:
         orderValue = issue.kanbanOrder + "-" + issue.id;
