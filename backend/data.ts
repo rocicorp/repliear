@@ -6,6 +6,7 @@ import type { Issue, Comment, Description } from "../frontend/issue";
 import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
 import { getSyncOrder } from "./sync-order";
+import { nanoid } from "nanoid";
 
 export type SampleData = {
   issue: Issue;
@@ -37,8 +38,7 @@ async function getSchemaVersion(executor: Executor) {
   return qr.rows[0].value;
 }
 
-export const TEMPLATE_SPACE_ID = "template-space-id";
-const INITIAL_SPACE_VERSION = 1;
+export const BASE_SPACE_ID = "$base-space-id";
 
 export async function createSchemaVersion1(executor: Executor) {
   await executor(`create table meta (key text primary key, value json)`);
@@ -47,7 +47,6 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create table space (
       id text primary key not null,
       version integer not null,
-      used boolean not null,
       lastmodified timestamp(6) not null
       )`);
 
@@ -84,87 +83,22 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (spaceid)`);
   await executor(`create index on entry (deleted)`);
   await executor(`create index on entry (version)`);
-
-  await executor(`create function gen_spaceid() 
-      returns text as $$
-      declare id text;
-      begin
-        id := encode(gen_random_bytes(6), 'base64');
-        id := replace(id, '/', '_'); -- url safe replacement
-        id := replace(id, '+', '-'); -- url safe replacement
-        return id;
-      end;
-      $$ language 'plpgsql';
-  `);
-
-  await executor(
-    `
-    create function cleanup_spaces(cleanupLimit integer, max_inactive_hours integer)
-    returns text[] as $$
-    declare spaceids text[] := array[]::text[];
-    begin
-      spaceids := array(
-        select id from space 
-          where used = true and id <> '${TEMPLATE_SPACE_ID}' 
-          and lastmodified < now() - interval '1 hour' * max_inactive_hours
-          order by lastmodified asc
-          limit cleanupLimit
-      );
-      delete from space where id = any(spaceids);
-      delete from entry where spaceid = any(spaceids);
-      return spaceids;
-    end;
-    $$ language 'plpgsql' volatile;
-    `
-  );
 }
 
-export async function getUnusedSpace(
-  executor: Executor,
-  getSampleData: () => Promise<SampleData>
-): Promise<string> {
-  let spaceID = await tryGetUnusedSpace(executor);
-  if (spaceID) {
-    return spaceID;
-  }
-  await initSpace(executor, getSampleData);
-  spaceID = await tryGetUnusedSpace(executor);
-  if (spaceID) {
-    return spaceID;
-  }
-  throw new Error("Could not find or create unused space");
-}
-
-async function tryGetUnusedSpace(
-  executor: Executor
-): Promise<string | undefined> {
-  return (
-    await executor(
-      `
-      update space set used = true where 
-      id = (select id from space where used = false order by id limit 1) 
-      returning id
-      `
-    )
-  ).rows[0]?.id;
-}
-
+const INITIAL_SPACE_VERSION = 1;
 export async function initSpace(
   executor: Executor,
   getSampleData: () => Promise<SampleData>
-): Promise<void> {
+): Promise<string> {
   const {
-    rows: sampleSpaceRows,
+    rows: baseSpaceRows,
   } = await executor(`select version from space where id = $1`, [
-    TEMPLATE_SPACE_ID,
+    BASE_SPACE_ID,
   ]);
 
-  if (sampleSpaceRows.length === 0) {
-    console.log("Initializing template space", TEMPLATE_SPACE_ID);
-    await executor(
-      `insert into space (id, version, used, lastmodified) values ($1, $2, true, now())`,
-      [TEMPLATE_SPACE_ID, INITIAL_SPACE_VERSION]
-    );
+  if (baseSpaceRows.length === 0) {
+    console.log("Initializing base space", BASE_SPACE_ID);
+    await insertSpace(executor, BASE_SPACE_ID, INITIAL_SPACE_VERSION);
     const start = Date.now();
     // We have to batch insertions to work around command size limits
     const sampleData = await getSampleData();
@@ -178,7 +112,7 @@ export async function initSpace(
     for (const sampleDataBatch of sampleDataBatchs) {
       const tx = new ReplicacheTransaction(
         executor,
-        TEMPLATE_SPACE_ID,
+        BASE_SPACE_ID,
         "fake-client-id-for-server-init",
         INITIAL_SPACE_VERSION,
         getSyncOrder
@@ -191,16 +125,21 @@ export async function initSpace(
       }
       await tx.flush();
     }
-    console.log("Creating template space took " + (Date.now() - start) + "ms");
+    console.log("Initing base space took " + (Date.now() - start) + "ms");
   }
-  const start = Date.now();
-  console.log("Copying from template space");
+  const spaceID = nanoid(10);
+  await insertSpace(executor, spaceID, INITIAL_SPACE_VERSION);
+  return spaceID;
+}
+
+async function insertSpace(
+  executor: Executor,
+  spaceID: string,
+  version: number
+) {
   await executor(
-    `insert into space (id, version, used, lastmodified) values (gen_spaceid(), $1, false, now())`,
-    [INITIAL_SPACE_VERSION]
-  );
-  console.log(
-    "Copying from template space took " + (Date.now() - start) + "ms"
+    `insert into space (id, version, lastmodified) values ($1, $2, now())`,
+    [spaceID, version]
   );
 }
 
@@ -211,15 +150,17 @@ export async function getEntry(
 ): Promise<JSONValue | undefined> {
   const { rows } = await executor(
     `
-  with overlayentry as (
-    select key, value, deleted from entry where spaceid = $2 and key = $3
-  ), baseentry as (
-    select key, value from entry where spaceid = $1 and key = $3
-  )
-  select coalesce(overlayentry.key, baseentry.key), coalesce(overlayentry.value, baseentry.value) as value, overlayentry.deleted as deleted
-  from overlayentry full outer join baseentry on overlayentry.key = baseentry.key
+    with overlayentry as (
+      select key, value, deleted from entry where spaceid = $1 and key = $3
+    ), baseentry as (
+      select key, value from entry where spaceid = $2 and key = $3
+    )
+    select coalesce(overlayentry.key, baseentry.key), 
+      coalesce(overlayentry.value, baseentry.value) as value, 
+      overlayentry.deleted as deleted
+    from overlayentry full join baseentry on overlayentry.key = baseentry.key
     `,
-    [TEMPLATE_SPACE_ID, spaceID, key]
+    [spaceID, BASE_SPACE_ID, key]
   );
   const value = rows[0]?.value;
   if (value === undefined || rows[0]?.deleted) {
@@ -244,10 +185,12 @@ export async function putEntries(
   ).join();
   await executor(
     `
-    insert into entry (spaceid, key, value, syncOrder, deleted, version, lastmodified)
-    values ${valuesSql}
-    on conflict (spaceid, key) do update set
-    value = excluded.value, syncorder = excluded.syncorder, deleted = false, version = excluded.version, lastmodified = now()
+    insert into entry (
+      spaceid, key, value, syncOrder, deleted, version, lastmodified
+    ) values ${valuesSql}
+    on conflict (spaceid, key) do 
+    update set value = excluded.value, syncorder = excluded.syncorder, 
+      deleted = false, version = excluded.version, lastmodified = now()
     `,
     [
       spaceID,
@@ -274,7 +217,10 @@ export async function delEntries(
   }
   const keyParamsSQL = keys.map((_, i) => `$${i + 3}`).join(",");
   await executor(
-    `update entry set deleted = true, version = $2 where spaceid = $1 and key in(${keyParamsSQL})`,
+    `
+    update entry set deleted = true, version = $2 
+    where spaceid = $1 and key in(${keyParamsSQL})
+    `,
     [spaceID, version, ...keys]
   );
 }
@@ -285,15 +231,18 @@ export async function getIssueEntries(
 ): Promise<[key: string, value: JSONValue][]> {
   const { rows } = await executor(
     `
-  with overlayentry as (
-    select key, value, deleted from entry where spaceid = $2 and key like 'issue/%'
-  ), baseentry as (
-    select key, value from entry where spaceid = $1 and key like 'issue/%'
-  )
-  select coalesce(overlayentry.key, baseentry.key) as key, coalesce(overlayentry.value, baseentry.value) as value, overlayentry.deleted as deleted
-  from overlayentry full outer join baseentry on overlayentry.key = baseentry.key
+    with overlayentry as (
+      select key, value, deleted from entry 
+      where spaceid = $1 and key like 'issue/%'
+    ), baseentry as (
+      select key, value from entry where spaceid = $2 and key like 'issue/%'
+    )
+    select coalesce(overlayentry.key, baseentry.key) as key, 
+      coalesce(overlayentry.value, baseentry.value) as value, 
+      overlayentry.deleted as deleted
+    from overlayentry full join baseentry on overlayentry.key = baseentry.key
     `,
-    [TEMPLATE_SPACE_ID, spaceID]
+    [spaceID, BASE_SPACE_ID]
   );
   return rows
     .filter((row) => !row.deleted)
@@ -309,25 +258,30 @@ export async function getNonIssueEntriesInSyncOrder(
   entries: [key: string, value: JSONValue][];
   endSyncOrder: string | undefined;
 }> {
+  // All though it complicates the query, we do the deleted filtering
+  // in the query so that we can correctly limit the results.
   const { rows } = await executor(
     `
-  with overlayentry as (
-    select key, value, syncorder, deleted from entry where spaceid = $2 and key not like 'issue/%' and syncorder > $3 order by syncorder limit $4
-  ), baseentry as (
-    select key, value, syncorder from entry where spaceid = $1 and key not like 'issue/%' and syncorder > $3 order by syncorder limit $4
-  )
-  select key, value, syncorder from (
-    select coalesce(overlayentry.key, baseentry.key) as key, 
-      coalesce(overlayentry.value, baseentry.value) as value,
-      coalesce(overlayentry.syncorder, baseentry.syncorder) as syncorder, 
-      overlayentry.deleted as deleted
-    from overlayentry full outer join baseentry on overlayentry.key = baseentry.key
-  ) as merged 
-  where deleted = false or deleted is null 
-  order by syncorder
-  limit $4
+    with overlayentry as (
+      select key, value, syncorder, deleted from entry 
+      where spaceid = $1 and key not like 'issue/%' and syncorder > $3 
+      order by syncorder limit $4
+    ), baseentry as (
+      select key, value, syncorder from entry 
+      where spaceid = $2 and key not like 'issue/%' and syncorder > $3 
+      order by syncorder limit $4
+    )
+    select key, value, syncorder from (
+      select coalesce(overlayentry.key, baseentry.key) as key, 
+        coalesce(overlayentry.value, baseentry.value) as value,
+        coalesce(overlayentry.syncorder, baseentry.syncorder) as syncorder, 
+        overlayentry.deleted as deleted
+      from overlayentry full join baseentry on overlayentry.key = baseentry.key
+    ) as merged where deleted = false or deleted is null 
+    order by syncorder
+    limit $4
     `,
-    [TEMPLATE_SPACE_ID, spaceID, startSyncOrderExclusive, limit]
+    [spaceID, BASE_SPACE_ID, startSyncOrderExclusive, limit]
   );
   return {
     entries: rows.map((row) => [row.key, JSON.parse(row.value)]),
@@ -399,7 +353,7 @@ export async function setLastMutationID(
     `
     insert into client (id, lastmutationid, lastmodified)
     values ($1, $2, now())
-      on conflict (id) do update set lastmutationid = $2, lastmodified = now()
+    on conflict (id) do update set lastmutationid = $2, lastmodified = now()
     `,
     [clientID, lastMutationID]
   );

@@ -20,16 +20,14 @@ const pullRequest = z.object({
 });
 
 const pull = async (req: NextApiRequest, res: NextApiResponse) => {
+  const t0 = Date.now();
   console.log(`Processing pull`, JSON.stringify(req.body, null, ""));
-
   const spaceID = req.query["spaceID"].toString();
   const pull = pullRequest.parse(req.body);
   const requestCookie = pull.cookie;
 
   console.log("spaceID", spaceID);
   console.log("clientID", pull.clientID);
-
-  const t0 = Date.now();
 
   const result = await transact(async (executor) => {
     await createDatabase(executor);
@@ -65,8 +63,6 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
           requestCookie.endKey,
           limit
         );
-        console.log("incrementalEntries", incrementalEntries.length);
-        console.log("endSyncOrder", endSyncOrder);
         entries = [...entries, ...incrementalEntries];
         const initialSyncDone = incrementalEntries.length < limit;
         if (initialSyncDone) {
@@ -97,9 +93,9 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
 
   console.log("lastMutationID: ", lastMutationID);
   console.log("responseCookie: ", responseCookie);
-  console.log("Read all objects in", Date.now() - t0);
+  console.log("DB reads took", Date.now() - t0);
 
-  const start = Date.now();
+  const startBuildingPatch = Date.now();
   const resp: PullResponse = {
     lastMutationID: lastMutationID ?? 0,
     cookie: responseCookie ?? 0,
@@ -120,10 +116,11 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       });
     }
   }
-  console.log("Built patch in", Date.now() - start);
+  console.log("Building patch took", Date.now() - startBuildingPatch);
 
   res.json(resp);
   res.end();
+  console.log("Pull took", Date.now() - t0);
 };
 
 export default pull;
