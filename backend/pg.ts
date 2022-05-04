@@ -27,8 +27,9 @@ pool.on("connect", (client) => {
 export async function withExecutor<R>(
   f: (executor: Executor) => R
 ): Promise<R> {
+  const startConnect = Date.now();
   const client = await pool.connect();
-
+  console.log("pool.connect took", Date.now() - startConnect);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const executor = async (sql: string, params?: any[]) => {
     try {
@@ -52,7 +53,9 @@ export async function withExecutor<R>(
   try {
     return await f(executor);
   } finally {
+    const startRelease = Date.now();
     client.release();
+    console.log("client.release took", Date.now() - startRelease);
   }
 }
 

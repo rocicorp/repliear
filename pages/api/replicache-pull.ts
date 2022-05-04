@@ -20,15 +20,18 @@ const pullRequest = z.object({
 });
 
 const pull = async (req: NextApiRequest, res: NextApiResponse) => {
-  const t0 = Date.now();
+  const startPull = Date.now();
   console.log(`Processing pull`, JSON.stringify(req.body, null, ""));
   const spaceID = req.query["spaceID"].toString();
+  const startRequestParse = Date.now();
   const pull = pullRequest.parse(req.body);
+  console.log("Request parse took", Date.now() - startRequestParse);
   const requestCookie = pull.cookie;
 
   console.log("spaceID", spaceID);
   console.log("clientID", pull.clientID);
 
+  const startTransact = Date.now();
   const result = await transact(async (executor) => {
     await createDatabase(executor);
     const version = await getVersion(executor, spaceID);
@@ -63,7 +66,9 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
           requestCookie.endKey,
           limit
         );
+        const startMergeEntries = Date.now();
         entries = [...entries, ...incrementalEntries];
+        console.log("merge entries took", Date.now() - startMergeEntries);
         const initialSyncDone = incrementalEntries.length < limit;
         if (initialSyncDone) {
           responseEndKey = undefined;
@@ -77,25 +82,22 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
           },
         ]);
       }
-      const version = await getVersion(executor, spaceID);
       const responseCookie = { version, endKey: responseEndKey };
       return Promise.all([entries, lastMutationIDPromise, responseCookie]);
     }
   });
+  console.log("transact took", Date.now() - startTransact);
 
   if (!result) {
     res.status(404);
     res.end();
     return;
   }
-
+  const startBuildingPatch = Date.now();
   const [entries, lastMutationID, responseCookie] = result;
 
   console.log("lastMutationID: ", lastMutationID);
   console.log("responseCookie: ", responseCookie);
-  console.log("DB reads took", Date.now() - t0);
-
-  const startBuildingPatch = Date.now();
   const resp: PullResponse = {
     lastMutationID: lastMutationID ?? 0,
     cookie: responseCookie ?? 0,
@@ -118,9 +120,15 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   }
   console.log("Building patch took", Date.now() - startBuildingPatch);
 
+  const startJson = Date.now();
   res.json(resp);
+  console.log("res.json took", Date.now() - startJson);
+
+  const startEnd = Date.now();
   res.end();
-  console.log("Pull took", Date.now() - t0);
+  console.log("res.end took", Date.now() - startEnd);
+
+  console.log("Pull took", Date.now() - startPull);
 };
 
 export default pull;

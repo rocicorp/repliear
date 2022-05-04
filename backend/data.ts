@@ -7,6 +7,7 @@ import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
 import { getSyncOrder } from "./sync-order";
 import { nanoid } from "nanoid";
+import { parse } from "path";
 
 export type SampleData = {
   issue: Issue;
@@ -38,6 +39,7 @@ async function getSchemaVersion(executor: Executor) {
   return qr.rows[0].value;
 }
 
+// nanoid's don't include $, so cannot collide with other space ids.
 export const BASE_SPACE_ID = "$base-space-id";
 
 export async function createSchemaVersion1(executor: Executor) {
@@ -244,9 +246,16 @@ export async function getIssueEntries(
     `,
     [spaceID, BASE_SPACE_ID]
   );
-  return rows
-    .filter((row) => !row.deleted)
-    .map((row) => [row.key, JSON.parse(row.value)]);
+  const startFilter = Date.now();
+  const filtered = rows.filter((row) => !row.deleted);
+  console.log("getIssueEntries filter took " + (Date.now() - startFilter));
+  const startParse = Date.now();
+  const parsed: [key: string, value: JSONValue][] = filtered.map((row) => [
+    row.key,
+    JSON.parse(row.value),
+  ]);
+  console.log("getIssueEntries parse took " + (Date.now() - startParse));
+  return parsed;
 }
 
 export async function getNonIssueEntriesInSyncOrder(
@@ -294,6 +303,8 @@ export async function getChangedEntries(
   spaceID: string,
   prevVersion: number
 ): Promise<[key: string, value: JSONValue, deleted: boolean][]> {
+  // changes are only in the onverlay space, so we do not need to
+  // query the base space.
   const {
     rows,
   } = await executor(
