@@ -1,23 +1,11 @@
-import type { JSONValue, ReadTransaction } from "replicache";
+import type { JSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
 import { ReplicacheTransaction } from "./replicache-transaction";
-import {
-  Issue,
-  Comment,
-  Description,
-  ISSUE_KEY_PREFIX,
-  COMMENT_KEY_PREFIX,
-  DESCRIPTION_KEY_PREFIX,
-  issueSchema,
-  commentSchema,
-  getIssue,
-  getDescriptionIssueId,
-  reverseTimestampSortKey,
-} from "../frontend/issue";
+import type { Issue, Comment, Description } from "../frontend/issue";
 import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
-import { assertNotUndefined } from "util/asserts";
+import { getPullOrder } from "./pull-order";
 
 export type SampleData = {
   issue: Issue;
@@ -149,24 +137,6 @@ export async function createSchemaVersion1(executor: Executor) {
     $$ language 'plpgsql' volatile;
     `
   );
-}
-
-async function getPullOrder(
-  tx: ReadTransaction,
-  entry: [key: string, value: JSONValue]
-): Promise<string> {
-  const [key, value] = entry;
-  let issue;
-  if (key.startsWith(ISSUE_KEY_PREFIX)) {
-    issue = issueSchema.parse(value);
-  } else if (key.startsWith(COMMENT_KEY_PREFIX)) {
-    const comment = commentSchema.parse(value);
-    issue = await getIssue(tx, comment.issueID);
-  } else if (key.startsWith(DESCRIPTION_KEY_PREFIX)) {
-    issue = await getIssue(tx, getDescriptionIssueId(key));
-  }
-  assertNotUndefined(issue);
-  return reverseTimestampSortKey(issue.modified, issue.id) + "-" + key;
 }
 
 export async function getUnusedSpace(
