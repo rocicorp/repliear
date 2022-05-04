@@ -46,7 +46,7 @@ export async function getReactSampleData(): Promise<SampleData> {
       issue.comments.push(comment);
     }
   }
-  return issues;
+  return issues.slice(0, 100);
 }
 
 function getStatus({
