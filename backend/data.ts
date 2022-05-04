@@ -79,7 +79,7 @@ export async function createSchemaVersion1(executor: Executor) {
   );
   await executor(`create index 
       on entry (spaceid, deleted)
-      include (key, value)
+      include (key, value, deleted)
       where key like 'issue/%'`);
   await executor(`create index on entry (spaceid)`);
   await executor(`create index on entry (deleted)`);
@@ -233,17 +233,18 @@ export async function getEntry(
 ): Promise<JSONValue | undefined> {
   const { rows } = await executor(
     `
-    select coalesce(overlays.value, base.value) as value
-    from entry base full outer join entry overlays on base.key = overlays.key
-    where overlays.spaceid = $1 and overlays.spaceid = $2 
-      and (base.key = $3 or base.key is null) 
-      and (overlays.key = $3 or overlays.key is null) 
-      and (overlays.deleted = false or overlays.deleted is null)
+  with overlayentry as (
+    select key, value, deleted from entry where spaceid = $2 and key = $3
+  ), baseentry as (
+    select key, value from entry where spaceid = $1 and key = $3
+  )
+  select coalesce(overlayentry.key, baseentry.key), coalesce(overlayentry.value, baseentry.value) as value, overlayentry.deleted as deleted
+  from overlayentry full outer join baseentry on overlayentry.key = baseentry.key
     `,
     [TEMPLATE_SPACE_ID, spaceID, key]
   );
   const value = rows[0]?.value;
-  if (value === undefined) {
+  if (value === undefined || rows[0]?.deleted) {
     return undefined;
   }
   return JSON.parse(value);
@@ -306,16 +307,19 @@ export async function getIssueEntries(
 ): Promise<[key: string, value: JSONValue][]> {
   const { rows } = await executor(
     `
-    select coalesce(overlays.key, base.key) as key, coalesce(overlays.value, base.value) as value
-    from entry base full outer join entry overlays on base.key = overlays.key
-    where overlays.spaceid = $1 and base.spaceid = $2 
-      and (base.key like 'issue/%' or base.key is null) 
-      and (overlays.key like 'issue/%' or overlays.key is null) 
-      and (overlays.deleted = false or overlays.deleted is null)
+  with overlayentry as (
+    select key, value, deleted from entry where spaceid = $2 and key like 'issue/%'
+  ), baseentry as (
+    select key, value from entry where spaceid = $1 and key like 'issue/%'
+  )
+  select coalesce(overlayentry.key, baseentry.key) as key, coalesce(overlayentry.value, baseentry.value) as value, overlayentry.deleted as deleted
+  from overlayentry full outer join baseentry on overlayentry.key = baseentry.key
     `,
     [TEMPLATE_SPACE_ID, spaceID]
   );
-  return rows.map((row) => [row.key, JSON.parse(row.value)]);
+  return rows
+    .filter((row) => !row.deleted)
+    .map((row) => [row.key, JSON.parse(row.value)]);
 }
 
 export async function getNonIssueEntriesInSyncOrder(
@@ -329,15 +333,21 @@ export async function getNonIssueEntriesInSyncOrder(
 }> {
   const { rows } = await executor(
     `
-    select coalesce(overlays.key, base.key) as key, coalesce(overlays.value, base.value) as value, coalesce(overlays.syncorder, base.syncorder) as syncorder
-    from entry base full outer join entry overlays on base.key = overlays.key
-    where overlays.spaceid = $1 and base.spaceid = $2 
-      and (base.key not like 'issue/%' or base.key is null) 
-      and (overlays.key not like 'issue/%' or overlays.key is null) 
-      and (overlays.deleted = false or overlays.deleted is null)
-      and (overlays.syncorder > $3 or overlays.syncorder is null)
-      and (base.syncorder > $3 or base.syncorder is null)
-      order by coalesce(overlays.syncorder, base.syncorder) limit $4
+  with overlayentry as (
+    select key, value, syncorder, deleted from entry where spaceid = $2 and key not like 'issue/%' and syncorder > $3 order by syncorder limit $4
+  ), baseentry as (
+    select key, value, syncorder from entry where spaceid = $1 and key not like 'issue/%' and syncorder > $3 order by syncorder limit $4
+  )
+  select key, value, syncorder from (
+    select coalesce(overlayentry.key, baseentry.key) as key, 
+      coalesce(overlayentry.value, baseentry.value) as value,
+      coalesce(overlayentry.syncorder, baseentry.syncorder) as syncorder, 
+      overlayentry.deleted as deleted
+    from overlayentry full outer join baseentry on overlayentry.key = baseentry.key
+  ) as merged 
+  where deleted = false or deleted is null 
+  order by syncorder
+  limit $4
     `,
     [TEMPLATE_SPACE_ID, spaceID, startSyncOrderExclusive, limit]
   );
