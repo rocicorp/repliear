@@ -5,7 +5,7 @@ import {
   getChangedEntries,
   getIssueEntries,
   getLastMutationID,
-  getNonIssueEntries,
+  getNonIssueEntriesInSyncOrder,
   getVersion,
 } from "../../backend/data";
 import { z } from "zod";
@@ -56,18 +56,23 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       let responseEndKey = undefined;
       if (requestCookie.endKey !== undefined) {
         const limit = 3000;
-        const incrementalEntries = await getNonIssueEntries(
+        const {
+          entries: incrementalEntries,
+          endSyncOrder,
+        } = await getNonIssueEntriesInSyncOrder(
           executor,
           spaceID,
           requestCookie.endKey,
           limit
         );
+        console.log("incrementalEntries", incrementalEntries.length);
+        console.log("endSyncOrder", endSyncOrder);
         entries = [...entries, ...incrementalEntries];
         const initialSyncDone = incrementalEntries.length < limit;
         if (initialSyncDone) {
           responseEndKey = undefined;
         } else {
-          responseEndKey = incrementalEntries[incrementalEntries.length - 1][0];
+          responseEndKey = endSyncOrder;
         }
         entries.push([
           "control/partialSync",

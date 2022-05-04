@@ -5,11 +5,13 @@ import { ReplicacheTransaction } from "./replicache-transaction";
 import type { Issue, Comment, Description } from "../frontend/issue";
 import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
+import { getSyncOrder } from "./sync-order";
 
 export type SampleData = {
-  issues: { issue: Issue; description: Description }[];
+  issue: Issue;
+  description: Description;
   comments: Comment[];
-};
+}[];
 
 export async function createDatabase(executor: Executor) {
   const schemaVersion = await getSchemaVersion(executor);
@@ -63,6 +65,7 @@ export async function createSchemaVersion1(executor: Executor) {
       spaceid text not null,
       key text not null,
       value text not null,
+      syncorder text not null,
       deleted boolean not null,
       version integer not null,
       lastmodified timestamp(6) not null
@@ -71,9 +74,12 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(
     `create unique index idx_entry_spaceid_key on entry (spaceid, key)`
   );
-  await executor(`create unique index 
-      on entry (spaceid, key text_pattern_ops, deleted)
-      include (value)
+  await executor(
+    `create index idx_entry_spaceid_syncorder on entry (spaceid, syncorder)`
+  );
+  await executor(`create index 
+      on entry (spaceid, deleted)
+      include (key, value)
       where key like 'issue/%'`);
   await executor(`create index on entry (spaceid)`);
   await executor(`create index on entry (deleted)`);
@@ -101,8 +107,8 @@ export async function createSchemaVersion1(executor: Executor) {
         spaceids[i] := gen_spaceid();
         insert into space (id, version, used, lastmodified) 
           values (spaceids[i], ${INITIAL_SPACE_VERSION}, false, now());
-        insert into entry (spaceid, key, value, deleted, version, lastmodified)
-          select (spaceids[i]), key, value, deleted, version, lastmodified 
+        insert into entry (spaceid, key, value, syncorder, deleted, version, lastmodified)
+          select (spaceids[i]), key, value, syncorder, deleted, version, lastmodified 
           from entry where spaceid = '${TEMPLATE_SPACE_ID}';
       end loop;
       return spaceids;
@@ -180,39 +186,31 @@ export async function initSpaces(
       `insert into space (id, version, used, lastmodified) values ($1, $2, $3, now())`,
       [TEMPLATE_SPACE_ID, INITIAL_SPACE_VERSION, true]
     );
-    const issuesTx = new ReplicacheTransaction(
-      executor,
-      TEMPLATE_SPACE_ID,
-      "fake-client-id-for-server-init",
-      INITIAL_SPACE_VERSION
-    );
     const start = Date.now();
+    // We have to batch insertions to work around command size limits
     const sampleData = await getSampleData();
-    for (const { issue, description } of sampleData.issues) {
-      await mutators.putIssue(issuesTx, { issue, description });
-    }
-    await issuesTx.flush();
-    const sampleComments = await sampleData.comments;
-    const sampleCommentGroups: Comment[][] = [];
-    for (let i = 0; i < sampleComments.length; i++) {
-      if (i % 20000 === 0) {
-        sampleCommentGroups.push([]);
+    const sampleDataBatchs: SampleData[] = [];
+    for (let i = 0; i < sampleData.length; i++) {
+      if (i % 1000 === 0) {
+        sampleDataBatchs.push([]);
       }
-      sampleCommentGroups[sampleCommentGroups.length - 1].push(
-        sampleComments[i]
-      );
+      sampleDataBatchs[sampleDataBatchs.length - 1].push(sampleData[i]);
     }
-    for (const sampleCommentGroup of sampleCommentGroups) {
-      const commentTx = new ReplicacheTransaction(
+    for (const sampleDataBatch of sampleDataBatchs) {
+      const tx = new ReplicacheTransaction(
         executor,
         TEMPLATE_SPACE_ID,
         "fake-client-id-for-server-init",
-        INITIAL_SPACE_VERSION
+        INITIAL_SPACE_VERSION,
+        getSyncOrder
       );
-      for (const comment of sampleCommentGroup) {
-        await mutators.putIssueComment(commentTx, comment);
+      for (const { issue, description, comments } of sampleDataBatch) {
+        await mutators.putIssue(tx, { issue, description });
+        for (const comment of comments) {
+          await mutators.putIssueComment(tx, comment);
+        }
       }
-      await commentTx.flush();
+      await tx.flush();
     }
     console.log("Creating template space took " + (Date.now() - start) + "ms");
   }
@@ -245,7 +243,7 @@ export async function getEntry(
 export async function putEntries(
   executor: Executor,
   spaceID: string,
-  entries: [key: string, value: JSONValue][],
+  entries: [key: string, value: JSONValue, syncOrder: string][],
   version: number
 ): Promise<void> {
   if (entries.length === 0) {
@@ -253,19 +251,26 @@ export async function putEntries(
   }
   const valuesSql = Array.from(
     { length: entries.length },
-    (_, i) => `($1, $${i * 2 + 3}, $${i * 2 + 4}, false, $2, now())`
+    (_, i) =>
+      `($1, $${i * 3 + 3}, $${i * 3 + 4}, $${i * 3 + 5}, false, $2, now())`
   ).join();
   await executor(
     `
-    insert into entry (spaceid, key, value, deleted, version, lastmodified)
+    insert into entry (spaceid, key, value, syncOrder, deleted, version, lastmodified)
     values ${valuesSql}
     on conflict (spaceid, key) do update set
-      value = excluded.value, deleted = false, version = excluded.version, lastmodified = now()
+    value = excluded.value, syncorder = excluded.syncorder, deleted = false, version = excluded.version, lastmodified = now()
     `,
     [
       spaceID,
       version,
-      ...flatten(entries.map(([key, value]) => [key, JSON.stringify(value)])),
+      ...flatten(
+        entries.map(([key, value, syncOrder]) => [
+          key,
+          JSON.stringify(value),
+          syncOrder,
+        ])
+      ),
     ]
   );
 }
@@ -300,21 +305,27 @@ export async function getIssueEntries(
   return rows.map((row) => [row.key, JSON.parse(row.value)]);
 }
 
-export async function getNonIssueEntries(
+export async function getNonIssueEntriesInSyncOrder(
   executor: Executor,
   spaceID: string,
-  startKey: string,
+  startSyncOrderExclusive: string,
   limit: number
-): Promise<[key: string, value: JSONValue][]> {
+): Promise<{
+  entries: [key: string, value: JSONValue][];
+  endSyncOrder: string | undefined;
+}> {
   const { rows } = await executor(
     `
-    select key, value from entry 
-    where spaceid = $1 and key not like 'issue/%' and key > $2 and deleted = false 
-    order by key limit $3
+    select key, value, syncorder from entry 
+    where spaceid = $1 and key not like 'issue/%' and syncorder > $2 and deleted = false 
+    order by syncorder limit $3
     `,
-    [spaceID, startKey, limit]
+    [spaceID, startSyncOrderExclusive, limit]
   );
-  return rows.map((row) => [row.key, JSON.parse(row.value)]);
+  return {
+    entries: rows.map((row) => [row.key, JSON.parse(row.value)]),
+    endSyncOrder: rows[rows.length - 1]?.syncorder,
+  };
 }
 
 export async function getChangedEntries(

@@ -16,7 +16,7 @@ export async function getReactSampleData(): Promise<SampleData> {
 
   const issuesCount = issuesDefault.length;
   const kanbanOrderKeys = generateNKeysBetween(null, null, issuesCount);
-  const issues = sortedIssues.map((reactIssue, idx) => ({
+  const issues: SampleData = sortedIssues.map((reactIssue, idx) => ({
     issue: {
       id: reactIssue.number.toString(),
       title: reactIssue.title,
@@ -28,6 +28,7 @@ export async function getReactSampleData(): Promise<SampleData> {
       kanbanOrder: kanbanOrderKeys[idx],
     },
     description: reactIssue.body || "",
+    comments: [],
   }));
 
   const comments = (await import("./comments-react.js.gz")).default.map(
@@ -39,10 +40,13 @@ export async function getReactSampleData(): Promise<SampleData> {
       creator: reactComment.creator_user_login,
     })
   );
-  return {
-    issues,
-    comments,
-  };
+  for (const comment of comments) {
+    const issue = issues.find((issue) => issue.issue.id === comment.issueID);
+    if (issue) {
+      issue.comments.push(comment);
+    }
+  }
+  return issues;
 }
 
 function getStatus({
