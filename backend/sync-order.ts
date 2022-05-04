@@ -15,11 +15,11 @@ export async function getSyncOrder(
   tx: ReadTransaction,
   entry: [key: string, value: JSONValue]
 ): Promise<string> {
-  // The default view is a list of issues in reverse modified order, so
-  // during initial sync we send descriptions and comments
-  // in reverse modified order of their corresponding issue, so that if a
-  // user clicks on an issue near the top of this view the data for displaying
-  // the detail view is available as soon as possible.
+  // The default view is a list of issues in reverse modified order, so it is
+  // preferable to sync entries in reverse modified order of their
+  // corresponding issue, so that if a user clicks on an issue near the top
+  // of the default initial list view the entries needed for displaying the
+  // detail view is available as soon as possible.
   const [key, value] = entry;
   let issue;
   if (key.startsWith(ISSUE_KEY_PREFIX)) {
