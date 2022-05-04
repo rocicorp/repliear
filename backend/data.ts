@@ -99,26 +99,6 @@ export async function createSchemaVersion1(executor: Executor) {
 
   await executor(
     `
-    create function init_spaces(count integer)
-    returns text[] as $$
-    declare spaceids text[] := array[]::text[];
-    begin
-      for i in 1..count loop
-        spaceids[i] := gen_spaceid();
-        insert into space (id, version, used, lastmodified) 
-          values (spaceids[i], ${INITIAL_SPACE_VERSION}, false, now());
-        insert into entry (spaceid, key, value, syncorder, deleted, version, lastmodified)
-          select (spaceids[i]), key, value, syncorder, deleted, version, lastmodified 
-          from entry where spaceid = '${TEMPLATE_SPACE_ID}';
-      end loop;
-      return spaceids;
-    end;
-    $$ language 'plpgsql' volatile;
-    `
-  );
-
-  await executor(
-    `
     create function cleanup_spaces(cleanupLimit integer, max_inactive_hours integer)
     returns text[] as $$
     declare spaceids text[] := array[]::text[];
@@ -147,7 +127,7 @@ export async function getUnusedSpace(
   if (spaceID) {
     return spaceID;
   }
-  await initSpaces(executor, 1, getSampleData);
+  await initSpace(executor, getSampleData);
   spaceID = await tryGetUnusedSpace(executor);
   if (spaceID) {
     return spaceID;
@@ -169,9 +149,8 @@ async function tryGetUnusedSpace(
   ).rows[0]?.id;
 }
 
-export async function initSpaces(
+export async function initSpace(
   executor: Executor,
-  count: number,
   getSampleData: () => Promise<SampleData>
 ): Promise<void> {
   const {
@@ -220,7 +199,6 @@ export async function initSpaces(
     `insert into space (id, version, used, lastmodified) values (gen_spaceid(), $1, false, now())`,
     [INITIAL_SPACE_VERSION]
   );
-  //await executor(`select init_spaces($1)`, [count]);
   console.log(
     "Copying from template space took " + (Date.now() - start) + "ms"
   );
