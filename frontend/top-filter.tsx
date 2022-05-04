@@ -28,7 +28,7 @@ const displayStrings: Record<Priority | Status, string> = {
   [Priority.URGENT]: "Urgent",
 
   [Status.BACKLOG]: "Backlog",
-  [Status.TODO]: "To Do",
+  [Status.TODO]: "Todo",
   [Status.IN_PROGRESS]: "In Progress",
   [Status.DONE]: "Done",
   [Status.CANCELED]: "Canceled",
