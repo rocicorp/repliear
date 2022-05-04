@@ -87,7 +87,16 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <SearchBox placeholder="Search" className="mt-5" />
           {/* actions */}
 
-          <ItemGroup title="Issues">
+          <ItemGroup title="React Issues">
+            <div
+              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
+              onClick={async () => {
+                await setLayoutViewParam("all");
+              }}
+            >
+              <span className="h-3">All</span>
+            </div>
+
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onClick={async () => {

@@ -45,6 +45,8 @@ function getFilters(
     case "backlog":
       viewStatuses = new Set([Status.BACKLOG]);
       break;
+    default:
+      viewStatuses = undefined;
   }
 
   let issuesStatuses: Set<Status> | undefined = undefined;
