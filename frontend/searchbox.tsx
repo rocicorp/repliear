@@ -1,6 +1,8 @@
-import React, { ChangeEventHandler, useState } from "react";
+import React, { ChangeEventHandler, useState, RefObject, useRef } from "react";
 import SearchIcon from "./assets/icons/search.svg";
 import classnames from "classnames";
+import { usePopper } from "react-popper";
+import { useClickOutside } from "./hooks/useClickOutside";
 
 interface Props {
   placeholder: string;
@@ -10,14 +12,37 @@ interface Props {
 }
 
 function SearchBox({ placeholder = "Search", onChange, className }: Props) {
+  const [alertRef, setAlertRef] = useState<HTMLInputElement | null>(null);
+  const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
+  const [alertVisible, setAlertVisible] = useState(false);
+
+  const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
+
+  const { styles, attributes, update } = usePopper(alertRef, popperRef, {
+    placement: "top",
+  });
+
+  const handleDropdownClick = () => {
+    update && update();
+    setFocus(true);
+    setAlertVisible(!alertVisible);
+  };
+
+  useClickOutside(ref, () => {
+    if (alertVisible) {
+      setAlertVisible(false);
+    }
+  });
+
   const [focus, setFocus] = useState(false);
   return (
-    <div className={classnames("relative", className)}>
+    <div className={classnames("relative", className)} ref={ref}>
       <input
+        ref={setAlertRef}
         type="search"
         placeholder={placeholder}
         onChange={onChange}
-        onFocus={() => setFocus(true)}
+        onFocus={handleDropdownClick}
         onBlur={() => setFocus(false)}
         className="w-full pl-8 pr-6 text-sm font-medium placeholder-white text-white bg-gray-450 border-gray-400 border-transparent rounded h-7 ring-0 focus:outline-none"
       />
@@ -27,6 +52,21 @@ function SearchBox({ placeholder = "Search", onChange, className }: Props) {
           "text-gray-100": focus,
         })}
       />
+      <div
+        ref={setPopperRef}
+        style={{
+          ...styles.popper,
+          display: alertVisible ? "" : "none",
+        }}
+        {...attributes.popper}
+        className="cursor-default bg-[#7B433D] rounded shadow-modal z-100 w-34 p-2 mt-2"
+      >
+        <div style={styles.offset} className="text-gray-410">
+          <a href="https://github.com/rocicorp/repliear/issues/29">
+            The search feature is coming soon ...
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
