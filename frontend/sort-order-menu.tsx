@@ -63,7 +63,7 @@ const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
         </div>
       )}
       <button
-        className="absolute right-2 top-2 items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
+        className="absolute right-2 top-3 items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
         ref={setOrderRef}
         onClick={handleDropdownClick}
       >

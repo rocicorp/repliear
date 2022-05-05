@@ -34,7 +34,7 @@ const commentsList = (comments: Comment[]) => {
   return comments.map((comment) => (
     <div
       key={comment.id}
-      className="mx-5 bg-gray-400 flex-1 mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap overflow-auto"
+      className=" max-w-[85vw] mx-5 bg-gray-400 flex-1 mt-0 mb-5 flex-1 border-transparent rounded py-3 px-4 relative whitespace-pre-wrap overflow-auto"
     >
       <div className="h-6 mb-1 -mt-px relative">
         <DefaultAvatarIcon className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 float-left mr-2" />
@@ -172,12 +172,26 @@ export default function IssueDetail({
         </div>
       </div>
       <div className="flex w-full p-4 h-full overflow-auto">
-        <div className=" flex-row w-3/4 p-8 border-gray-300 border-r my-2 overflow-auto h-[calc(100vh-140px)] ">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex border-solid border-b my-0 mx-auto px-5 justify-between">
+        <div className=" flex-row md:w-3/4 lg:p-8 border-gray-300 border-r my-2 overflow-auto h-[calc(100vh-140px)] ">
+          <div className="lg:max-w-4xl mx-auto max-w-[90vw]">
+            <div className="flex border-solid border-b my-1 mx-auto lg:px-5 justify-between px-3">
               <div className="text-md pb-4"></div>
+              <div className="flex visible lg:invisible">
+                <StatusMenu
+                  onSelect={handleChangeStatus}
+                  status={issue?.status || Status.BACKLOG}
+                  labelVisible={true}
+                  wideMode={false}
+                />
+                <PriorityMenu
+                  onSelect={handleChangePriority}
+                  labelVisible={true}
+                  priority={issue?.priority || Priority.NONE}
+                  wideMode={false}
+                />
+              </div>
               {editMode ? (
-                <div className="text-sm">
+                <div className="text-sm flex mb-2">
                   <button
                     className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-400 text-white"
                     onClick={handleSave}
@@ -214,7 +228,7 @@ export default function IssueDetail({
                   issue?.title
                 )}
               </div>
-              <div className="text-sm pb-4 text-gray-1 overflow-auto">
+              <div className="text-sm pb-4 text-gray-1 overflow-auto whitespace-pre-wrap">
                 {editMode ? (
                   <textarea
                     className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
@@ -228,7 +242,7 @@ export default function IssueDetail({
             </div>
             <div className="text-md py-4 px-5 text-gray-4">Comments</div>
             {commentsList(comments)}
-            <div className="mx-5 bg-gray-400 flex-1 mx- mt-0 mb-5 flex-1 border-transparent rounded max-w-full py-3 px-4 relative whitespace-pre-wrap ">
+            <div className="mx-5 bg-gray-400 flex-1 mx- mt-0 mb-5 flex-1 border-transparent rounded full py-3 px-4 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
                 placeholder="Leave a comment ..."
@@ -245,14 +259,14 @@ export default function IssueDetail({
             </div>
           </div>
         </div>
-        <div className="flex-row w-1/4 p-8 my-2">
+        <div className="md:flex-row hidden md:block w-1/4 p-8 my-2">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b my-0 mx-auto px-5">
               <div className="text-md pb-4"></div>
             </div>
             <div className="flex flex-row">
               <div className="flex-initial p-4">
-                <div className="w-[85px] text-md">Status</div>
+                <div className="w-1/2 text-md">Status</div>
               </div>
               <div className="flex-initial p-4">
                 <StatusMenu
@@ -264,9 +278,9 @@ export default function IssueDetail({
               </div>
             </div>
 
-            <div className="flex flex-row  flex-grow overflow-y-auto">
+            <div className="flex flex-row ">
               <div className="flex-initial p-4">
-                <div className="w-[85px] text-md">Priority</div>
+                <div className="text-md">Priority</div>
               </div>
               <div className="flex-initial p-4">
                 <PriorityMenu
