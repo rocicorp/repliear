@@ -50,7 +50,7 @@ const PriorityMenu = ({
   const getPriorityString = (priority: PriorityEnum) => {
     switch (priority) {
       case Priority.NONE:
-        return "Priority";
+        return "None";
       case Priority.HIGH:
         return "High";
       case Priority.MEDIUM:
