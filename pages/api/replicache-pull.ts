@@ -9,7 +9,6 @@ import {
   getVersion,
 } from "../../backend/data";
 import { z } from "zod";
-import type { JSONValue } from "replicache";
 
 const pullRequest = z.object({
   clientID: z.string(),
