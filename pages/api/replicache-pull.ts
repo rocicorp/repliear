@@ -119,10 +119,10 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   }`;
   console.log("Building patch took", Date.now() - startBuildingPatch);
 
-  const startJson = Date.now();
+  const startSend = Date.now();
   res.setHeader("Content-Type", "application/json");
   res.send(resp);
-  console.log("res.json took", Date.now() - startJson);
+  console.log("res.send took", Date.now() - startSend);
 
   const startEnd = Date.now();
   res.end();

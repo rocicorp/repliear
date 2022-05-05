@@ -246,15 +246,12 @@ export async function getIssueEntries(
     [spaceID, BASE_SPACE_ID]
   );
   const startFilter = Date.now();
-  const filtered = rows.filter((row) => !row.deleted);
+  const filtered: [key: string, value: string][] = rows
+    .filter((row) => !row.deleted)
+    .map((row) => [row.key, row.value]);
+
   console.log("getIssueEntries filter took " + (Date.now() - startFilter));
-  const startParse = Date.now();
-  const parsed: [key: string, value: string][] = filtered.map((row) => [
-    row.key,
-    row.value,
-  ]);
-  console.log("getIssueEntries parse took " + (Date.now() - startParse));
-  return parsed;
+  return filtered;
 }
 
 export async function getNonIssueEntriesInSyncOrder(
