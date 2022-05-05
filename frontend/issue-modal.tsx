@@ -1,7 +1,6 @@
 import AttachmentIcon from "./assets/icons/attachment.svg";
 import CloseIcon from "./assets/icons/close.svg";
 import GitIssueIcon from "./assets/icons/git-issue.svg";
-import ZoomIcon from "./assets/icons/zoom.svg";
 import Modal from "./modal";
 import Toggle from "./toggle";
 import React, { useState } from "react";
@@ -76,11 +75,8 @@ export default function IssueModal({
           <span className="ml-2 font-normal text-white">› New Issue</span>
         </div>
         <div className="flex items-center">
-          <div className="inline-flex items-center justify-center rounded h-7 w-7 hover:bg-gray-1 hover-text-gray-1 text-white">
-            <ZoomIcon className="w-3" />
-          </div>
           <div
-            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-1 hover-text-gray-1 text-white"
+            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-400 hover-text-gray-410 text-white"
             onClick={handleClickCloseBtn}
           >
             <CloseIcon className="w-4" />

@@ -164,7 +164,7 @@ export default function IssueDetail({
       <div className="flex bg-gray-400 border border-gray-300 justify-around">
         <div className="flex-1 p-4">
           <div
-            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-1 hover-text-gray-1 text-white cursor-pointer"
+            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-410 text-white cursor-pointer"
             onClick={handleClickCloseBtn}
           >
             <CloseIcon className="w-4" />

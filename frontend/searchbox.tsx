@@ -61,7 +61,7 @@ function SearchBox({ placeholder = "Search", onChange, className }: Props) {
         {...attributes.popper}
         className="cursor-default bg-[#7B433D] rounded shadow-modal z-100 w-34 p-2 mt-2"
       >
-        <div style={styles.offset} className="text-gray-410">
+        <div style={styles.offset} className="text-gray-2">
           <a href="https://github.com/rocicorp/repliear/issues/29">
             The search feature is coming soon ...
           </a>
