@@ -1,4 +1,4 @@
-import React, { RefObject, useRef, useState } from "react";
+import React, { MouseEvent, RefObject, useRef, useState } from "react";
 import { usePopper } from "react-popper";
 import PriorityIcon from "./priority-icon";
 import HighPriorityIcon from "./assets/icons/signal-strong.svg";
@@ -42,8 +42,9 @@ const PriorityMenu = ({
     placement: "bottom-start",
   });
 
-  const handleDropdownClick = () => {
+  const handleDropdownClick = (e: MouseEvent) => {
     update && update();
+    e.stopPropagation();
     setPriorityDropDownVisible(!priorityDropDownVisible);
   };
 
