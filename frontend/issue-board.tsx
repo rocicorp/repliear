@@ -3,7 +3,7 @@ import { groupBy, indexOf } from "lodash";
 import React, { useCallback } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
-import { Status, Issue, IssueUpdate } from "./issue";
+import { Status, Issue, IssueUpdate, Priority } from "./issue";
 import IssueCol from "./issue-col";
 
 export type IssuesByStatusType = {
@@ -78,7 +78,7 @@ interface Props {
 export default function IssueBoard({ issues, onUpdateIssues }: Props) {
   const issuesByType = getIssueByType(issues);
 
-  const onDragEnd = useCallback(
+  const handleDragEnd = useCallback(
     ({ source, destination }: DropResult) => {
       if (!destination) {
         return;
@@ -105,33 +105,45 @@ export default function IssueBoard({ issues, onUpdateIssues }: Props) {
     [issues, issuesByType, onUpdateIssues]
   );
 
+  const handleChangePriority = useCallback(
+    (issue: Issue, priority: Priority) => {
+      onUpdateIssues([{ id: issue.id, changes: { priority } }]);
+    },
+    [onUpdateIssues]
+  );
+
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex flex-1 pt-6 pl-8 overflow-scroll-x bg-gray-500 border-color-gray-2 border-right-width-1">
         <IssueCol
           title={"Backlog"}
           status={Status.BACKLOG}
           issues={issuesByType[Status.BACKLOG]}
+          onChangePriority={handleChangePriority}
         />
         <IssueCol
           title={"Todo"}
           status={Status.TODO}
           issues={issuesByType[Status.TODO]}
+          onChangePriority={handleChangePriority}
         />
         <IssueCol
           title={"In Progress"}
           status={Status.IN_PROGRESS}
           issues={issuesByType[Status.IN_PROGRESS]}
+          onChangePriority={handleChangePriority}
         />
         <IssueCol
           title={"Done"}
           status={Status.DONE}
           issues={issuesByType[Status.DONE]}
+          onChangePriority={handleChangePriority}
         />
         <IssueCol
           title={"Canceled"}
           status={Status.CANCELED}
           issues={issuesByType[Status.CANCELED]}
+          onChangePriority={handleChangePriority}
         />
       </div>
     </DragDropContext>

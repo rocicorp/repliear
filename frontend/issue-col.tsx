@@ -1,5 +1,5 @@
 import StatusIcon from "./status-icon";
-import React, { CSSProperties, memo } from "react";
+import React, { CSSProperties, memo, useMemo } from "react";
 import {
   Draggable,
   DraggableProvided,
@@ -7,7 +7,7 @@ import {
   DroppableProvided,
   DroppableStateSnapshot,
 } from "react-beautiful-dnd";
-import type { Issue, Status } from "./issue";
+import type { Issue, Priority, Status } from "./issue";
 import IssueItem from "./issue-item";
 import { FixedSizeList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -17,16 +17,20 @@ interface Props {
   status: Status;
   title: string;
   issues: Array<Issue>;
+  onChangePriority: (issue: Issue, priority: Priority) => void;
 }
 
 interface RowProps {
   index: number;
-  data: Array<Issue>;
+  data: {
+    issues: Array<Issue>;
+    onChangePriority: (issue: Issue, priority: Priority) => void;
+  };
   style: CSSProperties;
 }
 
-const RowPreMemo = ({ data: items, index, style }: RowProps) => {
-  const issue = items[index];
+const RowPreMemo = ({ data, index, style }: RowProps) => {
+  const issue = data.issues[index];
   // We are rendering an extra item for the placeholder.
   // To do this we increased our data set size to include one 'fake' item.
   if (!issue) {
@@ -46,7 +50,11 @@ const RowPreMemo = ({ data: items, index, style }: RowProps) => {
             }}
             ref={provided.innerRef}
           >
-            <IssueItem issue={issue} key={index} />
+            <IssueItem
+              issue={issue}
+              key={index}
+              onChangePriority={data.onChangePriority}
+            />
           </div>
         );
       }}
@@ -55,7 +63,14 @@ const RowPreMemo = ({ data: items, index, style }: RowProps) => {
 };
 const Row = memo(RowPreMemo);
 
-function IssueCol({ title, status, issues }: Props) {
+function IssueCol({ title, status, issues, onChangePriority }: Props) {
+  const itemData = useMemo(
+    () => ({
+      issues,
+      onChangePriority,
+    }),
+    [issues, onChangePriority]
+  );
   const statusIcon = <StatusIcon status={status} />;
   return (
     <div className="flex flex-col flex-shrink-0 pr-3 select-none w-1/5">
@@ -111,7 +126,7 @@ function IssueCol({ title, status, issues }: Props) {
                       itemSize={100}
                       width={width}
                       outerRef={provided.innerRef}
-                      itemData={issues}
+                      itemData={itemData}
                     >
                       {Row}
                     </FixedSizeList>
