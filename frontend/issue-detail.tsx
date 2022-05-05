@@ -1,5 +1,7 @@
 import React, { useCallback, useState } from "react";
 import CloseIcon from "./assets/icons/close.svg";
+import ArrowIcon from "./assets/icons/arrow.svg";
+
 import DefaultAvatarIcon from "./assets/icons/avatar.svg";
 import EditIcon from "@mui/icons-material/Edit";
 import PriorityMenu from "./priority-menu";
@@ -163,11 +165,34 @@ export default function IssueDetail({
     <div className="m-3 rounded-md shadow-mdw-7xl	border-gray-400 border">
       <div className="flex bg-gray-400 border border-gray-300 justify-around">
         <div className="flex-1 p-4">
-          <div
-            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-410 text-white cursor-pointer"
-            onClick={handleClickCloseBtn}
-          >
-            <CloseIcon className="w-4" />
+          <div className="flex flex-row flex-initial ml-3">
+            <div
+              className="inline-flex items-center justify-center h-6 w-7 rounded  hover:bg-gray-410  cursor-pointer"
+              onClick={handleClickCloseBtn}
+            >
+              <CloseIcon className="w-4" />
+            </div>
+            <div className="flex flex-row flex-initial select-none cursor-pointer">
+              <button
+                style={{ transform: "rotate(180deg) scale(1.25)" }}
+                className="h-6 m-0 py-0 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-4  hover:bg-gray-410 "
+                type="button"
+              >
+                <ArrowIcon />
+              </button>
+            </div>
+            <div
+              role="button"
+              className="flex flex-row flex-initial select-none cursor-pointer"
+            >
+              <button
+                style={{ transform: "scale(1.25)" }}
+                className="h-6 m-0 py-0 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-4  hover:bg-gray-410 "
+                type="button"
+              >
+                <ArrowIcon />
+              </button>
+            </div>
           </div>
         </div>
       </div>
