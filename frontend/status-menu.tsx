@@ -60,8 +60,8 @@ const StatusMenu = ({
     "inline-flex items-center h-6 px-2 border-none rounded focus:outline-none",
     {
       /* eslint-disable @typescript-eslint/naming-convention */
-      "text-gray-2 hover:bg-gray-500 hover:text-gray-400": !labelVisible,
-      "text-md hover:bg-gray-500 hover:text-gray-3": wideMode,
+      "text-gray-2 hover:bg-gray-400 hover:text-gray-2": !labelVisible,
+      "text-md hover:bg-gray-400 hover:text-gray-2": wideMode || labelVisible,
       /* eslint-enable @typescript-eslint/naming-convention */
     }
   );
