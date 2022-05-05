@@ -9,7 +9,7 @@ import {
   reverseTimestampSortKey,
 } from "../frontend/issue";
 import type { JSONValue, ReadTransaction } from "replicache";
-import { assertNotUndefined } from "util/asserts";
+import { assertNotUndefined } from "../util/asserts";
 
 export async function getSyncOrder(
   tx: ReadTransaction,

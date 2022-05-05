@@ -5,13 +5,14 @@ import type { JSONValue } from "replicache";
 import {
   createDatabase,
   delEntries,
-  getChangedEntries,
   getEntry,
   getVersion,
   initSpace,
   putEntries,
   SampleData,
-  SAMPLE_SPACE_ID,
+  BASE_SPACE_ID,
+  getIssueEntries,
+  getNonIssueEntriesInSyncOrder,
 } from "./data";
 import { transact, withExecutor } from "./pg";
 
@@ -23,6 +24,7 @@ const i1: Issue = {
   modified: 0,
   created: 0,
   creator: "testUser1",
+  kanbanOrder: "1",
 };
 
 const comment1i1: Comment = {
@@ -49,6 +51,7 @@ const i2: Issue = {
   modified: 0,
   created: 0,
   creator: "testUser2",
+  kanbanOrder: "2",
 };
 
 const comment1i2: Comment = {
@@ -67,16 +70,22 @@ const i3: Issue = {
   modified: 0,
   created: 0,
   creator: "testUser3",
+  kanbanOrder: "3",
 };
 
-export const testSampleData: SampleData = {
-  issues: [
-    { issue: i1, description: "Description 1" },
-    { issue: i2, description: "Description 2" },
-    { issue: i3, description: "Description 3" },
-  ],
-  comments: [comment1i1, comment1i2, comment2i1],
-};
+export const testSampleData: SampleData = [
+  {
+    issue: i1,
+    description: "Description 1",
+    comments: [comment1i1, comment2i1],
+  },
+  { issue: i2, description: "Description 2", comments: [comment1i2] },
+  { issue: i3, description: "Description 3", comments: [] },
+];
+
+function getTestSyncOrder(key: string) {
+  return `${key}-testSyncOrder`;
+}
 
 setup(async () => {
   // TODO: This is a very expensive way to unit test :).
@@ -86,8 +95,8 @@ setup(async () => {
 
 teardown(async () => {
   await withExecutor(async (executor) => {
-    await executor(`delete from entry where spaceid = $1`, [SAMPLE_SPACE_ID]);
-    await executor(`delete from space where id = $1`, [SAMPLE_SPACE_ID]);
+    await executor(`delete from entry where spaceid = $1`, [BASE_SPACE_ID]);
+    await executor(`delete from space where id = $1`, [BASE_SPACE_ID]);
     await executor(`delete from entry where spaceid like 'test-s-%'`);
     await executor(`delete from space where id like 'test-s-%'`);
   });
@@ -134,7 +143,9 @@ test("getEntry", async () => {
       );
       if (c.exists) {
         await executor(
-          `insert into entry (spaceid, key, value, deleted, version, lastmodified) values ('test-s-s1', 'foo', $1, $2, 1, now())`,
+          `insert into entry (spaceid, key, value, syncorder, deleted, version, lastmodified) values ('test-s-s1', 'foo', $1, '${getTestSyncOrder(
+            "foo"
+          )}',$2, 1, now())`,
           [c.validJSON ? JSON.stringify(42) : "not json", c.deleted]
         );
       }
@@ -170,11 +181,11 @@ test("getEntry RoundTrip types", async () => {
       executor,
       "test-s-s1",
       [
-        ["boolean", true],
-        ["number", 42],
-        ["string", "foo"],
-        ["array", [1, 2, 3]],
-        ["object", { a: 1, b: 2 }],
+        ["boolean", true, getTestSyncOrder("boolean")],
+        ["number", 42, getTestSyncOrder("number")],
+        ["string", "foo", getTestSyncOrder("string")],
+        ["array", [1, 2, 3], getTestSyncOrder("array")],
+        ["object", { a: 1, b: 2 }, getTestSyncOrder("object")],
       ],
       1
     );
@@ -228,7 +239,12 @@ test("putEntries", async () => {
       );
 
       if (c.duplicate) {
-        await putEntries(executor, "test-s-s1", [["foo", 41]], 1);
+        await putEntries(
+          executor,
+          "test-s-s1",
+          [["foo", 41, getTestSyncOrder("foo")]],
+          1
+        );
         if (c.deleted) {
           await delEntries(executor, "test-s-s1", ["foo"], 1);
         }
@@ -237,8 +253,8 @@ test("putEntries", async () => {
         executor,
         "test-s-s1",
         [
-          ["bar", 100],
-          ["foo", 42],
+          ["bar", 100, getTestSyncOrder("bar")],
+          ["foo", 42, getTestSyncOrder("foo")],
         ],
         2
       );
@@ -295,11 +311,15 @@ test("delEntries", async () => {
         `delete from entry where spaceid = 'test-s-s1' and key = 'foo'`
       );
       await executor(
-        `insert into entry (spaceid, key, value, deleted, version, lastmodified) values ('test-s-s1', 'bar', '100', false, 1, now())`
+        `insert into entry (spaceid, key, value, syncorder, deleted, version, lastmodified) values ('test-s-s1', 'bar', '100', '${getTestSyncOrder(
+          "bar"
+        )}', false, 1, now())`
       );
       if (c.exists) {
         await executor(
-          `insert into entry (spaceid, key, value, deleted, version, lastmodified) values ('test-s-s1', 'foo', '42', false, 1, now())`
+          `insert into entry (spaceid, key, value, syncorder, deleted, version, lastmodified) values ('test-s-s1', 'foo', '42', '${getTestSyncOrder(
+            "foo"
+          )}',false, 1, now())`
         );
       }
 
@@ -342,23 +362,29 @@ test("delEntries", async () => {
 
 test("initSpace", async () => {
   await withExecutor(async (executor) => {
-    await executor(`delete from entry where spaceid = $1`, [SAMPLE_SPACE_ID]);
-    await executor(`delete from space where id = $1`, [SAMPLE_SPACE_ID]);
-    const testSpaceID1 = "test-s-i1";
-    const testSpaceID2 = "test-s-i2";
-    expect(await getVersion(executor, testSpaceID1)).undefined;
-    await initSpace(executor, testSpaceID1, () =>
+    await executor(`delete from entry where spaceid = $1`, [BASE_SPACE_ID]);
+    await executor(`delete from space where id = $1`, [BASE_SPACE_ID]);
+    const testSpaceID1 = await initSpace(executor, () =>
       Promise.resolve(testSampleData)
     );
     expect(await getVersion(executor, testSpaceID1)).eq(1);
-    // 3 issues, 3 descriptions, and 3 comments
-    expect((await getChangedEntries(executor, testSpaceID1, 0)).length).eq(9);
-    expect(await getVersion(executor, testSpaceID2)).undefined;
-    await initSpace(executor, testSpaceID2, () => {
+    // 3 issues
+    expect((await getIssueEntries(executor, testSpaceID1)).length).eq(3);
+    // 3 descriptions, and 3 comments
+    expect(
+      (await getNonIssueEntriesInSyncOrder(executor, testSpaceID1, "", 10))
+        .entries.length
+    ).eq(6);
+    const testSpaceID2 = await initSpace(executor, () => {
       throw new Error("unexpected call to getSampleIssues on subsequent calls");
     });
     expect(await getVersion(executor, testSpaceID2)).eq(1);
-    // 3 issues, 3 descriptions, and 3 comments
-    expect((await getChangedEntries(executor, testSpaceID2, 0)).length).eq(9);
+    // 3 issues
+    expect((await getIssueEntries(executor, testSpaceID2)).length).eq(3);
+    // 3 descriptions, and 3 comments
+    expect(
+      (await getNonIssueEntriesInSyncOrder(executor, testSpaceID2, "", 10))
+        .entries.length
+    ).eq(6);
   });
 });

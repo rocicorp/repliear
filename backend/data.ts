@@ -101,7 +101,7 @@ export async function initSpace(
     console.log("Initializing base space", BASE_SPACE_ID);
     await insertSpace(executor, BASE_SPACE_ID, INITIAL_SPACE_VERSION);
     const start = Date.now();
-    // We have to batch insertions to work around command size limits
+    // We have to batch insertions to work around postgres command size limits
     const sampleData = await getSampleData();
     const sampleDataBatchs: SampleData[] = [];
     for (let i = 0; i < sampleData.length; i++) {
