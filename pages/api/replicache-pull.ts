@@ -9,7 +9,7 @@ import {
   getVersion,
 } from "../../backend/data";
 import { z } from "zod";
-import type { JSONValue, PullResponse } from "replicache";
+import type { JSONValue } from "replicache";
 
 const pullRequest = z.object({
   clientID: z.string(),
@@ -98,30 +98,30 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
 
   console.log("lastMutationID: ", lastMutationID);
   console.log("responseCookie: ", responseCookie);
-  const resp: PullResponse = {
-    lastMutationID: lastMutationID ?? 0,
-    cookie: responseCookie ?? 0,
-    patch: [],
-  };
-
-  for (const [key, value, deleted] of entries) {
-    if (deleted) {
-      resp.patch.push({
-        op: "del",
-        key,
-      });
-    } else {
-      resp.patch.push({
-        op: "put",
-        key,
-        value,
-      });
-    }
-  }
+  const resp = `{
+    "lastMutationID": ${lastMutationID ?? 0},
+    "cookie": ${JSON.stringify(responseCookie) ?? 0},
+    "patch": [${entries
+      .map(([key, value, deleted]) => {
+        if (deleted) {
+          return `{
+            "op": "del",
+            "key": "${key}"
+          }`;
+        } else {
+          return `{
+            "op": "put",
+            "key": "${key}",
+            "value": ${value}
+          }`;
+        }
+      })
+      .join(",")}]
+  }`;
   console.log("Building patch took", Date.now() - startBuildingPatch);
 
   const startJson = Date.now();
-  res.json(resp);
+  res.send(resp);
   console.log("res.json took", Date.now() - startJson);
 
   const startEnd = Date.now();
