@@ -319,6 +319,7 @@ const Layout = ({
     case "detail":
       return (
         <IssueDetail
+          issues={state.filteredIssues}
           rep={rep}
           onUpdateIssues={onUpdateIssues}
           onAddComment={onCreateComment}
