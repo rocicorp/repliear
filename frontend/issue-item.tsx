@@ -5,7 +5,7 @@ import IssueItemBase from "./issue-item-base";
 
 interface IssueProps {
   issue: Issue;
-  onChangePriority?: (issue: Issue, priority: Priority) => void;
+  onChangePriority: (issue: Issue, priority: Priority) => void;
 }
 
 const IssueItem = ({ issue, onChangePriority }: IssueProps) => {
