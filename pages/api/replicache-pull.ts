@@ -9,7 +9,6 @@ import {
   getVersion,
 } from "../../backend/data";
 import { z } from "zod";
-import type { JSONValue, PullResponse } from "replicache";
 
 const pullRequest = z.object({
   clientID: z.string(),
@@ -51,7 +50,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       const lastMutationIDPromise = getLastMutationID(executor, pull.clientID);
       let entries: [
         key: string,
-        value: JSONValue,
+        value: string,
         deleted?: boolean
       ][] = await getChangedEntries(executor, spaceID, requestCookie.version);
       let responseEndKey = undefined;
@@ -77,9 +76,9 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
         }
         entries.push([
           "control/partialSync",
-          {
+          JSON.stringify({
             endKey: responseEndKey,
-          },
+          }),
         ]);
       }
       const responseCookie = { version, endKey: responseEndKey };
@@ -98,31 +97,32 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
 
   console.log("lastMutationID: ", lastMutationID);
   console.log("responseCookie: ", responseCookie);
-  const resp: PullResponse = {
-    lastMutationID: lastMutationID ?? 0,
-    cookie: responseCookie ?? 0,
-    patch: [],
-  };
-
-  for (const [key, value, deleted] of entries) {
-    if (deleted) {
-      resp.patch.push({
-        op: "del",
-        key,
-      });
-    } else {
-      resp.patch.push({
-        op: "put",
-        key,
-        value,
-      });
-    }
-  }
+  const resp = `{
+    "lastMutationID": ${lastMutationID ?? 0},
+    "cookie": ${JSON.stringify(responseCookie) ?? 0},
+    "patch": [${entries
+      .map(([key, value, deleted]) => {
+        if (deleted) {
+          return `{
+            "op": "del",
+            "key": "${key}"
+          }`;
+        } else {
+          return `{
+            "op": "put",
+            "key": "${key}",
+            "value": ${value}
+          }`;
+        }
+      })
+      .join(",")}]
+  }`;
   console.log("Building patch took", Date.now() - startBuildingPatch);
 
-  const startJson = Date.now();
-  res.json(resp);
-  console.log("res.json took", Date.now() - startJson);
+  const startSend = Date.now();
+  res.setHeader("Content-Type", "application/json");
+  res.send(resp);
+  console.log("res.send took", Date.now() - startSend);
 
   const startEnd = Date.now();
   res.end();

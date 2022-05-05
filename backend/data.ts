@@ -229,7 +229,7 @@ export async function delEntries(
 export async function getIssueEntries(
   executor: Executor,
   spaceID: string
-): Promise<[key: string, value: JSONValue][]> {
+): Promise<[key: string, value: string][]> {
   const { rows } = await executor(
     `
     with overlayentry as (
@@ -246,15 +246,12 @@ export async function getIssueEntries(
     [spaceID, BASE_SPACE_ID]
   );
   const startFilter = Date.now();
-  const filtered = rows.filter((row) => !row.deleted);
+  const filtered: [key: string, value: string][] = rows
+    .filter((row) => !row.deleted)
+    .map((row) => [row.key, row.value]);
+
   console.log("getIssueEntries filter took " + (Date.now() - startFilter));
-  const startParse = Date.now();
-  const parsed: [key: string, value: JSONValue][] = filtered.map((row) => [
-    row.key,
-    JSON.parse(row.value),
-  ]);
-  console.log("getIssueEntries parse took " + (Date.now() - startParse));
-  return parsed;
+  return filtered;
 }
 
 export async function getNonIssueEntriesInSyncOrder(
@@ -263,7 +260,7 @@ export async function getNonIssueEntriesInSyncOrder(
   startSyncOrderExclusive: string,
   limit: number
 ): Promise<{
-  entries: [key: string, value: JSONValue][];
+  entries: [key: string, value: string][];
   endSyncOrder: string | undefined;
 }> {
   // All though it complicates the query, we do the deleted filtering
@@ -292,7 +289,7 @@ export async function getNonIssueEntriesInSyncOrder(
     [spaceID, BASE_SPACE_ID, startSyncOrderExclusive, limit]
   );
   return {
-    entries: rows.map((row) => [row.key, JSON.parse(row.value)]),
+    entries: rows.map((row) => [row.key, row.value]),
     endSyncOrder: rows[rows.length - 1]?.syncorder,
   };
 }
@@ -301,7 +298,7 @@ export async function getChangedEntries(
   executor: Executor,
   spaceID: string,
   prevVersion: number
-): Promise<[key: string, value: JSONValue, deleted: boolean][]> {
+): Promise<[key: string, value: string, deleted: boolean][]> {
   // changes are only in the onverlay space, so we do not need to
   // query the base space.
   const {
@@ -310,7 +307,7 @@ export async function getChangedEntries(
     `select key, value, deleted from entry where spaceid = $1 and version > $2`,
     [spaceID, prevVersion]
   );
-  return rows.map((row) => [row.key, JSON.parse(row.value), row.deleted]);
+  return rows.map((row) => [row.key, row.value, row.deleted]);
 }
 
 export async function getVersion(
