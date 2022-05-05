@@ -64,9 +64,7 @@ export default function IssueDetail({
 
   const [editMode, setEditMode] = useState(false);
 
-  const [currentIssueIdx, setCurrentIssueIdx] = useState<undefined | number>(
-    undefined
-  );
+  const [currentIssueIdx, setCurrentIssueIdx] = useState<number>(-1);
 
   const [commentText, setCommentText] = useState("");
   const [titleText, setTitle] = useState("");
@@ -228,29 +226,35 @@ export default function IssueDetail({
             >
               <CloseIcon className="w-4" />
             </div>
-            <div className="flex flex-row flex-initial select-none cursor-pointer">
-              <button
-                style={{ transform: "rotate(180deg) scale(1.25)" }}
-                className="h-6 m-0 py-0 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-4  hover:bg-gray-410 "
-                type="button"
-                onClick={() => handleFwdPrev("prev")}
-              >
-                <ArrowIcon />
-              </button>
-            </div>
-            <div
-              role="button"
-              className="flex flex-row flex-initial select-none cursor-pointer"
-            >
-              <button
-                style={{ transform: "scale(1.25)" }}
-                className="h-6 m-0 py-0 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-4  hover:bg-gray-410 "
-                type="button"
-                onClick={() => handleFwdPrev("fwd")}
-              >
-                <ArrowIcon />
-              </button>
-            </div>
+            {currentIssueIdx >= 0 && (
+              <>
+                <div className="flex flex-row flex-initial select-none cursor-pointer">
+                  <button
+                    style={{ transform: "rotate(180deg) scale(1.25)" }}
+                    className="h-6 m-0 py-0 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-4  hover:bg-gray-410 disabled:opacity-25"
+                    type="button"
+                    onClick={() => handleFwdPrev("prev")}
+                    disabled={currentIssueIdx === 0}
+                  >
+                    <ArrowIcon />
+                  </button>
+                </div>
+                <div
+                  role="button"
+                  className="flex flex-row flex-initial select-none cursor-pointer"
+                >
+                  <button
+                    style={{ transform: "scale(1.25)" }}
+                    className="h-6 m-0 py-0 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-4  hover:bg-gray-410 disabled:opacity-50"
+                    type="button"
+                    onClick={() => handleFwdPrev("fwd")}
+                    disabled={currentIssueIdx === issues.length - 1}
+                  >
+                    <ArrowIcon />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
