@@ -51,7 +51,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       const lastMutationIDPromise = getLastMutationID(executor, pull.clientID);
       let entries: [
         key: string,
-        value: JSONValue,
+        value: string,
         deleted?: boolean
       ][] = await getChangedEntries(executor, spaceID, requestCookie.version);
       let responseEndKey = undefined;
