@@ -77,9 +77,9 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
         }
         entries.push([
           "control/partialSync",
-          {
+          JSON.stringify({
             endKey: responseEndKey,
-          },
+          }),
         ]);
       }
       const responseCookie = { version, endKey: responseEndKey };
