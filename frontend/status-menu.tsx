@@ -1,4 +1,4 @@
-import React, { RefObject, useRef, useState } from "react";
+import React, { MouseEvent, RefObject, useRef, useState } from "react";
 import { usePopper } from "react-popper";
 import StatusIcon from "./status-icon";
 import CancelIcon from "./assets/icons/cancel.svg";
@@ -68,8 +68,9 @@ const StatusMenu = ({
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
 
-  const handleDropdownClick = () => {
+  const handleDropdownClick = (e: MouseEvent) => {
     update && update();
+    e.stopPropagation();
     setStatusDropDownVisible(!statusDropDownVisible);
   };
 

@@ -1,20 +1,14 @@
 import React, { memo } from "react";
-import {
-  Draggable,
-  DraggableProvided,
-  DraggableStateSnapshot,
-} from "react-beautiful-dnd";
 import type { Issue, Priority } from "./issue";
 import { queryTypes, useQueryStates } from "next-usequerystate";
 import IssueItemBase from "./issue-item-base";
 
 interface IssueProps {
   issue: Issue;
-  index: number;
   onChangePriority?: (issue: Issue, priority: Priority) => void;
 }
 
-const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
+const IssueItem = ({ issue, onChangePriority }: IssueProps) => {
   const [, setDetailView] = useQueryStates(
     {
       view: queryTypes.string,
@@ -38,19 +32,11 @@ const IssueItem = ({ issue, index, onChangePriority }: IssueProps) => {
   };
 
   return (
-    <Draggable draggableId={issue.id || "id"} index={index} key={issue.id}>
-      {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => {
-        return (
-          <IssueItemBase
-            issue={issue}
-            provided={provided}
-            snapshot={snapshot}
-            handleIssueItemClick={handleIssueItemClick}
-            handleChangePriority={handleChangePriority}
-          />
-        );
-      }}
-    </Draggable>
+    <IssueItemBase
+      issue={issue}
+      handleIssueItemClick={handleIssueItemClick}
+      handleChangePriority={handleChangePriority}
+    />
   );
 };
 
