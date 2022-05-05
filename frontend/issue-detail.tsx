@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import CloseIcon from "./assets/icons/close.svg";
 import ArrowIcon from "./assets/icons/arrow.svg";
 
@@ -25,10 +25,12 @@ import { useSubscribe } from "replicache-react";
 import { Remark } from "react-remark";
 import { nanoid } from "nanoid";
 import { timeAgo } from "../util/date";
+import { useKeyPressed } from "./hooks/useKeyPressed";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onAddComment: (comment: Comment) => void;
+  issues: Issue[];
   rep: Replicache<M>;
 }
 
@@ -53,6 +55,7 @@ export default function IssueDetail({
   rep,
   onUpdateIssues,
   onAddComment,
+  issues,
 }: Props) {
   const [detailView, setDetailView] = useQueryStates({
     view: queryTypes.string,
@@ -60,11 +63,24 @@ export default function IssueDetail({
   });
 
   const [editMode, setEditMode] = useState(false);
+
+  const [currentIssueIdx, setCurrentIssueIdx] = useState<undefined | number>(
+    undefined
+  );
+
   const [commentText, setCommentText] = useState("");
   const [titleText, setTitle] = useState("");
   const [descriptionText, setDescription] = useState("");
 
   const { iss } = detailView;
+
+  useEffect(() => {
+    if (detailView.iss) {
+      const index = issues.findIndex((issue) => issue.id === detailView.iss);
+      setCurrentIssueIdx(index);
+    }
+  }, [issues, iss]);
+
   const issue = useSubscribe<Issue | null>(
     rep,
     async (tx) => {
@@ -141,7 +157,7 @@ export default function IssueDetail({
     }
   }, [onAddComment, commentText, issue]);
 
-  const handleClickCloseBtn = async () => {
+  const handleClickCloseBtn = useCallback(async () => {
     await setDetailView(
       { view: null, iss: null },
       {
@@ -149,7 +165,47 @@ export default function IssueDetail({
         shallow: true,
       }
     );
-  };
+  }, []);
+
+  const handleFwdPrev = useCallback(
+    async (direction: "prev" | "fwd") => {
+      if (currentIssueIdx === undefined) {
+        return;
+      }
+      let newIss = undefined;
+      if (direction === "prev") {
+        if (currentIssueIdx === 0) {
+          return;
+        }
+        newIss = issues[currentIssueIdx - 1].id;
+      } else {
+        if (currentIssueIdx === issues.length - 1) {
+          return;
+        }
+        newIss = issues[currentIssueIdx + 1].id;
+      }
+
+      await setDetailView(
+        { iss: newIss },
+        {
+          scroll: false,
+          shallow: true,
+        }
+      );
+    },
+    [currentIssueIdx, issues]
+  );
+
+  const handleFwd = useCallback(async () => {
+    await handleFwdPrev("fwd");
+  }, [handleFwdPrev]);
+
+  const handlePrev = useCallback(async () => {
+    await handleFwdPrev("prev");
+  }, [handleFwdPrev]);
+
+  useKeyPressed("j", handleFwd);
+  useKeyPressed("k", handlePrev);
 
   const handleCancel = () => {
     setEditMode(false);
@@ -177,6 +233,7 @@ export default function IssueDetail({
                 style={{ transform: "rotate(180deg) scale(1.25)" }}
                 className="h-6 m-0 py-0 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-4  hover:bg-gray-410 "
                 type="button"
+                onClick={() => handleFwdPrev("prev")}
               >
                 <ArrowIcon />
               </button>
@@ -189,6 +246,7 @@ export default function IssueDetail({
                 style={{ transform: "scale(1.25)" }}
                 className="h-6 m-0 py-0 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-4  hover:bg-gray-410 "
                 type="button"
+                onClick={() => handleFwdPrev("fwd")}
               >
                 <ArrowIcon />
               </button>
