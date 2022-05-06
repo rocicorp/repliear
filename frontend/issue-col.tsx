@@ -73,9 +73,9 @@ function IssueCol({ title, status, issues, onChangePriority }: Props) {
   );
   const statusIcon = <StatusIcon className="flex-shrink-0" status={status} />;
   return (
-    <div className="flex flex-col flex-shrink-0 pr-3 select-none w-1/5">
+    <div className="flex flex-col pr-3 flex-1 select-none min-w-[9rem]">
       {/* column title */}
-      <div className="flex items-center pb-3 text-sm min-w-0 whitespace-nowrap overflow-hidden">
+      <div className="flex items-center pb-3 text-sm whitespace-nowrap overflow-hidden">
         {statusIcon}
         <div className="ml-3 mr-3 font-medium">{title}</div>
         <div className="mr-3 font-normal text-gray-410">

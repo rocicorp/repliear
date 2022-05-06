@@ -21,7 +21,7 @@ const IssueItemBase = ({
       )}
       onClick={handleIssueItemClick}
     >
-      <div className="flex justify-between w-full overflow-x-clip">
+      <div className="flex justify-between w-full overflow-hidden">
         <div className="flex flex-col">
           <span className="text-xs font-normal uppercase"></span>
           <span className="mt-1 text-sm font-medium text-gray-2 line-clamp-2 overflow-ellipsis h-10">
