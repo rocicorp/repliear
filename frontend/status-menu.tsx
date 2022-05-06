@@ -85,12 +85,14 @@ const StatusMenu = ({
       <div
         key={idx}
         className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
-        onClick={() => {
+        onClick={(e: MouseEvent) => {
           onSelect(status);
           setStatusDropDownVisible(false);
+          e.stopPropagation();
         }}
       >
-        <Icon className="mr-3" /> <span>{label}</span>
+        <Icon className="mr-3" />
+        <span>{label}</span>
       </div>
     );
   });
