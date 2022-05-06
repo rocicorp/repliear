@@ -13,9 +13,10 @@ interface Props {
   /* function called when modal is closed */
   onDismiss?: () => void;
   children?: React.ReactNode;
-  size: "normal" | "large";
+  size: "normal" | "large" | "wide";
 }
 const sizeClasses = {
+  wide: "w-185",
   large: "w-175",
   normal: "w-140",
 };
@@ -43,7 +44,7 @@ function Modal({
     "flex flex-col items-center transform bg-gray-450 modal shadow-large-modal rounded-xl",
     {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      "mt-20 mb-2 ": !center,
+      "mt-5 lg:mt-20 mb-2 ": !center,
     },
     sizeClasses[size],
     className
