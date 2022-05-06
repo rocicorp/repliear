@@ -39,7 +39,7 @@ function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
 
   return (
     <div
-      className="inline-flex items-center flex-grow flex-shrink w-full min-w-0 pl-2 pr-8 text-sm border-b border-gray-400 hover:bg-gray-400 hover:bg-opacity-40 h-11 cursor-pointer text-white border-y-1"
+      className="inline-flex items-center flex-grow flex-shrink w-full min-w-0 pl-2 pr-4 lg:pr-8 text-sm border-b border-gray-400 hover:bg-gray-400 hover:bg-opacity-40 h-11 cursor-pointer text-white border-y-1"
       id={issue.id}
       onClick={handleIssueRowClick}
     >
@@ -50,14 +50,13 @@ function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
           priority={issue.priority}
         />
       </div>
-      <div className="flex-shrink-0 hidden ml-2 font-normal text-gray-500 sm:block w-11 md:block"></div>
-      <div className="flex-shrink-0 ml-2">
+      <div className="flex-shrink-0 ml-1">
         <StatusMenu onSelect={handleChangeStatus} status={issue.status} />
       </div>
-      <div className="flex-wrap flex-grow ml-2 overflow-hidden font-medium line-clamp-1 overflow-ellipsis">
+      <div className="flex-wrap flex-shrink-1 flex-grow ml-2 overflow-hidden font-medium line-clamp-1 overflow-ellipsis">
         {issue.title.substr(0, 3000) || ""}
       </div>
-      <div className="flex-shrink-0 hidden w-12 ml-2 mr-3 font-normal sm:block">
+      <div className="flex-shrink-0 ml-2 font-normal sm:block">
         {formatDate(new Date(issue.modified))}
       </div>
     </div>

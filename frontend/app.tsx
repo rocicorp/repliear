@@ -17,6 +17,8 @@ import {
   Comment,
   IssueUpdate,
   reverseTimestampSortKey,
+  statusOrderValues,
+  priorityOrderValues,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -182,6 +184,18 @@ function reducer(
         break;
       case Order.MODIFIED:
         orderValue = reverseTimestampSortKey(issue.modified, issue.id);
+        break;
+      case Order.STATUS:
+        orderValue =
+          statusOrderValues[issue.status] +
+          "-" +
+          reverseTimestampSortKey(issue.modified, issue.id);
+        break;
+      case Order.PRIORITY:
+        orderValue =
+          priorityOrderValues[issue.priority] +
+          "-" +
+          reverseTimestampSortKey(issue.modified, issue.id);
         break;
       case Order.KANBAN:
         orderValue = issue.kanbanOrder + "-" + issue.id;
@@ -421,7 +435,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           onCloseMenu={() => setMenuVisible(false)}
           onCreateIssue={handleCreateIssue}
         />
-        <div className="flex flex-col flex-grow">
+        <div className="flex flex-col flex-grow min-w-0">
           {view !== "detail" && (
             <TopFilter
               onToggleMenu={() => setMenuVisible(!menuVisible)}

@@ -61,7 +61,9 @@ const TopFilter = ({
 }: Props) => {
   const [orderBy, setOrderByParam] = useQueryState(
     "orderBy",
-    queryTypes.stringEnum<Order>(Object.values(Order))
+    queryTypes
+      .stringEnum<Order>(Object.values(Order))
+      .withDefault(Order.MODIFIED)
   );
   const [statusFilters, setStatusFilterByParam] = useQueryState(
     "statusFilter",
@@ -78,7 +80,7 @@ const TopFilter = ({
 
   return (
     <>
-      <div className="flex justify-between flex-shrink-0 pl-2 pr-6 border-b border-gray-400 h-14 lg:pl-9 border-b-color-gray-2">
+      <div className="flex justify-between flex-shrink-0 pl-2 lg:pl-9 pr-2 lg:pr-6 border-b border-gray-400 h-14  border-b-color-gray-2">
         {/* left section */}
         <div className="flex items-center">
           <button
@@ -99,17 +101,26 @@ const TopFilter = ({
           )}
           <FilterMenu
             onSelectPriority={async (priority) => {
-              await setPriorityFilterByParam([
-                ...new Set([
-                  ...((priorityFilters as Priority[]) || []),
-                  priority,
-                ]),
-              ]);
+              const prioritySet = new Set(priorityFilters);
+              if (prioritySet.has(priority)) {
+                prioritySet.delete(priority);
+              } else {
+                prioritySet.add(priority);
+              }
+              await setPriorityFilterByParam(
+                prioritySet.size === 0 ? null : [...prioritySet]
+              );
             }}
             onSelectStatus={async (status) => {
-              await setStatusFilterByParam([
-                ...new Set([...((statusFilters as Status[]) || []), status]),
-              ]);
+              const statusSet = new Set(statusFilters);
+              if (statusSet.has(status)) {
+                statusSet.delete(status);
+              } else {
+                statusSet.add(status);
+              }
+              await setStatusFilterByParam(
+                statusSet.size === 0 ? null : [...statusSet]
+              );
             }}
           />
         </div>
@@ -119,14 +130,14 @@ const TopFilter = ({
           {showSortOrderMenu && (
             <SortOrderMenu
               onSelect={(orderBy) => setOrderByParam(orderBy)}
-              onCancelOrder={() => setOrderByParam(null)}
               order={orderBy}
             />
           )}
         </div>
       </div>
-      {statusFilters || priorityFilters ? (
-        <div className="flex  pl-2 pr-6 border-b border-gray-400 h-8 lg:pl-9">
+      {(statusFilters && statusFilters.length) ||
+      (priorityFilters && priorityFilters.length) ? (
+        <div className="flex pl-2 lg:pl-9 pr-6 border-b border-gray-400 h-8">
           <FilterStatus
             filter={statusFilters}
             onDelete={() => setStatusFilterByParam(null)}

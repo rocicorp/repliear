@@ -94,7 +94,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
                 await setLayoutViewParam("all");
               }}
             >
-              <span className="h-3">All</span>
+              <span>All</span>
             </div>
 
             <div
@@ -103,7 +103,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
                 await setLayoutViewParam("active");
               }}
             >
-              <span className="h-3">Active</span>
+              <span>Active</span>
             </div>
 
             <div
@@ -112,7 +112,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
                 await setLayoutViewParam("backlog");
               }}
             >
-              <span className="h-3">Backlog</span>
+              <span>Backlog</span>
             </div>
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
@@ -120,7 +120,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
                 await setLayoutViewParam("board");
               }}
             >
-              <span className="h-3">Board</span>
+              <span>Board</span>
             </div>
           </ItemGroup>
 

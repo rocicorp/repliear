@@ -3,15 +3,14 @@ import { usePopper } from "react-popper";
 import { Order } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
 import SortOutlinedIcon from "@mui/icons-material/SortOutlined";
-import CancelIcon from "@mui/icons-material/Cancel";
+import classNames from "classnames";
 
 interface Props {
   onSelect: (orderBy: Order) => void;
-  onCancelOrder: () => void;
-  order: Order | null;
+  order: Order;
 }
 
-const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
+const SortOrderMenu = ({ onSelect, order }: Props) => {
   const [orderRef, setOrderRef] = useState<HTMLButtonElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [orderByDropDownVisible, setOrderByDropDownVisible] = useState(false);
@@ -36,17 +35,23 @@ const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
   const orderedBys: Array<[Order, string]> = [
     [Order.CREATED, "Created Date"],
     [Order.MODIFIED, "Last Modified"],
+    [Order.STATUS, "Status"],
+    [Order.PRIORITY, "Priority"],
   ];
 
   const displayOrder = new Map(orderedBys);
 
-  const options = orderedBys.map(([order, label], idx) => {
+  const options = orderedBys.map(([orderOption, label], idx) => {
     return (
       <div
         key={idx}
-        className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
+        className={classNames(
+          "flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100",
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          { "font-semibold text-black": order === orderOption }
+        )}
         onClick={() => {
-          onSelect(order as Order);
+          onSelect(orderOption as Order);
           setOrderByDropDownVisible(false);
         }}
       >
@@ -56,27 +61,17 @@ const SortOrderMenu = ({ onSelect, onCancelOrder, order }: Props) => {
   });
 
   return (
-    <div ref={ref}>
-      {order !== null && (
-        <div className="text-white hover:text-gray-2 absolute top-3 right-9">
-          {displayOrder.get(order)}
-        </div>
-      )}
+    <div className="flex flex-row items-center" ref={ref}>
+      <div className="text-white hover:text-gray-2 p-1">
+        {displayOrder.get(order)}
+      </div>
       <button
-        className="absolute right-2 top-3 items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
+        className="items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
         ref={setOrderRef}
         onClick={handleDropdownClick}
       >
         <SortOutlinedIcon />
       </button>
-      {order !== null && (
-        <button
-          className="flex-shrink-0 focus:outline-none text-sm"
-          onClick={onCancelOrder}
-        >
-          <CancelIcon className="!w-3 text-white hover:text-gray-2 absolute top-4 right-2" />
-        </button>
-      )}
       <div
         ref={setPopperRef}
         style={{
