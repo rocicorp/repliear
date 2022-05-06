@@ -1,8 +1,6 @@
 import React, { RefObject, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 import classnames from "classnames";
-
-import CloseIcon from "./assets/icons/close.svg";
 import useLockBodyScroll from "./hooks/useLockBodyScroll";
 
 interface Props {
@@ -22,7 +20,6 @@ const sizeClasses = {
 };
 
 function Modal({
-  title,
   isOpen,
   center,
   size,
@@ -40,8 +37,9 @@ function Modal({
       "justify-center": center,
     }
   );
+  console.log(className);
   const modalClasses = classnames(
-    "flex flex-col items-center transform bg-gray-450 modal shadow-large-modal rounded-xl",
+    "flex flex-col items-center transform bg-gray-470 modal shadow-large-modal rounded-lg",
     {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       "mt-5 lg:mt-20 mb-2 ": !center,
@@ -49,12 +47,16 @@ function Modal({
     sizeClasses[size],
     className
   );
-  const handleClick = useCallback((e) => {
-    if (!onDismiss) return;
-    if (ref.current && !ref.current.contains(e.target)) {
-      onDismiss();
-    }
-  }, []);
+  console.log(modalClasses);
+  const handleClick = useCallback(
+    (e) => {
+      if (!onDismiss) return;
+      if (ref.current && !ref.current.contains(e.target)) {
+        onDismiss();
+      }
+    },
+    [onDismiss]
+  );
 
   useLockBodyScroll();
 
@@ -62,14 +64,6 @@ function Modal({
     <div ref={outerRef} onMouseDown={handleClick}>
       <div className={wrapperClasses} style={{ display: isOpen ? "" : "none" }}>
         <div ref={ref} className={modalClasses}>
-          {title && (
-            <div className="flex items-center justify-between w-full pl-8 pr-4 border-b border-gray-200">
-              <div className="text-sm font-semibold text-gray-700">{title}</div>
-              <div className="p-4" onClick={onDismiss}>
-                <CloseIcon className="w-4 text-gray-500 hover:text-gray-700" />
-              </div>
-            </div>
-          )}
           {children}
         </div>
       </div>

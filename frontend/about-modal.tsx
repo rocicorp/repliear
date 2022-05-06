@@ -1,10 +1,67 @@
 import CloseIcon from "./assets/icons/close.svg";
 import Modal from "./modal";
 import React from "react";
+import classNames from "classnames";
 
 interface Props {
   isOpen: boolean;
   onDismiss?: () => void;
+}
+
+function Title({ children }: { children: string }) {
+  return <div className="text-lg font-normal text-gray-4">{children}</div>;
+}
+
+function H1({ children }: { children: string }) {
+  return <div className="mt-5 text-lg font-normal text-gray-4">{children}</div>;
+}
+
+function H2({ children }: { children: string }) {
+  return <div className="mt-4 text-md font-normal text-gray-4">{children}</div>;
+}
+
+function P({
+  noTopMargin,
+  children,
+}: {
+  noTopMargin?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={classNames("text-sm font-normal text-gray-5", {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        "mt-3": !noTopMargin,
+      })}
+    >
+      {children}
+    </div>
+  );
+}
+
+function A({ href, children }: { href: string; children: string }) {
+  return (
+    <span className="text-blue">
+      <a target="_blank" rel="noreferrer" href={href}>
+        {children}
+      </a>
+    </span>
+  );
+}
+
+function FeatureSection({
+  title,
+  children,
+}: {
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <>
+      <H2>{title}</H2>
+      <P>{children}</P>
+    </>
+  );
 }
 
 export default function AboutModal({ isOpen, onDismiss }: Props) {
@@ -13,137 +70,89 @@ export default function AboutModal({ isOpen, onDismiss }: Props) {
   };
 
   const body = (
-    <div className="flex flex-col w-full p-3 overflow-y-auto">
-      <div className="flex items-center justify-between flex-shrink-0 pb-3.5 border-b-2 border-gray-5 mb-3.5 mx-4">
-        <div className="text-lg text-gray-1">About this Demo</div>
-
-        <div className="flex items-center">
-          <div
-            className="inline-flex items-center justify-center h-7 w-7 rounded  hover:bg-gray-400 hover-text-gray-410 text-white"
-            onClick={handleClickCloseBtn}
-          >
-            <CloseIcon className="w-4" />
-          </div>
+    <div className="flex flex-col min-h-0">
+      <div className="flex items-center justify-between flex-shrink-0 py-4 px-8 border-b border-gray-6">
+        <Title>About This Demo</Title>
+        <div
+          className="flex items-center justify-center h-7 w-7 rounded hover:bg-gray-400"
+          onClick={handleClickCloseBtn}
+        >
+          <CloseIcon className="w-4" />
         </div>
       </div>
+      <div className="flex flex-col flex-1 px-8 pt-4 pb-8 overflow-y-auto">
+        <P noTopMargin>
+          Repliear is a loving &hearts; tribute to the{" "}
+          <A href="https://linear.app/">Linear issue tracker</A>, built with{" "}
+          <A href="https://replicache.dev">Replicache</A>,{" "}
+          <A href="https://nextjs.org">Next.js</A>, and{" "}
+          <A href="https://supabase.com">Supabase.</A>
+        </P>
 
-      <div className="px-4 text-sm">
-        Repliear is a loving &hearts; tribute to the
-        <span className="text-blue">
-          <a target="_blank" rel="noreferrer" href="https://linear.app/">
-            {" "}
-            Linear issue tracker
-          </a>
-        </span>
-        , built with
-        <span className="text-blue">
-          <a target="_blank" rel="noreferrer" href="https://replicache.dev">
-            &nbsp; Replicache
-          </a>
-        </span>
-        ,
-        <span className="text-blue">
-          <a target="_blank" rel="noreferrer" href="https://nextjs.org">
-            &nbsp; Next.js
-          </a>
-        </span>
-        , and
-        <span className="text-blue">
-          <a target="_blank" rel="noreferrer" href="https://supabase.com">
-            &nbsp; Supabase.
-          </a>
-        </span>
-      </div>
+        <P>
+          Linear&apos;s killer feature is performance: Every interaction
+          throughout the UI responds instantly. There are zero spinners.
+          Additionally, the Linear UI continuously updates automatically from
+          the server. When a user changes something, other users&apos; views
+          update immediately to reflect the change.
+        </P>
 
-      <div className="mt-3 px-4 text-sm">
-        Linear&apos;s killer feature is performance: Every interaction
-        throughout the UI responds instantly. There are zero spinners.
-        Additionally, the Linear UI continuously updates automatically from the
-        server. When a user changes something, other users&apos; views update
-        immediately to reflect the change.
-      </div>
+        <P>
+          Replicache makes it much easier to build apps like Linear. To show
+          how, this demo recreates a subset of the Linear experience, focusing
+          on the distinctive features of Linear that are especially difficult to
+          engineer.
+        </P>
 
-      <div className="mt-3 px-4 text-sm">
-        Replicache makes it much easier to build apps like Linear. To show how,
-        this demo recreates a subset of the Linear experience, focusing on the
-        distinctive features of Linear that are especially difficult to
-        engineer.
-      </div>
+        <H1>Key Features</H1>
+        <FeatureSection title="Substantial Dataset">
+          This demo contains the entire React issue database as of mid-April
+          2022. It comprises about 11 thousands issues and about 50 MB of
+          structured data.
+        </FeatureSection>
+        <FeatureSection title="Instant UI Responsiveness">
+          Scrolling, issue creation, issue modification, and view transition are
+          all instant. There are no spinners, and every mutation is optimistic.
+          Even details like the number of active issues update immediately to
+          reflect changes.
+        </FeatureSection>
+        <FeatureSection title="Complex Filters">
+          Use the filter picker to build complex multi-attribute filters. The
+          response is instant, with zero network requests.
+        </FeatureSection>
+        <FeatureSection title="Realtime Sync Throughout">
+          Changes made by one user are instantly reflected to other users, even
+          if they are looking at a different view. Replicache syncs the entire
+          data model under the covers, and since the views are rendered from
+          that data model they update automatically when it changes.
+        </FeatureSection>
 
-      <div className="pt-3.5 px-4 text-lg text-gray-1">Key Features</div>
+        <H1>Learn More</H1>
+        <P>
+          Replicache is the best way to build applications like Linear. Learn
+          more at <A href="https://replicache.dev">replicache.dev</A>, or come
+          visit us in <A href="https://discord.replicache.dev">Discord</A>.
+        </P>
 
-      <div className=" mt-3 px-4 text-md text-gray-5">Substantial Dataset</div>
-      <div className="mt-3 px-4 text-sm">
-        This demo contains the entire React issue database as of mid-April 2022.
-        It comprises about 11 thousands issues and about 50 MB of structured
-        data.
-      </div>
-      <div className=" mt-3 px-4 text-md text-gray-5">
-        Instant UI Responsiveness
-      </div>
-      <div className=" mt-3 px-4 text-sm">
-        Scrolling, issue creation, issue modification, and view transition are
-        all instant. There are no spinners, and every mutation is optimistic.
-        Even details like the number of active issues update immediately to
-        reflect changes.
-      </div>
-      <div className="mt-3 px-4 text-md text-gray-5">Complex filters</div>
-      <div className="mt-3 px-4 text-sm">
-        Use the filter picker to build complex multi-attribute filters. The
-        response is instant, with zero network requests.
-      </div>
-      <div className="mt-3 px-4 text-md text-gray-5">
-        Realtime Sync Throughout
-      </div>
-      <div className="mt-3 px-4 text-sm">
-        Changes made by one user are instantly reflected to other users, even if
-        they are looking at a different view. Replicache syncs the entire data
-        model under the covers, and since the views are rendered from that data
-        model they update automatically when it changes.
-      </div>
-
-      <div className="pt-3.5 px-4 text-lg text-gray-1">Learn More</div>
-      <div className="mt-3 px-4 text-sm">
-        Replicache is the best way to build applications like Linear. Learn more
-        at{" "}
-        <span className="text-blue">
-          <a target="_blank" rel="noreferrer" href="https://replicache.dev">
-            {" "}
-            replicache.dev
-          </a>
-        </span>
-        , or come visit us in
-        <span className="text-blue">
-          <a
-            target="_blank"
-            rel="noreferrer"
-            href="https://discord.replicache.dev"
-          >
-            {" "}
-            Discord
-          </a>
-        </span>
-        .
-      </div>
-
-      <div className="mt-3 px-4 text-sm">
-        Check out the source for this demo at
-        <span className="text-blue">
-          <a
-            target="_blank"
-            rel="noreferrer"
-            href="https://github.com/rocicorp/repliear"
-          >
-            {" "}
+        <P>
+          Check out the source for this demo at{" "}
+          <A href="https://github.com/rocicorp/repliear">
             github.com/rocicorp/repliear
-          </a>
-        </span>
+          </A>
+          .
+        </P>
       </div>
     </div>
   );
 
   return (
-    <Modal isOpen={isOpen} center={false} size="wide" onDismiss={onDismiss}>
+    <Modal
+      isOpen={isOpen}
+      center={true}
+      size="wide"
+      onDismiss={onDismiss}
+      className="border border-gray-6"
+    >
       {body}
     </Modal>
   );
