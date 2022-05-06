@@ -37,7 +37,7 @@ const displayStrings: Record<Priority | Status, string> = {
 const FilterStatus = ({ filter, onDelete, label }: FilterStatusProps) => {
   if (!filter || filter.length === 0) return null;
   return (
-    <div className="flex items-center pl-4 space-x-[1px]">
+    <div className="flex items-center pr-4 space-x-[1px]">
       <span className="px-1 text-gray-2 bg-gray-400 rounded-l">{label} is</span>
       <span className="px-1 text-gray-2 bg-gray-400 ">
         {filter.map((f) => displayStrings[f]).join(", ")}
