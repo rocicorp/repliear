@@ -25,6 +25,19 @@ export enum Priority {
 export const priorityEnumSchema = z.nativeEnum(Priority);
 export type PriorityEnum = z.infer<typeof priorityEnumSchema>;
 
+export const priorityOrderValues: Record<Priority, string> = {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  URGENT: "1",
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  HIGH: "2",
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  MEDIUM: "3",
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  LOW: "4",
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  NONE: "5",
+};
+
 export enum Status {
   BACKLOG = "BACKLOG",
   TODO = "TODO",
@@ -33,12 +46,27 @@ export enum Status {
   CANCELED = "CANCELED",
 }
 
+export const statusOrderValues: Record<Status, string> = {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  BACKLOG: "1",
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  TODO: "2",
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  IN_PROGRESS: "3",
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  DONE: "4",
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  CANCELED: "5",
+};
+
 export const statusEnumSchema = z.nativeEnum(Status);
 export type StatusEnum = z.infer<typeof statusEnumSchema>;
 
 export enum Order {
   CREATED = "CREATED",
   MODIFIED = "MODIFIED",
+  STATUS = "STATUS",
+  PRIORITY = "PRIORITY",
   KANBAN = "KANBAN",
 }
 
