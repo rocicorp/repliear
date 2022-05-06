@@ -27,6 +27,8 @@ interface Props {
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const [, setLayoutViewParam] = useQueryState("view", { history: "push" });
 
+  const [disableAbout] = useQueryState("disableAbout");
+
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(true);
@@ -151,7 +153,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
       }
       {
         <AboutModal
-          isOpen={aboutModalVisible}
+          isOpen={aboutModalVisible && disableAbout !== "true"}
           onDismiss={() => setAboutModalVisible(false)}
         />
       }

@@ -13,9 +13,10 @@ interface Props {
   /* function called when modal is closed */
   onDismiss?: () => void;
   children?: React.ReactNode;
-  size: "normal" | "large";
+  size: "normal" | "large" | "wide";
 }
 const sizeClasses = {
+  wide: "w-185",
   large: "w-175",
   normal: "w-140",
 };
