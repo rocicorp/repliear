@@ -1,8 +1,6 @@
 import AttachmentIcon from "./assets/icons/attachment.svg";
 import CloseIcon from "./assets/icons/close.svg";
-import GitIssueIcon from "./assets/icons/git-issue.svg";
 import Modal from "./modal";
-import Toggle from "./toggle";
 import React, { useState } from "react";
 import { Description, Issue, Priority, Status } from "./issue";
 import { nanoid } from "nanoid";
@@ -68,15 +66,11 @@ export default function IssueModal({
       {/* header */}
       <div className="flex items-center justify-between flex-shrink-0 px-4">
         <div className="flex items-center">
-          <span className="inline-flex items-center p-1 text-gray-400 bg-gray-2 rounded">
-            <GitIssueIcon className="w-3 mr-1" />
-            <span>GIT</span>
-          </span>
           <span className="ml-2 font-normal text-white">› New Issue</span>
         </div>
         <div className="flex items-center">
           <div
-            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded  hover:bg-gray-400 hover-text-gray-410 text-white"
+            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded hover:bg-gray-400 hover-text-gray-410 text-white"
             onClick={handleClickCloseBtn}
           >
             <CloseIcon className="w-4" />
@@ -121,8 +115,6 @@ export default function IssueModal({
           <AttachmentIcon />
         </button>
         <div className="flex items-center">
-          <Toggle />
-          <span className="ml-2 font-normal">Create more</span>
           <button
             className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-500 text-white"
             onClick={handleSubmit}
