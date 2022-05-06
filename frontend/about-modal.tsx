@@ -9,15 +9,15 @@ interface Props {
 }
 
 function Title({ children }: { children: string }) {
-  return <div className="text-lg text-gray-4">{children}</div>;
+  return <div className="text-lg font-normal text-gray-4">{children}</div>;
 }
 
 function H1({ children }: { children: string }) {
-  return <div className="mt-5 text-lg text-gray-4">{children}</div>;
+  return <div className="mt-5 text-lg font-normal text-gray-4">{children}</div>;
 }
 
 function H2({ children }: { children: string }) {
-  return <div className="mt-4 text-md text-gray-4">{children}</div>;
+  return <div className="mt-4 text-md font-normal text-gray-4">{children}</div>;
 }
 
 function P({
