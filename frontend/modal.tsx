@@ -43,7 +43,7 @@ function Modal({
     "flex flex-col items-center transform bg-gray-450 modal shadow-large-modal rounded-xl",
     {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      "mt-20 mb-2 ": !center,
+      "mt-5 lg:mt-20 mb-2 ": !center,
     },
     sizeClasses[size],
     className

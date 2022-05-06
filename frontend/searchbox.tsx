@@ -59,7 +59,7 @@ function SearchBox({ placeholder = "Search", onChange, className }: Props) {
           display: alertVisible ? "" : "none",
         }}
         {...attributes.popper}
-        className="cursor-default bg-[#7B433D] rounded shadow-modal z-100 w-34 p-2 mt-2"
+        className="cursor-default bg-blue rounded shadow-modal z-100 w-34 p-2 mt-2"
       >
         <div style={styles.offset} className="text-gray-2">
           <a href="https://github.com/rocicorp/repliear/issues/29">

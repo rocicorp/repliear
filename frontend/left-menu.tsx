@@ -12,6 +12,7 @@ import ReactLogo from "./assets/images/logo.svg";
 import type { Description, Issue } from "./issue";
 import { useRouter } from "next/router";
 import { useQueryState } from "next-usequerystate";
+import AboutModal from "./about-modal";
 
 interface Props {
   // Show menu (for small screen only)
@@ -28,6 +29,8 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
+  const [aboutModalVisible, setAboutModalVisible] = useState(true);
+
   const router = useRouter();
   const { id } = router.query;
 
@@ -128,25 +131,28 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <div className="flex flex-col flex-grow flex-shrink" />
 
           {/* bottom group */}
-          <div className="px-2 pb-2 text-gray-500 mt-7">
+          <div className="px-2 pb-2 text-gray-2 mt-7">
             <button
               className="inline-flex mt-1 focus:outline-none"
-              // onClick={() => setShowHelpModal(true)}
+              onClick={() => setAboutModalVisible(true)}
             >
-              <HelpIcon className="w-3 mr-2" /> About
+              <HelpIcon className="w-3 mr-2 pt-1 h-4" /> About
             </button>
           </div>
         </div>
       </div>
       {/* Modals */}
-      {/* {<HelpModal isOpen={showHelpModal} onDismiss={() => setShowHelpModal(false)} />}
-            {<InviteBox isOpen={showInviteModal} onDismiss={() => setShowInviteModal(false)} />} 
-          */}
       {
         <IssueModal
           isOpen={issueModalVisible}
           onDismiss={() => setIssueModalVisible(false)}
           onCreateIssue={onCreateIssue}
+        />
+      }
+      {
+        <AboutModal
+          isOpen={aboutModalVisible}
+          onDismiss={() => setAboutModalVisible(false)}
         />
       }
     </>
