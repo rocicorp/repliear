@@ -93,7 +93,8 @@ export default function IssueModal({
         <div className="flex w-full px-4">
           <textarea
             rows={5}
-            onBlur={(e) => setDescription(e.target.value)}
+            onChange={(e) => setDescription(e.target.value)}
+            value={description}
             className="w-full mt-4 ml-5 font-normal border-none appearance-none min-h-12 text-md focus:outline-none placeholder-white bg-gray-450 text-white"
             placeholder="Add description..."
           />
@@ -110,18 +111,13 @@ export default function IssueModal({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between flex-shrink-0 px-4 pt-3">
-        <button className="focus:outline-none">
-          <AttachmentIcon />
+      <div className="flex items-center justify-end flex-shrink-0 px-4 pt-3">
+        <button
+          className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-500 text-white"
+          onClick={handleSubmit}
+        >
+          Save Issue
         </button>
-        <div className="flex items-center">
-          <button
-            className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-500 text-white"
-            onClick={handleSubmit}
-          >
-            Save Issue
-          </button>
-        </div>
       </div>
     </div>
   );

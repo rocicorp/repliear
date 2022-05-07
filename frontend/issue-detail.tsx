@@ -252,8 +252,8 @@ export default function IssueDetail({
       </div>
       <div className="flex flex-1 p-2 overflow-hidden">
         <div className="flex flex-col flex-[3_3_0%] items-center md:p-3 border-gray-300 md:border-r min-h-0 overflow-auto">
-          <div className="flex flex-col lg:max-w-4xl max-w-[90vw]">
-            <div className="flex border-solid border-b lg:px-3 justify-between px-2">
+          <div className="flex flex-col w-full lg:max-w-4xl max-w-[90vw]">
+            <div className="flex border-solid border-b lg:px-5 justify-between px-2">
               <div className="flex visible md:invisible">
                 <StatusMenu
                   onSelect={handleChangeStatus}
@@ -267,15 +267,15 @@ export default function IssueDetail({
                 />
               </div>
               {editMode ? (
-                <div className="text-sm flex mb-2">
+                <div className="text-sm flex mb-1">
                   <button
-                    className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-400 text-white"
+                    className="px-2 ml-2 rounded hover:bg-indigo-700 focus:outline-none bg-gray-400 text-white"
                     onClick={handleSave}
                   >
                     Save
                   </button>
                   <button
-                    className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-300 text-white"
+                    className="px-2 ml-2 rounded hover:bg-indigo-700 focus:outline-none bg-gray-300 text-white"
                     onClick={handleCancel}
                   >
                     Cancel
@@ -296,7 +296,7 @@ export default function IssueDetail({
               <div className="text-md py-4">
                 {editMode ? (
                   <input
-                    className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 placeholder-gray-100 placeholder:text-sm"
+                    className="block px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 placeholder-gray-100 placeholder:text-sm"
                     onChange={(e) => setTitle(e.target.value)}
                     defaultValue={issue?.title}
                   />
@@ -307,7 +307,7 @@ export default function IssueDetail({
               <div className="text-sm pb-4 text-gray-1 overflow-auto whitespace-pre-wrap">
                 {editMode ? (
                   <textarea
-                    className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
+                    className="block  px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
                     onChange={(e) => setDescription(e.target.value)}
                     defaultValue={description}
                   />
@@ -336,7 +336,7 @@ export default function IssueDetail({
           </div>
         </div>
         <div className="hidden md:block flex flex-1 p-3">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl">
             <div className="flex border-solid border-b px-5">
               {/* For consistent spacing with left col */}
               <div className="text-sm invisible">
