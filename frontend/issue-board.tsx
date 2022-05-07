@@ -89,7 +89,10 @@ export default function IssueBoard({ issues, onUpdateIssues }: Props) {
         return;
       }
       const newStatus = destination.droppableId as Status;
-      const newIndex = destination?.index;
+      const newIndex =
+        sourceStatus === newStatus && source.index < destination.index
+          ? destination.index + 1
+          : destination.index;
       const issueToInsertBefore = issuesByType[newStatus][newIndex];
       if (draggedIssue === issueToInsertBefore) {
         return;

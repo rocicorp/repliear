@@ -37,7 +37,6 @@ function Modal({
       "justify-center": center,
     }
   );
-  console.log(className);
   const modalClasses = classnames(
     "flex flex-col items-center transform bg-gray-470 modal shadow-large-modal rounded-lg",
     {
@@ -47,7 +46,6 @@ function Modal({
     sizeClasses[size],
     className
   );
-  console.log(modalClasses);
   const handleClick = useCallback(
     (e) => {
       if (!onDismiss) return;
