@@ -35,6 +35,14 @@ function P({
   );
 }
 
+function Feature({ title, children }: { title: string; children: string }) {
+  return (
+    <li className="ml-3 mt-3">
+      <span className="font-semibold">{title}:</span> {children}
+    </li>
+  );
+}
+
 function A({ href, children }: { href: string; children: string }) {
   return (
     <span className="text-blue">
@@ -76,41 +84,26 @@ export default function AboutModal({ isOpen, onDismiss }: Props) {
 
         <H1>Key Features</H1>
         <ul
-          /* i was tired and needed to ship */
+          /* tailwind doesnt have circle option built in */
           style={{
             listStyleType: "circle",
-            padding: "1em",
           }}
           className="text-sm font-normal text-gray-1"
         >
-          <li
-            style={{
-              marginBottom: "0.5em",
-            }}
-          >
-            <b>Dataset:</b> The entire React issue db as of April 2022. ~11k
-            issues, ~50 MB of data.
-          </li>
-          <li
-            style={{
-              marginBottom: "0.5em",
-            }}
-          >
-            <b>Spinner-free:</b> Everything in the UI responds instantly,
-            without progress bars.
-          </li>
-          <li
-            style={{
-              marginBottom: "0.5em",
-            }}
-          >
-            <b>Realtime sync:</b> Any change made by one user is seen ~instantly
-            by others. Open in two windows to test. Even works across views!
-          </li>
-          <li>
-            <b>Complex filters:</b> Use the filter picker in the top nav to
-            build complex filters.
-          </li>
+          <Feature title="Dataset">
+            The entire React issue db as of April 2022. ~11k issues, ~50 MB of
+            data.
+          </Feature>
+          <Feature title="Spinner-free">
+            Everything in the UI responds instantly, without progress bars.
+          </Feature>
+          <Feature title="Realtime sync">
+            Any change made by one user is seen ~instantly by others. Open in
+            two windows to test. Even works across views!
+          </Feature>
+          <Feature title="Complex filters">
+            Use the filter picker in the top nav to build complex filters.
+          </Feature>
         </ul>
 
         <H1>Learn More</H1>

@@ -250,22 +250,20 @@ export default function IssueDetail({
           </div>
         </div>
       </div>
-      <div className="flex flex-1j p-2 overflow-hidden">
-        <div className="flex flex-col flex-1 lg:p-3 border-gray-300 lg:border-r min-h-0 overflow-auto">
+      <div className="flex flex-1 p-2 overflow-hidden">
+        <div className="flex flex-col flex-[3_3_0%] items-center md:p-3 border-gray-300 md:border-r min-h-0 overflow-auto">
           <div className="flex flex-col lg:max-w-4xl max-w-[90vw]">
             <div className="flex border-solid border-b lg:px-3 justify-between px-2">
-              <div className="flex visible lg:invisible">
+              <div className="flex visible md:invisible">
                 <StatusMenu
                   onSelect={handleChangeStatus}
                   status={issue?.status || Status.BACKLOG}
                   labelVisible={true}
-                  wideMode={false}
                 />
                 <PriorityMenu
                   onSelect={handleChangePriority}
                   labelVisible={true}
                   priority={issue?.priority || Priority.NONE}
-                  wideMode={false}
                 />
               </div>
               {editMode ? (
@@ -337,39 +335,30 @@ export default function IssueDetail({
             </div>
           </div>
         </div>
-        <div className="md:flex-row hidden md:block w-1/4 p-3">
+        <div className="hidden md:block flex flex-1 p-3">
           <div className="max-w-4xl mx-auto">
             <div className="flex border-solid border-b px-5">
+              {/* For consistent spacing with left col */}
               <div className="text-sm invisible">
                 <EditIcon className="!w-4" />
               </div>
             </div>
-            <div className="flex flex-row">
-              <div className="flex flex-col">
-                <div className="flex-initial p-2">
-                  <div className="w-1/2 text-md">Status</div>
-                </div>
-                <div className="flex-initial p-2">
-                  <div className="text-md">Priority</div>
-                </div>
+            <div className="flex flex-col px-5 py-4 text-sm">
+              <div className="flex flex-row items-center my-1">
+                <div className="w-20">Status</div>
+                <StatusMenu
+                  onSelect={handleChangeStatus}
+                  status={issue?.status || Status.BACKLOG}
+                  labelVisible={true}
+                />
               </div>
-              <div className="flex flex-col">
-                <div className="flex-initial p-2">
-                  <StatusMenu
-                    onSelect={handleChangeStatus}
-                    status={issue?.status || Status.BACKLOG}
-                    labelVisible={true}
-                    wideMode={true}
-                  />
-                </div>
-                <div className="flex-initial p-2">
-                  <PriorityMenu
-                    onSelect={handleChangePriority}
-                    labelVisible={true}
-                    priority={issue?.priority || Priority.NONE}
-                    wideMode={true}
-                  />
-                </div>
+              <div className="flex flex-row items-center my-1">
+                <div className="w-20">Priority</div>
+                <PriorityMenu
+                  onSelect={handleChangePriority}
+                  labelVisible={true}
+                  priority={issue?.priority || Priority.NONE}
+                />
               </div>
             </div>
           </div>
