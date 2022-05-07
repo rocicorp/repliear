@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ReadonlyJSONValue, Replicache, TEST_LICENSE_KEY } from "replicache";
+import { ReadonlyJSONValue, Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
 import { createClient } from "@supabase/supabase-js";
@@ -23,8 +23,8 @@ export default function Home() {
         name: spaceID,
         mutators,
         pullInterval: 30000,
-        licenseKey:
-          process.env.NEXT_PUBLIC_REPLICACHE_LICENSE_KEY || TEST_LICENSE_KEY,
+        // To get your own license key run `npx replicache get-license`. (It's free.)
+        licenseKey: process.env.NEXT_PUBLIC_REPLICACHE_LICENSE_KEY!,
       });
       const unsub = r.subscribe(
         (tx) => {
