@@ -8,11 +8,9 @@ import NoPriorityIcon from "./assets/icons/dots.svg";
 import UrgentPriorityIcon from "./assets/icons/rounded-claim.svg";
 import { Priority, PriorityEnum } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
-import classnames from "classnames";
 
 interface Props {
   labelVisible?: boolean;
-  wideMode?: boolean;
   onSelect: (priority: Priority) => void;
   priority: Priority;
 }
@@ -27,7 +25,6 @@ export const statusOpts = [
 
 const PriorityMenu = ({
   labelVisible,
-  wideMode,
   onSelect,
   priority = Priority.NONE,
 }: Props) => {
@@ -71,16 +68,6 @@ const PriorityMenu = ({
     }
   });
 
-  const classes = classnames(
-    "inline-flex items-center h-6 px-2 border-none rounded focus:outline-none",
-    {
-      /* eslint-disable @typescript-eslint/naming-convention */
-      "text-gray-2 hover:bg-gray-400 hover:text-gray-2": !labelVisible,
-      "text-md hover:bg-gray-400 hover:text-gray-2": wideMode || labelVisible,
-      /* eslint-enable @typescript-eslint/naming-convention */
-    }
-  );
-
   const options = statusOpts.map(([Icon, label, priority], idx) => {
     return (
       <div
@@ -101,15 +88,16 @@ const PriorityMenu = ({
   return (
     <div ref={ref}>
       <button
-        className={classes}
+        className="inline-flex items-center h-6 px-2 border-none rounded focus:outline-none hover:bg-gray-400"
         ref={setPriorityRef}
         onClick={handleDropdownClick}
       >
-        <PriorityIcon
-          priority={priority}
-          className={wideMode ? "mr-2" : "mr-0.5"}
-        />
-        {labelVisible && <span>{getPriorityString(priority)}</span>}
+        <PriorityIcon priority={priority} />
+        {labelVisible && (
+          <div className="ml-2 whitespace-nowrap">
+            {getPriorityString(priority)}
+          </div>
+        )}
       </button>
       <div
         ref={setPopperRef}

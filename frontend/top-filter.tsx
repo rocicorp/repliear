@@ -89,9 +89,7 @@ const TopFilter = ({
           >
             <MenuIcon className="w-3.5 text-white hover:text-gray-2" />
           </button>
-          <div className="p-1 font-semibold cursor-default hover:bg-gray-450">
-            {title}
-          </div>
+          <div className="p-1 font-semibold cursor-default">{title}</div>
           {filteredIssuesCount ? (
             <span>
               {filteredIssuesCount} / {issuesCount}

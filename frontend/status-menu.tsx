@@ -8,11 +8,9 @@ import DoneIcon from "./assets/icons/done.svg";
 import InProgressIcon from "./assets/icons/half-circle.svg";
 import { Status, StatusEnum } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
-import classnames from "classnames";
 
 interface Props {
   labelVisible?: boolean;
-  wideMode?: boolean;
   onSelect: (status: Status) => void;
   status: Status;
 }
@@ -42,12 +40,7 @@ const getStatusString = (status: StatusEnum) => {
   }
 };
 
-const StatusMenu = ({
-  labelVisible = false,
-  wideMode = false,
-  onSelect,
-  status,
-}: Props) => {
+const StatusMenu = ({ labelVisible = false, onSelect, status }: Props) => {
   const [statusRef, setStatusRef] = useState<HTMLButtonElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [statusDropDownVisible, setStatusDropDownVisible] = useState(false);
@@ -55,16 +48,6 @@ const StatusMenu = ({
   const { styles, attributes, update } = usePopper(statusRef, popperRef, {
     placement: "bottom-start",
   });
-
-  const classes = classnames(
-    "inline-flex items-center h-6 px-2 border-none rounded focus:outline-none",
-    {
-      /* eslint-disable @typescript-eslint/naming-convention */
-      "text-gray-2 hover:bg-gray-400 hover:text-gray-2": !labelVisible,
-      "text-md hover:bg-gray-400 hover:text-gray-2": wideMode || labelVisible,
-      /* eslint-enable @typescript-eslint/naming-convention */
-    }
-  );
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
 
@@ -100,12 +83,16 @@ const StatusMenu = ({
   return (
     <div ref={ref}>
       <button
-        className={classes}
+        className="inline-flex items-center h-6 px-2 border-none rounded focus:outline-none hover:bg-gray-400"
         ref={setStatusRef}
         onClick={handleDropdownClick}
       >
-        <StatusIcon status={status} className={wideMode ? "mr-2" : "mr-0.5"} />
-        {labelVisible && <span>{getStatusString(status)}</span>}
+        <StatusIcon status={status} />
+        {labelVisible && (
+          <div className="ml-2 whitespace-nowrap">
+            {getStatusString(status)}
+          </div>
+        )}
       </button>
       <div
         ref={setPopperRef}
