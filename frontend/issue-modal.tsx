@@ -1,4 +1,3 @@
-import AttachmentIcon from "./assets/icons/attachment.svg";
 import CloseIcon from "./assets/icons/close.svg";
 import Modal from "./modal";
 import React, { useState } from "react";
