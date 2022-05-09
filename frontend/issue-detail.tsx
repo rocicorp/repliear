@@ -31,10 +31,11 @@ interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onAddComment: (comment: Comment) => void;
   issues: Issue[];
+  isLoading: boolean;
   rep: Replicache<M>;
 }
 
-const commentsList = (comments: Comment[]) => {
+const commentsList = (comments: Comment[], isLoading: boolean) => {
   return comments.map((comment) => (
     <div
       key={comment.id}
@@ -45,7 +46,7 @@ const commentsList = (comments: Comment[]) => {
         {comment.creator} {timeAgo(comment.created)}
       </div>
       <div className="block flex-1 whitespace-pre-wrap">
-        <Remark>{comment.body}</Remark>
+        {isLoading ? "Loading..." : <Remark>{comment.body}</Remark>}
       </div>
     </div>
   ));
@@ -60,6 +61,7 @@ export default function IssueDetail({
   onUpdateIssues,
   onAddComment,
   issues,
+  isLoading,
 }: Props) {
   const [detailView, setDetailView] = useQueryStates({
     view: queryTypes.string,
@@ -311,13 +313,15 @@ export default function IssueDetail({
                     onChange={(e) => setDescription(e.target.value)}
                     defaultValue={description}
                   />
+                ) : isLoading ? (
+                  "Loading..."
                 ) : (
                   <Remark>{description}</Remark>
                 )}
               </div>
             </div>
             <div className="text-md py-4 px-5 text-gray-4">Comments</div>
-            {commentsList(comments)}
+            {commentsList(comments, isLoading)}
             <div className="mx-3 bg-gray-400 flex-1 mx- mt-0 mb-3 flex-1 border-transparent rounded full py-3 px-3 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
