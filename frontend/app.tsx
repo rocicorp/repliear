@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useReducer } from "react";
-import type { ExperimentalDiff as Diff, Replicache } from "replicache";
+import type {
+  ExperimentalDiff as Diff,
+  ReadTransaction,
+  Replicache,
+} from "replicache";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
 import {
@@ -28,6 +32,7 @@ import IssueBoard from "./issue-board";
 import { isEqual, minBy, sortBy, sortedIndexBy } from "lodash";
 import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
+import { useSubscribe } from "replicache-react";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -391,6 +396,25 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     filters: getFilters(view, priorityFilter, statusFilter),
     issueOrder: getIssueOrder(view, orderBy),
   });
+
+  const partialSyncDefault = { endKey: "PARTIAL_SYNC_SENTINEL" };
+  const partialSync = useSubscribe(
+    rep,
+    async (tx: ReadTransaction) => {
+      return (
+        ((await tx.get("control/partialSync")) as { endKey?: string }) ||
+        partialSyncDefault
+      );
+    },
+    partialSyncDefault
+  );
+
+  const partialSyncComplete = partialSync.endKey === undefined;
+  useEffect(() => {
+    if (!partialSyncComplete) {
+      rep.pull();
+    }
+  }, [rep, partialSync, partialSyncComplete]);
 
   useEffect(() => {
     rep.experimentalWatch(
