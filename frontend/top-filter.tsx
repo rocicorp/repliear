@@ -85,7 +85,7 @@ const TopFilter = ({
         <div className="flex items-center">
           <button
             className="flex-shrink-0 h-full px-5 focus:outline-none lg:hidden"
-            onMouseDown={onToggleMenu}
+            onClick={onToggleMenu}
           >
             <MenuIcon className="w-3.5 text-white hover:text-gray-2" />
           </button>
