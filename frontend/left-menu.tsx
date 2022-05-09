@@ -81,6 +81,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             className="inline-flex items-center px-2 py-2 mt-3 bg-gray-400  hover:bg-gray-450 border border-gray-500 rounded focus:outline-none h-7"
             onMouseDown={() => {
               setIssueModalVisible(true);
+              onCloseMenu && onCloseMenu();
             }}
           >
             <AddIcon className="mr-2.5 w-3.5 h-3.5" /> New Issue
@@ -97,6 +98,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onMouseDown={async () => {
                 await setLayoutViewParam("all");
+                onCloseMenu && onCloseMenu();
               }}
             >
               <span>All</span>
@@ -106,6 +108,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onMouseDown={async () => {
                 await setLayoutViewParam("active");
+                onCloseMenu && onCloseMenu();
               }}
             >
               <span>Active</span>
@@ -115,6 +118,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onMouseDown={async () => {
                 await setLayoutViewParam("backlog");
+                onCloseMenu && onCloseMenu();
               }}
             >
               <span>Backlog</span>
@@ -123,6 +127,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onMouseDown={async () => {
                 await setLayoutViewParam("board");
+                onCloseMenu && onCloseMenu();
               }}
             >
               <span>Board</span>

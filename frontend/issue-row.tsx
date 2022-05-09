@@ -41,7 +41,7 @@ function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
     <div
       className="inline-flex items-center flex-grow flex-shrink w-full min-w-0 pl-2 pr-4 lg:pr-8 text-sm border-b border-gray-400 hover:bg-gray-400 hover:bg-opacity-40 h-11 cursor-pointer text-white border-y-1"
       id={issue.id}
-      onMouseDown={handleIssueRowClick}
+      onClick={handleIssueRowClick}
     >
       <div className="flex-shrink-0 ml-2">
         <PriorityMenu
