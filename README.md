@@ -14,7 +14,6 @@ Install the following before starting:
 - Docker (and ensure the daemon is running)
 - [Supabase CLI](https://github.com/supabase/cli)
 
-
 ## Setup
 
 ```bash
@@ -25,16 +24,18 @@ supabase init
 supabase start
 ```
 
-## Licensing 
+## Licensing
 
-Info about [Replicache licenseing](https://doc.replicache.dev/licensing)
+Info about [Replicache licensing](https://doc.replicache.dev/licensing)
 
 Get a Replicache license key.
 
-<pre>npx replicache get-license</pre>
-
+```
+npx replicache get-license
+```
 
 ## Run
+
 To run `repliear` app, run the following command but substitute each angle-bracket-wrapped parameter with the corresponding value which was output from `supabase start`.
 
 ```bash
