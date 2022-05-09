@@ -50,13 +50,16 @@ export const mutators = {
       await tx.del(issueKey(id));
     }
   },
-  putIssueComment: async(tx: WriteTransaction, comment: Comment): Promise<void>{
+  putIssueComment: async (
+    tx: WriteTransaction,
+    comment: Comment
+  ): Promise<void> => {
     const issue = await getIssue(tx, comment.issueID);
     if (issue === undefined) {
       console.info(`Issue ${comment.issueID} not found`);
       return;
     }
-    const changed = {...issue, modified: Date.now()};
+    const changed = { ...issue, modified: Date.now() };
     await putIssue(tx, changed);
     await putIssueComment(tx, comment);
   },
