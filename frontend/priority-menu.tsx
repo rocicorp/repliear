@@ -73,7 +73,7 @@ const PriorityMenu = ({
       <div
         key={idx}
         className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
-        onClick={(e: MouseEvent) => {
+        onMouseDown={(e: MouseEvent) => {
           onSelect(priority);
           setPriorityDropDownVisible(false);
           e.stopPropagation();
@@ -90,7 +90,7 @@ const PriorityMenu = ({
       <button
         className="inline-flex items-center h-6 px-2 border-none rounded focus:outline-none hover:bg-gray-400"
         ref={setPriorityRef}
-        onClick={handleDropdownClick}
+        onMouseDown={handleDropdownClick}
       >
         <PriorityIcon priority={priority} />
         {labelVisible && (

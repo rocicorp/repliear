@@ -44,7 +44,7 @@ const FilterStatus = ({ filter, onDelete, label }: FilterStatusProps) => {
       </span>
       <span
         className="px-1 text-gray-2 bg-gray-400 rounded-r cursor-pointer"
-        onClick={onDelete}
+        onMouseDown={onDelete}
       >
         &times;
       </span>
@@ -85,7 +85,7 @@ const TopFilter = ({
         <div className="flex items-center">
           <button
             className="flex-shrink-0 h-full px-5 focus:outline-none lg:hidden"
-            onClick={onToggleMenu}
+            onMouseDown={onToggleMenu}
           >
             <MenuIcon className="w-3.5 text-white hover:text-gray-2" />
           </button>

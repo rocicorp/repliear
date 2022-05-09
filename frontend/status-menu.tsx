@@ -68,7 +68,7 @@ const StatusMenu = ({ labelVisible = false, onSelect, status }: Props) => {
       <div
         key={idx}
         className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
-        onClick={(e: MouseEvent) => {
+        onMouseDown={(e: MouseEvent) => {
           onSelect(status);
           setStatusDropDownVisible(false);
           e.stopPropagation();
@@ -85,7 +85,7 @@ const StatusMenu = ({ labelVisible = false, onSelect, status }: Props) => {
       <button
         className="inline-flex items-center h-6 px-2 border-none rounded focus:outline-none hover:bg-gray-400"
         ref={setStatusRef}
-        onClick={handleDropdownClick}
+        onMouseDown={handleDropdownClick}
       >
         <StatusIcon status={status} />
         {labelVisible && (

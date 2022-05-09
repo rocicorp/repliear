@@ -216,7 +216,7 @@ export default function IssueDetail({
           <div className="flex flex-row flex-initial ml-3">
             <div
               className="inline-flex items-center justify-center h-6 w-6 rounded  hover:bg-gray-410  cursor-pointer"
-              onClick={handleClickCloseBtn}
+              onMouseDown={handleClickCloseBtn}
             >
               <CloseIcon className="w-4" />
             </div>
@@ -226,7 +226,7 @@ export default function IssueDetail({
                   <button
                     className="h-6 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-2  hover:bg-gray-410 disabled:opacity-25"
                     type="button"
-                    onClick={() => handleFwdPrev("prev")}
+                    onMouseDown={() => handleFwdPrev("prev")}
                     disabled={currentIssueIdx === 0}
                   >
                     <ArrowIcon style={{ transform: "rotate(180deg)" }} />
@@ -239,7 +239,7 @@ export default function IssueDetail({
                   <button
                     className="h-6 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-2  hover:bg-gray-410 disabled:opacity-50"
                     type="button"
-                    onClick={() => handleFwdPrev("fwd")}
+                    onMouseDown={() => handleFwdPrev("fwd")}
                     disabled={currentIssueIdx === issues.length - 1}
                   >
                     <ArrowIcon />
@@ -270,13 +270,13 @@ export default function IssueDetail({
                 <div className="text-sm flex mb-1">
                   <button
                     className="px-2 ml-2 rounded hover:bg-indigo-700 focus:outline-none bg-gray-400 text-white"
-                    onClick={handleSave}
+                    onMouseDown={handleSave}
                   >
                     Save
                   </button>
                   <button
                     className="px-2 ml-2 rounded hover:bg-indigo-700 focus:outline-none bg-gray-300 text-white"
-                    onClick={handleCancel}
+                    onMouseDown={handleCancel}
                   >
                     Cancel
                   </button>
@@ -285,7 +285,7 @@ export default function IssueDetail({
                 <div className="text-sm">
                   <EditIcon
                     className="!w-4 cursor-pointer"
-                    onClick={() => {
+                    onMouseDown={() => {
                       setEditMode(true);
                     }}
                   />
@@ -327,7 +327,7 @@ export default function IssueDetail({
               <div className="flex justify-end">
                 <button
                   className="px-3 ml-2 mt-2 rounded h-8 focus:outline-none bg-gray-500 text-white "
-                  onClick={handleAddComment}
+                  onMouseDown={handleAddComment}
                 >
                   Comment
                 </button>

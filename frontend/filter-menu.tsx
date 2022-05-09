@@ -49,7 +49,7 @@ const FilterMenu = ({ onSelectStatus, onSelectPriority }: Props) => {
             <div
               key={idx}
               className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
-              onClick={() => {
+              onMouseDown={() => {
                 onSelectPriority(priority as Priority);
                 setFilter(null);
                 setFilterDropDownVisible(false);
@@ -67,7 +67,7 @@ const FilterMenu = ({ onSelectStatus, onSelectPriority }: Props) => {
             <div
               key={idx}
               className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
-              onClick={() => {
+              onMouseDown={() => {
                 onSelectStatus(status as Status);
                 setFilter(null);
                 setFilterDropDownVisible(false);
@@ -84,7 +84,7 @@ const FilterMenu = ({ onSelectStatus, onSelectPriority }: Props) => {
             <div
               key={idx}
               className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
-              onClick={() => {
+              onMouseDown={() => {
                 setFilter(filter as Filter);
               }}
             >
@@ -101,7 +101,7 @@ const FilterMenu = ({ onSelectStatus, onSelectPriority }: Props) => {
       <button
         className="px-1 py-0.5 ml-3 border border-gray-3 border-dashed rounded text-white hover:text-gray-2 focus:outline-none"
         ref={setFilterRef}
-        onClick={handleDropdownClick}
+        onMouseDown={handleDropdownClick}
       >
         + Filter
       </button>

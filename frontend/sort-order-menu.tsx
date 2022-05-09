@@ -50,7 +50,7 @@ const SortOrderMenu = ({ onSelect, order }: Props) => {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           { "font-semibold text-black": order === orderOption }
         )}
-        onClick={() => {
+        onMouseDown={() => {
           onSelect(orderOption as Order);
           setOrderByDropDownVisible(false);
         }}
@@ -68,7 +68,7 @@ const SortOrderMenu = ({ onSelect, order }: Props) => {
       <button
         className="items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
         ref={setOrderRef}
-        onClick={handleDropdownClick}
+        onMouseDown={handleDropdownClick}
       >
         <SortOutlinedIcon />
       </button>

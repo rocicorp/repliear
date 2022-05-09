@@ -64,7 +64,7 @@ export default function AboutModal({ isOpen, onDismiss }: Props) {
         <Title>About This Demo</Title>
         <div
           className="flex items-center justify-center h-7 w-7 rounded hover:bg-gray-400"
-          onClick={handleClickCloseBtn}
+          onMouseDown={handleClickCloseBtn}
         >
           <CloseIcon className="w-4" />
         </div>
