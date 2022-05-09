@@ -24,10 +24,22 @@ supabase init
 supabase start
 ```
 
+## Licensing
+
+Info about [Replicache licensing](https://doc.replicache.dev/licensing)
+
+Get a Replicache license key.
+
+```
+npx replicache get-license
+```
+
+## Run
+
 To run `repliear` app, run the following command but substitute each angle-bracket-wrapped parameter with the corresponding value which was output from `supabase start`.
 
 ```bash
-DATABASE_URL="<DB URL>" NEXT_PUBLIC_SUPABASE_URL="<API URL>" NEXT_PUBLIC_SUPABASE_KEY="<anon key>" npm run dev
+NEXT_PUBLIC_REPLICACHE_LICENSE_KEY="<LICENSE KEY>" DATABASE_URL="<DB URL>" NEXT_PUBLIC_SUPABASE_URL="<API URL>" NEXT_PUBLIC_SUPABASE_KEY="<anon key>" npm run dev
 ```
 
 ## Publishing
