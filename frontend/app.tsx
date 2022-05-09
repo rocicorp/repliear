@@ -337,6 +337,7 @@ const Layout = ({
           rep={rep}
           onUpdateIssues={onUpdateIssues}
           onAddComment={onCreateComment}
+          isLoading={false}
         />
       );
     default:
