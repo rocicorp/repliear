@@ -121,7 +121,7 @@ export async function initSpace(
       for (const { issue, description, comments } of sampleDataBatch) {
         await mutators.putIssue(tx, { issue, description });
         for (const comment of comments) {
-          await mutators.putIssueComment(tx, comment);
+          await mutators.putIssueComment(tx, comment, false);
         }
       }
       await tx.flush();
