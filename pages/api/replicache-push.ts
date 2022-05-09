@@ -13,6 +13,7 @@ import { mutators } from "../../frontend/mutators";
 import { z } from "zod";
 import { jsonSchema } from "../../util/json";
 import type { MutatorDefs } from "replicache";
+import Pusher from "pusher";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
 // See notes in bug: https://github.com/rocicorp/replidraw/issues/47
@@ -106,6 +107,18 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   console.log("Processed all mutations in", Date.now() - t0);
+
+  const startPoke = Date.now();
+  const pusher = new Pusher({
+    appId: "1407264",
+    key: "ca0cbe1442bba8f6e8e0",
+    secret: "273dd0f2f28d58f5c2b0",
+    cluster: "mt1",
+    useTLS: true,
+  });
+
+  await pusher.trigger("default", "poke", {});
+  console.log("Poke took", Date.now() - startPoke);
 
   res.status(200).json({});
 };
