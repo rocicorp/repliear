@@ -6,6 +6,7 @@ import {
   Description,
   putIssueDescription,
   putIssueComment,
+  Comment,
   Issue,
   IssueUpdate,
 } from "./issue";
@@ -29,6 +30,7 @@ export const mutators = {
     tx: WriteTransaction,
     issueUpdates: IssueUpdate[]
   ): Promise<void> => {
+    const modified = Date.now();
     for (const { id, changes, description } of issueUpdates) {
       const issue = await getIssue(tx, id);
       if (issue === undefined) {
@@ -36,6 +38,7 @@ export const mutators = {
         return;
       }
       const changed = { ...issue, ...changes };
+      changed.modified = modified;
       await putIssue(tx, changed);
       if (description) {
         await putIssueDescription(tx, id, description);
@@ -47,5 +50,17 @@ export const mutators = {
       await tx.del(issueKey(id));
     }
   },
-  putIssueComment,
+  putIssueComment: async (
+    tx: WriteTransaction,
+    comment: Comment
+  ): Promise<void> => {
+    const issue = await getIssue(tx, comment.issueID);
+    if (issue === undefined) {
+      console.info(`Issue ${comment.issueID} not found`);
+      return;
+    }
+    const changed = { ...issue, modified: Date.now() };
+    await putIssue(tx, changed);
+    await putIssueComment(tx, comment);
+  },
 };
