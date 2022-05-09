@@ -52,15 +52,18 @@ export const mutators = {
   },
   putIssueComment: async (
     tx: WriteTransaction,
-    comment: Comment
+    comment: Comment,
+    updateIssueModifed = true
   ): Promise<void> => {
-    const issue = await getIssue(tx, comment.issueID);
-    if (issue === undefined) {
-      console.info(`Issue ${comment.issueID} not found`);
-      return;
+    if (updateIssueModifed) {
+      const issue = await getIssue(tx, comment.issueID);
+      if (issue === undefined) {
+        console.info(`Issue ${comment.issueID} not found`);
+        return;
+      }
+      const changed = { ...issue, modified: Date.now() };
+      await putIssue(tx, changed);
     }
-    const changed = { ...issue, modified: Date.now() };
-    await putIssue(tx, changed);
     await putIssueComment(tx, comment);
   },
 };
