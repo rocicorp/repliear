@@ -24,6 +24,7 @@ export default function Home() {
         mutators,
         pullInterval: 30000,
         // To get your own license key run `npx replicache get-license`. (It's free.)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         licenseKey: process.env.NEXT_PUBLIC_REPLICACHE_LICENSE_KEY!,
       });
       const unsub = r.subscribe(
@@ -46,7 +47,9 @@ export default function Home() {
       );
 
       const supabase = createClient(
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         process.env.NEXT_PUBLIC_SUPABASE_KEY!
       );
       supabase
@@ -57,7 +60,7 @@ export default function Home() {
         .subscribe();
       setRep(r);
     })();
-  }, []);
+  }, [rep]);
 
   if (!rep) {
     return null;
