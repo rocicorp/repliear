@@ -28,6 +28,7 @@ export default function Home() {
         licenseKey: process.env.NEXT_PUBLIC_REPLICACHE_LICENSE_KEY!,
       });
 
+      //
       // const supabase = createClient(
       //   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
