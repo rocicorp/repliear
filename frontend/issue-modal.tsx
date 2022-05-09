@@ -70,7 +70,7 @@ export default function IssueModal({
         <div className="flex items-center">
           <div
             className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded hover:bg-gray-400 hover-text-gray-410 text-white"
-            onClick={handleClickCloseBtn}
+            onMouseDown={handleClickCloseBtn}
           >
             <CloseIcon className="w-4" />
           </div>
@@ -113,7 +113,7 @@ export default function IssueModal({
       <div className="flex items-center justify-end flex-shrink-0 px-4 pt-3">
         <button
           className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray-500 text-white"
-          onClick={handleSubmit}
+          onMouseDown={handleSubmit}
         >
           Save Issue
         </button>

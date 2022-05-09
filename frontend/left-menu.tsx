@@ -37,11 +37,11 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const { id } = router.query;
 
   const classes = classnames(
-    "absolute lg:static inset-0 transform duration-300 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm border-r lg:shadow-none justify-items-start bg-gray-500 border-gray-400 text-white bg-opacity-1",
+    "absolute lg:static inset-0 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm border-r lg:shadow-none justify-items-start bg-gray-500 border-gray-400 text-white bg-opacity-1",
     {
       /* eslint-disable @typescript-eslint/naming-convention */
-      "-translate-x-full ease-out shadow-none": !menuVisible,
-      "translate-x-0 ease-in shadow-x z-50": menuVisible,
+      "-translate-x-full shadow-none": !menuVisible,
+      "translate-x-0 shadow-x z-50": menuVisible,
       /* eslint-enable @typescript-eslint/naming-convention */
     }
   );
@@ -57,7 +57,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
       <div className={classes} ref={ref}>
         <button
           className="flex-shrink-0 px-5 ml-2 lg:hidden h-14 focus:outline-none"
-          onClick={onCloseMenu}
+          onMouseDown={onCloseMenu}
         >
           <MenuIcon className="w-3.5 text-gray-2 hover:text-gray-1" />
         </button>
@@ -79,7 +79,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           {/* Create issue btn */}
           <button
             className="inline-flex items-center px-2 py-2 mt-3 bg-gray-400  hover:bg-gray-450 border border-gray-500 rounded focus:outline-none h-7"
-            onClick={() => {
+            onMouseDown={() => {
               setIssueModalVisible(true);
             }}
           >
@@ -95,7 +95,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <ItemGroup title="React Issues">
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
-              onClick={async () => {
+              onMouseDown={async () => {
                 await setLayoutViewParam("all");
               }}
             >
@@ -104,7 +104,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
 
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
-              onClick={async () => {
+              onMouseDown={async () => {
                 await setLayoutViewParam("active");
               }}
             >
@@ -113,7 +113,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
 
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
-              onClick={async () => {
+              onMouseDown={async () => {
                 await setLayoutViewParam("backlog");
               }}
             >
@@ -121,7 +121,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             </div>
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
-              onClick={async () => {
+              onMouseDown={async () => {
                 await setLayoutViewParam("board");
               }}
             >
@@ -136,7 +136,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <div className="px-2 pb-2 text-gray-2 mt-7">
             <button
               className="inline-flex mt-1 focus:outline-none"
-              onClick={() => setAboutModalVisible(true)}
+              onMouseDown={() => setAboutModalVisible(true)}
             >
               <HelpIcon className="w-3 mr-2 pt-1 h-4" /> About
             </button>
