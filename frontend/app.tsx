@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useReducer } from "react";
+import React, { memo, useCallback, useEffect, useReducer } from "react";
 import type {
   ExperimentalDiff as Diff,
   ReadTransaction,
@@ -33,6 +33,8 @@ import { isEqual, minBy, sortBy, sortedIndexBy } from "lodash";
 import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
+import classnames from "classnames";
+import classNames from "classnames";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -338,59 +340,12 @@ function reducer(
   return state;
 }
 
-interface LayoutProps {
-  view: string | null;
-  detailIssueID: string | null;
-  isLoading: boolean;
-  state: State;
-  rep: Replicache<M>;
-  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
-  onCreateComment: (comment: Comment) => void;
-}
-
-const MainContent = ({
-  view,
-  detailIssueID,
-  isLoading,
-  state,
-  rep,
-  onUpdateIssues,
-  onCreateComment,
-}: LayoutProps) => {
-  if (detailIssueID) {
-    return (
-      <IssueDetail
-        issues={state.filteredIssues}
-        rep={rep}
-        onUpdateIssues={onUpdateIssues}
-        onAddComment={onCreateComment}
-        isLoading={isLoading}
-      />
-    );
-  }
-  if (view === "board") {
-    return (
-      <IssueBoard
-        issues={state.filteredIssues}
-        onUpdateIssues={onUpdateIssues}
-      />
-    );
-  }
-  return (
-    <IssueList
-      issues={state.filteredIssues}
-      onUpdateIssues={onUpdateIssues}
-      view={view}
-    />
-  );
-};
-
 const App = ({ rep }: { rep: Replicache<M> }) => {
   const [view] = useQueryState("view");
   const [priorityFilter] = useQueryState("priorityFilter");
   const [statusFilter] = useQueryState("statusFilter");
   const [orderBy] = useQueryState("orderBy");
-  const [detailIssueID] = useQueryState("iss");
+  const [detailIssueID, setDetailIssueID] = useQueryState("iss");
   const [menuVisible, setMenuVisible] = useState(false);
 
   const [state, dispatch] = useReducer(timedReducer, {
@@ -482,19 +437,84 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     },
     [rep]
   );
+  const handleOpenDetail = useCallback(
+    async (issue: Issue) => {
+      await setDetailIssueID(issue.id, { scroll: false, shallow: true });
+    },
+    [setDetailIssueID]
+  );
+
+  return (
+    <Layout
+      menuVisible={menuVisible}
+      view={view}
+      detailIssueID={detailIssueID}
+      isLoading={!partialSyncComplete}
+      state={state}
+      rep={rep}
+      setMenuVisible={setMenuVisible}
+      onUpdateIssues={handleUpdateIssues}
+      onCreateIssue={handleCreateIssue}
+      onCreateComment={handleCreateComment}
+      onOpenDetail={handleOpenDetail}
+    ></Layout>
+  );
+};
+
+interface LayoutProps {
+  menuVisible: boolean;
+  view: string | null;
+  detailIssueID: string | null;
+  isLoading: boolean;
+  state: State;
+  rep: Replicache<M>;
+  setMenuVisible: (visible: boolean) => void;
+  onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
+  onCreateIssue: (
+    issue: Omit<Issue, "kanbanOrder">,
+    description: Description
+  ) => void;
+  onCreateComment: (comment: Comment) => void;
+  onOpenDetail: (issue: Issue) => void;
+}
+
+const RawLayout = ({
+  menuVisible,
+  view,
+  detailIssueID,
+  isLoading,
+  state,
+  rep,
+  setMenuVisible,
+  onUpdateIssues,
+  onCreateIssue,
+  onCreateComment,
+  onOpenDetail,
+}: LayoutProps) => {
+  const handleCloseMenu = useCallback(() => setMenuVisible(false), [
+    setMenuVisible,
+  ]);
+  const handleToggleMenu = useCallback(() => setMenuVisible(!menuVisible), [
+    setMenuVisible,
+    menuVisible,
+  ]);
 
   return (
     <div>
       <div className="flex w-full h-screen overflow-y-hidden">
         <LeftMenu
           menuVisible={menuVisible}
-          onCloseMenu={() => setMenuVisible(false)}
-          onCreateIssue={handleCreateIssue}
+          onCloseMenu={handleCloseMenu}
+          onCreateIssue={onCreateIssue}
         />
         <div className="flex flex-col flex-grow min-w-0">
-          {detailIssueID === null && (
+          <div
+            className={classNames("flex flex-col", {
+              hidden: detailIssueID,
+            })}
+          >
             <TopFilter
-              onToggleMenu={() => setMenuVisible(!menuVisible)}
+              onToggleMenu={handleToggleMenu}
               title={getTitle(view)}
               filteredIssuesCount={
                 state.filters.hasNonViewFilters
@@ -504,20 +524,46 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
               issuesCount={state.viewIssueCount}
               showSortOrderMenu={view !== "board"}
             />
-          )}
-          <MainContent
-            view={view}
-            detailIssueID={detailIssueID}
-            isLoading={!partialSyncComplete}
-            state={state}
-            rep={rep}
-            onUpdateIssues={handleUpdateIssues}
-            onCreateComment={handleCreateComment}
-          />
+          </div>
+          <div className="relative flex flex-1 min-h-0">
+            {detailIssueID && (
+              <IssueDetail
+                issues={state.filteredIssues}
+                rep={rep}
+                onUpdateIssues={onUpdateIssues}
+                onAddComment={onCreateComment}
+                isLoading={isLoading}
+              />
+            )}
+            <div
+              className={classnames("absolute inset-0 flex flex-col", {
+                invisible: detailIssueID,
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                "pointer-events-none": detailIssueID,
+              })}
+            >
+              {view === "board" ? (
+                <IssueBoard
+                  issues={state.filteredIssues}
+                  onUpdateIssues={onUpdateIssues}
+                  onOpenDetail={onOpenDetail}
+                />
+              ) : (
+                <IssueList
+                  issues={state.filteredIssues}
+                  onUpdateIssues={onUpdateIssues}
+                  onOpenDetail={onOpenDetail}
+                  view={view}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+const Layout = memo(RawLayout);
 
 export default App;

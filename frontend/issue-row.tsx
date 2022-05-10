@@ -3,32 +3,23 @@ import type { Issue, Priority, Status } from "./issue";
 import { formatDate } from "../util/date";
 import PriorityMenu from "./priority-menu";
 import StatusMenu from "./status-menu";
-import { useQueryState } from "next-usequerystate";
 
 interface Props {
   issue: Issue;
-  onChangePriority?: (issue: Issue, priority: Priority) => void;
-  onChangeStatus?: (issue: Issue, status: Status) => void;
+  onChangePriority: (issue: Issue, priority: Priority) => void;
+  onChangeStatus: (issue: Issue, status: Status) => void;
+  onOpenDetail: (issue: Issue) => void;
 }
 
-function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
-  const [, setDetailIssueID] = useQueryState("iss", {
-    history: "push",
-  });
-  const handleChangePriority = (p: Priority) => {
-    if (onChangePriority) onChangePriority(issue, p);
-  };
-
-  const handleChangeStatus = (status: Status) => {
-    if (onChangeStatus) onChangeStatus(issue, status);
-  };
-
-  const handleIssueRowClick = async () => {
-    await setDetailIssueID(issue.id, {
-      scroll: false,
-      shallow: true,
-    });
-  };
+function IssueRow({
+  issue,
+  onChangePriority,
+  onChangeStatus,
+  onOpenDetail,
+}: Props) {
+  const handleChangePriority = (p: Priority) => onChangePriority(issue, p);
+  const handleChangeStatus = (status: Status) => onChangeStatus(issue, status);
+  const handleIssueRowClick = () => onOpenDetail(issue);
 
   return (
     <div

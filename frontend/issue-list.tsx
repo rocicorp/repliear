@@ -1,4 +1,11 @@
-import React, { CSSProperties, useCallback, useEffect, useRef } from "react";
+import React, {
+  CSSProperties,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import IssueRow from "./issue-row";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
@@ -6,6 +13,7 @@ import type { Issue, IssueUpdate, Priority, Status } from "./issue";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
+  onOpenDetail: (issue: Issue) => void;
   issues: Issue[];
   view: string | null;
 }
@@ -14,11 +22,12 @@ type ListData = {
   issues: Issue[];
   handleChangePriority: (issue: Issue, priority: Priority) => void;
   handleChangeStatus: (issue: Issue, status: Status) => void;
+  onOpenDetail: (issue: Issue) => void;
 };
 
 const itemKey = (index: number, data: ListData) => data.issues[index].id;
 
-const Row = ({
+const RawRow = ({
   data,
   index,
   style,
@@ -32,11 +41,14 @@ const Row = ({
       issue={data.issues[index]}
       onChangePriority={data.handleChangePriority}
       onChangeStatus={data.handleChangeStatus}
+      onOpenDetail={data.onOpenDetail}
     />
   </div>
 );
 
-const IssueList = ({ onUpdateIssues, issues, view }: Props) => {
+const Row = memo(RawRow);
+
+const IssueList = ({ onUpdateIssues, onOpenDetail, issues, view }: Props) => {
   const fixedSizeListRef = useRef<FixedSizeList>(null);
   useEffect(() => {
     fixedSizeListRef.current?.scrollTo(0);
@@ -56,6 +68,11 @@ const IssueList = ({ onUpdateIssues, issues, view }: Props) => {
     [onUpdateIssues]
   );
 
+  const itemData = useMemo(
+    () => ({ issues, handleChangePriority, handleChangeStatus, onOpenDetail }),
+    [issues, handleChangePriority, handleChangeStatus, onOpenDetail]
+  );
+
   return (
     <div className="flex flex-col flex-grow overflow-auto">
       <AutoSizer>
@@ -65,11 +82,7 @@ const IssueList = ({ onUpdateIssues, issues, view }: Props) => {
             height={height}
             itemCount={issues.length}
             itemSize={43}
-            itemData={{
-              handleChangePriority,
-              handleChangeStatus,
-              issues,
-            }}
+            itemData={itemData}
             itemKey={itemKey}
             overscanCount={10}
             width={width}
@@ -82,4 +95,4 @@ const IssueList = ({ onUpdateIssues, issues, view }: Props) => {
   );
 };
 
-export default IssueList;
+export default memo(IssueList);

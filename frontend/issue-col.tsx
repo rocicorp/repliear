@@ -11,13 +11,13 @@ import type { Issue, Priority, Status } from "./issue";
 import IssueItem from "./issue-item";
 import { FixedSizeList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
-import IssueItemBase from "./issue-item-base";
 
 interface Props {
   status: Status;
   title: string;
   issues: Array<Issue>;
   onChangePriority: (issue: Issue, priority: Priority) => void;
+  onOpenDetail: (issue: Issue) => void;
 }
 
 interface RowProps {
@@ -25,6 +25,7 @@ interface RowProps {
   data: {
     issues: Array<Issue>;
     onChangePriority: (issue: Issue, priority: Priority) => void;
+    onOpenDetail: (issue: Issue) => void;
   };
   style: CSSProperties;
 }
@@ -54,6 +55,7 @@ const RowPreMemo = ({ data, index, style }: RowProps) => {
               issue={issue}
               key={index}
               onChangePriority={data.onChangePriority}
+              onOpenDetail={data.onOpenDetail}
             />
           </div>
         );
@@ -63,13 +65,20 @@ const RowPreMemo = ({ data, index, style }: RowProps) => {
 };
 const Row = memo(RowPreMemo);
 
-function IssueCol({ title, status, issues, onChangePriority }: Props) {
+function IssueCol({
+  title,
+  status,
+  issues,
+  onChangePriority,
+  onOpenDetail,
+}: Props) {
   const itemData = useMemo(
     () => ({
       issues,
       onChangePriority,
+      onOpenDetail,
     }),
-    [issues, onChangePriority]
+    [issues, onChangePriority, onOpenDetail]
   );
   const statusIcon = <StatusIcon className="flex-shrink-0" status={status} />;
   return (
@@ -98,7 +107,7 @@ function IssueCol({ title, status, issues, onChangePriority }: Props) {
                 {...provided.draggableProps}
                 {...provided.dragHandleProps}
               >
-                <IssueItemBase issue={issue} />
+                <IssueItem issue={issue} />
               </div>
             );
           }}

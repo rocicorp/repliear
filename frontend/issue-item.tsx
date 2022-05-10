@@ -1,35 +1,47 @@
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import type { Issue, Priority } from "./issue";
-import { useQueryState } from "next-usequerystate";
-import IssueItemBase from "./issue-item-base";
+import classnames from "classnames";
+import PriorityMenu from "./priority-menu";
 
-interface IssueProps {
+interface Props {
   issue: Issue;
-  onChangePriority: (issue: Issue, priority: Priority) => void;
+  onChangePriority?: (issue: Issue, priority: Priority) => void;
+  onOpenDetail?: (issue: Issue) => void;
 }
 
-const IssueItem = ({ issue, onChangePriority }: IssueProps) => {
-  const [, setDetailIssueID] = useQueryState("iss", {
-    history: "push",
-  });
+const IssueItem = ({ issue, onChangePriority, onOpenDetail }: Props) => {
+  const handleChangePriority = useCallback(
+    (p: Priority) => {
+      onChangePriority && onChangePriority(issue, p);
+    },
+    [issue, onChangePriority]
+  );
 
-  const handleChangePriority = (p: Priority) => {
-    if (onChangePriority) onChangePriority(issue, p);
-  };
-
-  const handleIssueItemClick = async () => {
-    await setDetailIssueID(issue.id, {
-      scroll: false,
-      shallow: true,
-    });
-  };
+  const handleIssueItemClick = () => onOpenDetail && onOpenDetail(issue);
 
   return (
-    <IssueItemBase
-      issue={issue}
-      handleIssueItemClick={handleIssueItemClick}
-      handleChangePriority={handleChangePriority}
-    />
+    <div
+      className={classnames(
+        "bg-gray-850 cursor-pointer flex flex-col px-4 py-2 text-white rounded focus:outline-none"
+      )}
+      onClick={handleIssueItemClick}
+    >
+      <div className="flex justify-between w-full overflow-hidden">
+        <div className="flex flex-col">
+          <span className="text-xs font-normal uppercase"></span>
+          <span className="mt-1 text-sm font-medium text-gray-50 line-clamp-2 overflow-ellipsis h-10">
+            {issue.title}
+          </span>
+        </div>
+      </div>
+      <div className="mt-1 flex items-center">
+        <PriorityMenu
+          onSelect={handleChangePriority}
+          labelVisible={false}
+          priority={issue.priority}
+        />
+      </div>
+    </div>
   );
 };
 
