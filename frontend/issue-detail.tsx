@@ -35,8 +35,8 @@ interface Props {
   rep: Replicache<M>;
 }
 
-const commentsList = (comments: Comment[], isLoading: boolean) => {
-  return comments.map((comment) => (
+const CommentsList = (comments: Comment[], isLoading: boolean) => {
+  const elements = comments.map((comment) => (
     <div
       key={comment.id}
       className=" max-w-[85vw] mx-3 bg-gray-400 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
@@ -46,10 +46,18 @@ const commentsList = (comments: Comment[], isLoading: boolean) => {
         {comment.creator} {timeAgo(comment.created)}
       </div>
       <div className="block flex-1 whitespace-pre-wrap">
-        {isLoading ? "Loading..." : <Remark>{comment.body}</Remark>}
+        <Remark>{comment.body}</Remark>
       </div>
     </div>
   ));
+  if (isLoading) {
+    elements.push(
+      <div className=" max-w-[85vw] mx-3 bg-gray-400 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto">
+        Loading...
+      </div>
+    );
+  }
+  return elements;
 };
 
 const handleClickCloseBtn = async () => {
@@ -96,15 +104,15 @@ export default function IssueDetail({
     null,
     [iss]
   );
-  const description = useSubscribe<Description>(
+  const description = useSubscribe<Description | null>(
     rep,
     async (tx) => {
       if (iss) {
-        return (await getIssueDescription(tx, iss)) || "";
+        return (await getIssueDescription(tx, iss)) || null;
       }
-      return "";
+      return null;
     },
-    "",
+    null,
     [iss]
   );
 
@@ -311,17 +319,17 @@ export default function IssueDetail({
                   <textarea
                     className="block  px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
                     onChange={(e) => setDescription(e.target.value)}
-                    defaultValue={description}
+                    defaultValue={description || ""}
                   />
-                ) : isLoading ? (
+                ) : isLoading && description === null ? (
                   "Loading..."
                 ) : (
-                  <Remark>{description}</Remark>
+                  <Remark>{description || ""}</Remark>
                 )}
               </div>
             </div>
             <div className="text-md py-4 px-5 text-gray-4">Comments</div>
-            {commentsList(comments, isLoading)}
+            {CommentsList(comments, isLoading)}
             <div className="mx-3 bg-gray-400 flex-1 mx- mt-0 mb-3 flex-1 border-transparent rounded full py-3 px-3 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
