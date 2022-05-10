@@ -217,12 +217,12 @@ export default function IssueDetail({
   };
 
   return (
-    <div className="flex flex-col flex-grow m-3 rounded-md shadow-mdw-7xl	border-gray-850 border min-h-0 min-w-0">
+    <div className="flex flex-col flex-grow m-3 rounded-md shadow-mdw-7xl border-gray-850 border min-h-0 min-w-0">
       <div className="flex bg-gray-850 border border-gray-700 justify-around">
         <div className="flex-1 p-2">
           <div className="flex flex-row flex-initial ml-3">
             <div
-              className="inline-flex items-center justify-center h-6 w-6 rounded  hover:bg-gray-400  cursor-pointer"
+              className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-gray-400  cursor-pointer"
               onMouseDown={handleClose}
             >
               <CloseIcon className="w-4" />
