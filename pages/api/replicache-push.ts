@@ -106,14 +106,15 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const startPoke = Date.now();
+  console.log("Processed all mutations in", Date.now() - t0);
+
   if (
     process.env.NEXT_PUBLIC_PUSHER_APP_ID &&
     process.env.NEXT_PUBLIC_PUSHER_KEY &&
     process.env.NEXT_PUBLIC_PUSHER_SECRET &&
     process.env.NEXT_PUBLIC_PUSHER_CLUSTER
   ) {
-    console.log("Processed all mutations in", Date.now() - t0);
+    const startPoke = Date.now();
 
     const pusher = new Pusher({
       appId: process.env.NEXT_PUBLIC_PUSHER_APP_ID,
