@@ -145,20 +145,6 @@ export default function IssueDetail({
     [onUpdateIssues, issue]
   );
 
-  const handleChangeDescription = useCallback(
-    (description: string) => {
-      issue && onUpdateIssues([{ id: issue.id, changes: {}, description }]);
-    },
-    [onUpdateIssues, issue]
-  );
-
-  const handleChangeTitle = useCallback(
-    (title: string) => {
-      issue && onUpdateIssues([{ id: issue.id, changes: { title } }]);
-    },
-    [onUpdateIssues, issue]
-  );
-
   const handleAddComment = useCallback(() => {
     if (commentText !== "") {
       onAddComment({
@@ -209,13 +195,32 @@ export default function IssueDetail({
   useKeyPressed("j", handleFwd);
   useKeyPressed("k", handlePrev);
 
+  const handleEdit = () => {
+    setTitleText(issue?.title || "");
+    setDescriptionText(description || "");
+    setEditMode(true);
+  };
+
   const handleCancel = () => {
     setEditMode(false);
   };
 
   const handleSave = () => {
-    handleChangeDescription(descriptionText);
-    handleChangeTitle(titleText || (issue?.title as string));
+    if (issue) {
+      onUpdateIssues([
+        {
+          id: issue.id,
+          changes:
+            titleText !== issue.title
+              ? {
+                  title: titleText,
+                }
+              : {},
+          description:
+            descriptionText !== description ? descriptionText : undefined,
+        },
+      ]);
+    }
     setEditMode(false);
   };
 
@@ -295,9 +300,7 @@ export default function IssueDetail({
                 <div className="text-sm">
                   <EditIcon
                     className="!w-4 cursor-pointer"
-                    onMouseDown={() => {
-                      setEditMode(true);
-                    }}
+                    onMouseDown={handleEdit}
                   />
                 </div>
               )}
@@ -308,7 +311,6 @@ export default function IssueDetail({
                   <input
                     className="block px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 placeholder-gray-300 placeholder:text-sm"
                     onChange={(e) => setTitleText(e.target.value)}
-                    defaultValue={issue?.title}
                     value={titleText}
                   />
                 ) : (
@@ -320,7 +322,6 @@ export default function IssueDetail({
                   <textarea
                     className="block  px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 h-[calc(100vh-340px)] placeholder-gray-300 placeholder:text-sm"
                     onChange={(e) => setDescriptionText(e.target.value)}
-                    defaultValue={description || ""}
                     value={descriptionText}
                   />
                 ) : isLoading && description === null ? (
