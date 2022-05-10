@@ -415,6 +415,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
 
   const partialSyncComplete = partialSync.endKey === undefined;
   useEffect(() => {
+    console.log("partialSync", partialSync.endKey);
     if (!partialSyncComplete) {
       rep.pull();
     }
