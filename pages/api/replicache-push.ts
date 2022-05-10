@@ -106,20 +106,28 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  console.log("Processed all mutations in", Date.now() - t0);
-
   const startPoke = Date.now();
-  const pusher = new Pusher({
-    appId: "1407264",
-    key: "ca0cbe1442bba8f6e8e0",
-    secret: "273dd0f2f28d58f5c2b0",
-    cluster: "mt1",
-    useTLS: true,
-  });
+  if (
+    process.env.NEXT_PUBLIC_PUSHER_APP_ID &&
+    process.env.NEXT_PUBLIC_PUSHER_KEY &&
+    process.env.NEXT_PUBLIC_PUSHER_SECRET &&
+    process.env.NEXT_PUBLIC_PUSHER_CLUSTER
+  ) {
+    console.log("Processed all mutations in", Date.now() - t0);
 
-  await pusher.trigger("default", "poke", {});
-  console.log("Poke took", Date.now() - startPoke);
+    const pusher = new Pusher({
+      appId: process.env.NEXT_PUBLIC_PUSHER_APP_ID,
+      key: process.env.NEXT_PUBLIC_PUSHER_KEY,
+      secret: process.env.NEXT_PUBLIC_PUSHER_SECRET,
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+      useTLS: true,
+    });
 
+    await pusher.trigger("default", "poke", {});
+    console.log("Poke took", Date.now() - startPoke);
+  } else {
+    console.log("Not poking because Pusher is not configured");
+  }
   res.status(200).json({});
 };
 

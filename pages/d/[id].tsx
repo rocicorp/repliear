@@ -27,14 +27,19 @@ export default function Home() {
         licenseKey: process.env.NEXT_PUBLIC_REPLICACHE_LICENSE_KEY!,
       });
 
-      const pusher = new Pusher("ca0cbe1442bba8f6e8e0", {
-        cluster: "mt1",
-      });
+      if (
+        process.env.NEXT_PUBLIC_PUSHER_KEY &&
+        process.env.NEXT_PUBLIC_PUSHER_CLUSTER
+      ) {
+        const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+          cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+        });
 
-      const channel = pusher.subscribe("default");
-      channel.bind("poke", () => {
-        r.pull();
-      });
+        const channel = pusher.subscribe("default");
+        channel.bind("poke", () => {
+          r.pull();
+        });
+      }
       setRep(r);
     })();
   }, [rep]);

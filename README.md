@@ -39,7 +39,7 @@ npx replicache get-license
 To run `repliear` app, run the following command but substitute each angle-bracket-wrapped parameter with the corresponding value which was output from `supabase start`.
 
 ```bash
-NEXT_PUBLIC_REPLICACHE_LICENSE_KEY="<LICENSE KEY>" DATABASE_URL="<DB URL>" NEXT_PUBLIC_SUPABASE_URL="<API URL>" NEXT_PUBLIC_SUPABASE_KEY="<anon key>" npm run dev
+NEXT_PUBLIC_REPLICACHE_LICENSE_KEY="<LICENSE KEY>" DATABASE_URL="<DB URL>" npm run dev
 ```
 
 ## Publishing
