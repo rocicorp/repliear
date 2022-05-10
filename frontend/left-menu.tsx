@@ -9,7 +9,6 @@ import SearchBox from "./searchbox";
 import IssueModal from "./issue-modal";
 import ReactLogo from "./assets/images/logo.svg";
 import type { Description, Issue } from "./issue";
-import { useRouter } from "next/router";
 import { useQueryState } from "next-usequerystate";
 import AboutModal from "./about-modal";
 
@@ -31,9 +30,6 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(true);
-
-  const router = useRouter();
-  const { id } = router.query;
 
   const classes = classnames(
     "absolute lg:static inset-0 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm border-r lg:shadow-none justify-items-start bg-gray-500 border-gray-400 text-white bg-opacity-1",
