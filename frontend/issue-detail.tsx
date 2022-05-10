@@ -17,7 +17,7 @@ import {
   IssueUpdate,
 } from "./issue";
 import StatusMenu from "./status-menu";
-import { queryTypes, useQueryStates } from "next-usequerystate";
+import { useQueryState } from "next-usequerystate";
 
 import type { Replicache } from "replicache";
 import type { M } from "./mutators";
@@ -71,9 +71,8 @@ export default function IssueDetail({
   issues,
   isLoading,
 }: Props) {
-  const [detailView, setDetailView] = useQueryStates({
-    view: queryTypes.string,
-    iss: queryTypes.string,
+  const [detailIssueID, setDetailIssueID] = useQueryState("iss", {
+    history: "push",
   });
 
   const [editMode, setEditMode] = useState(false);
@@ -84,48 +83,46 @@ export default function IssueDetail({
   const [titleText, setTitle] = useState("");
   const [descriptionText, setDescription] = useState("");
 
-  const { iss } = detailView;
-
   useEffect(() => {
-    if (detailView.iss) {
-      const index = issues.findIndex((issue) => issue.id === detailView.iss);
+    if (detailIssueID) {
+      const index = issues.findIndex((issue) => issue.id === detailIssueID);
       setCurrentIssueIdx(index);
     }
-  }, [issues, detailView.iss]);
+  }, [issues, detailIssueID]);
 
   const issue = useSubscribe<Issue | null>(
     rep,
     async (tx) => {
-      if (iss) {
-        return (await getIssue(tx, iss)) || null;
+      if (detailIssueID) {
+        return (await getIssue(tx, detailIssueID)) || null;
       }
       return null;
     },
     null,
-    [iss]
+    [detailIssueID]
   );
   const description = useSubscribe<Description | null>(
     rep,
     async (tx) => {
-      if (iss) {
-        return (await getIssueDescription(tx, iss)) || null;
+      if (detailIssueID) {
+        return (await getIssueDescription(tx, detailIssueID)) || null;
       }
       return null;
     },
     null,
-    [iss]
+    [detailIssueID]
   );
 
   const comments = useSubscribe<Comment[] | []>(
     rep,
     async (tx) => {
-      if (iss) {
-        return (await getIssueComments(tx, iss)) || [];
+      if (detailIssueID) {
+        return (await getIssueComments(tx, detailIssueID)) || [];
       }
       return [];
     },
     [],
-    [iss]
+    [detailIssueID]
   );
 
   const handleChangePriority = useCallback(
@@ -187,15 +184,12 @@ export default function IssueDetail({
         newIss = issues[currentIssueIdx + 1].id;
       }
 
-      await setDetailView(
-        { iss: newIss },
-        {
-          scroll: false,
-          shallow: true,
-        }
-      );
+      await setDetailIssueID(newIss, {
+        scroll: false,
+        shallow: true,
+      });
     },
-    [currentIssueIdx, issues, setDetailView]
+    [currentIssueIdx, issues, setDetailIssueID]
   );
 
   const handleFwd = useCallback(async () => {

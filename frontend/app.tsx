@@ -340,6 +340,7 @@ function reducer(
 
 interface LayoutProps {
   view: string | null;
+  detailIssueID: string | null;
   isLoading: boolean;
   state: State;
   rep: Replicache<M>;
@@ -347,41 +348,41 @@ interface LayoutProps {
   onCreateComment: (comment: Comment) => void;
 }
 
-const Layout = ({
+const MainContent = ({
   view,
+  detailIssueID,
   isLoading,
   state,
   rep,
   onUpdateIssues,
   onCreateComment,
 }: LayoutProps) => {
-  switch (view) {
-    case "board":
-      return (
-        <IssueBoard
-          issues={state.filteredIssues}
-          onUpdateIssues={onUpdateIssues}
-        />
-      );
-    case "detail":
-      return (
-        <IssueDetail
-          issues={state.filteredIssues}
-          rep={rep}
-          onUpdateIssues={onUpdateIssues}
-          onAddComment={onCreateComment}
-          isLoading={isLoading}
-        />
-      );
-    default:
-      return (
-        <IssueList
-          issues={state.filteredIssues}
-          onUpdateIssues={onUpdateIssues}
-          view={view}
-        />
-      );
+  if (detailIssueID) {
+    return (
+      <IssueDetail
+        issues={state.filteredIssues}
+        rep={rep}
+        onUpdateIssues={onUpdateIssues}
+        onAddComment={onCreateComment}
+        isLoading={isLoading}
+      />
+    );
   }
+  if (view === "board") {
+    return (
+      <IssueBoard
+        issues={state.filteredIssues}
+        onUpdateIssues={onUpdateIssues}
+      />
+    );
+  }
+  return (
+    <IssueList
+      issues={state.filteredIssues}
+      onUpdateIssues={onUpdateIssues}
+      view={view}
+    />
+  );
 };
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
@@ -389,6 +390,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   const [priorityFilter] = useQueryState("priorityFilter");
   const [statusFilter] = useQueryState("statusFilter");
   const [orderBy] = useQueryState("orderBy");
+  const [detailIssueID] = useQueryState("iss");
   const [menuVisible, setMenuVisible] = useState(false);
 
   const [state, dispatch] = useReducer(timedReducer, {
@@ -489,7 +491,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           onCreateIssue={handleCreateIssue}
         />
         <div className="flex flex-col flex-grow min-w-0">
-          {view !== "detail" && (
+          {detailIssueID === null && (
             <TopFilter
               onToggleMenu={() => setMenuVisible(!menuVisible)}
               title={getTitle(view)}
@@ -502,8 +504,9 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
               showSortOrderMenu={view !== "board"}
             />
           )}
-          <Layout
+          <MainContent
             view={view}
+            detailIssueID={detailIssueID}
             isLoading={!partialSyncComplete}
             state={state}
             rep={rep}
