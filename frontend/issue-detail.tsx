@@ -17,7 +17,7 @@ import {
   IssueUpdate,
 } from "./issue";
 import StatusMenu from "./status-menu";
-import { queryTypes, useQueryStates } from "next-usequerystate";
+import { useQueryState } from "next-usequerystate";
 
 import type { Replicache } from "replicache";
 import type { M } from "./mutators";
@@ -35,8 +35,8 @@ interface Props {
   rep: Replicache<M>;
 }
 
-const commentsList = (comments: Comment[], isLoading: boolean) => {
-  return comments.map((comment) => (
+const CommentsList = (comments: Comment[], isLoading: boolean) => {
+  const elements = comments.map((comment) => (
     <div
       key={comment.id}
       className=" max-w-[85vw] mx-3 bg-gray-400 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
@@ -46,14 +46,18 @@ const commentsList = (comments: Comment[], isLoading: boolean) => {
         {comment.creator} {timeAgo(comment.created)}
       </div>
       <div className="block flex-1 whitespace-pre-wrap">
-        {isLoading ? "Loading..." : <Remark>{comment.body}</Remark>}
+        <Remark>{comment.body}</Remark>
       </div>
     </div>
   ));
-};
-
-const handleClickCloseBtn = async () => {
-  history.back();
+  if (isLoading) {
+    elements.push(
+      <div className=" max-w-[85vw] mx-3 bg-gray-400 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto">
+        Loading...
+      </div>
+    );
+  }
+  return elements;
 };
 
 export default function IssueDetail({
@@ -63,9 +67,8 @@ export default function IssueDetail({
   issues,
   isLoading,
 }: Props) {
-  const [detailView, setDetailView] = useQueryStates({
-    view: queryTypes.string,
-    iss: queryTypes.string,
+  const [detailIssueID, setDetailIssueID] = useQueryState("iss", {
+    history: "push",
   });
 
   const [editMode, setEditMode] = useState(false);
@@ -76,49 +79,51 @@ export default function IssueDetail({
   const [titleText, setTitle] = useState("");
   const [descriptionText, setDescription] = useState("");
 
-  const { iss } = detailView;
-
   useEffect(() => {
-    if (detailView.iss) {
-      const index = issues.findIndex((issue) => issue.id === detailView.iss);
+    if (detailIssueID) {
+      const index = issues.findIndex((issue) => issue.id === detailIssueID);
       setCurrentIssueIdx(index);
     }
-  }, [issues, detailView.iss]);
+  }, [issues, detailIssueID]);
 
   const issue = useSubscribe<Issue | null>(
     rep,
     async (tx) => {
-      if (iss) {
-        return (await getIssue(tx, iss)) || null;
+      if (detailIssueID) {
+        return (await getIssue(tx, detailIssueID)) || null;
       }
       return null;
     },
     null,
-    [iss]
+    [detailIssueID]
   );
-  const description = useSubscribe<Description>(
+  const description = useSubscribe<Description | null>(
     rep,
     async (tx) => {
-      if (iss) {
-        return (await getIssueDescription(tx, iss)) || "";
+      if (detailIssueID) {
+        return (await getIssueDescription(tx, detailIssueID)) || null;
       }
-      return "";
+      return null;
     },
-    "",
-    [iss]
+    null,
+    [detailIssueID]
   );
 
   const comments = useSubscribe<Comment[] | []>(
     rep,
     async (tx) => {
-      if (iss) {
-        return (await getIssueComments(tx, iss)) || [];
+      if (detailIssueID) {
+        return (await getIssueComments(tx, detailIssueID)) || [];
       }
       return [];
     },
     [],
-    [iss]
+    [detailIssueID]
   );
+
+  const handleClose = useCallback(async () => {
+    await setDetailIssueID(null);
+  }, [setDetailIssueID]);
 
   const handleChangePriority = useCallback(
     (priority: Priority) => {
@@ -179,15 +184,12 @@ export default function IssueDetail({
         newIss = issues[currentIssueIdx + 1].id;
       }
 
-      await setDetailView(
-        { iss: newIss },
-        {
-          scroll: false,
-          shallow: true,
-        }
-      );
+      await setDetailIssueID(newIss, {
+        scroll: false,
+        shallow: true,
+      });
     },
-    [currentIssueIdx, issues, setDetailView]
+    [currentIssueIdx, issues, setDetailIssueID]
   );
 
   const handleFwd = useCallback(async () => {
@@ -218,7 +220,7 @@ export default function IssueDetail({
           <div className="flex flex-row flex-initial ml-3">
             <div
               className="inline-flex items-center justify-center h-6 w-6 rounded  hover:bg-gray-410  cursor-pointer"
-              onMouseDown={handleClickCloseBtn}
+              onMouseDown={handleClose}
             >
               <CloseIcon className="w-4" />
             </div>
@@ -311,17 +313,17 @@ export default function IssueDetail({
                   <textarea
                     className="block  px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
                     onChange={(e) => setDescription(e.target.value)}
-                    defaultValue={description}
+                    defaultValue={description || ""}
                   />
-                ) : isLoading ? (
+                ) : isLoading && description === null ? (
                   "Loading..."
                 ) : (
-                  <Remark>{description}</Remark>
+                  <Remark>{description || ""}</Remark>
                 )}
               </div>
             </div>
             <div className="text-md py-4 px-5 text-gray-4">Comments</div>
-            {commentsList(comments, isLoading)}
+            {CommentsList(comments, isLoading)}
             <div className="mx-3 bg-gray-400 flex-1 mx- mt-0 mb-3 flex-1 border-transparent rounded full py-3 px-3 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"

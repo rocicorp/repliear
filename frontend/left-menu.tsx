@@ -2,7 +2,6 @@ import React, { RefObject, useRef, useState } from "react";
 import AddIcon from "./assets/icons/add.svg";
 import HelpIcon from "./assets/icons/help.svg";
 import MenuIcon from "./assets/icons/menu.svg";
-import Link from "next/link";
 import ItemGroup from "./item-group";
 import { useClickOutside } from "./hooks/useClickOutside";
 import classnames from "classnames";
@@ -10,8 +9,7 @@ import SearchBox from "./searchbox";
 import IssueModal from "./issue-modal";
 import ReactLogo from "./assets/images/logo.svg";
 import type { Description, Issue } from "./issue";
-import { useRouter } from "next/router";
-import { useQueryState } from "next-usequerystate";
+import { queryTypes, useQueryState, useQueryStates } from "next-usequerystate";
 import AboutModal from "./about-modal";
 
 interface Props {
@@ -25,16 +23,16 @@ interface Props {
 }
 
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
-  const [, setLayoutViewParam] = useQueryState("view", { history: "push" });
+  const [, setLayoutViewParams] = useQueryStates(
+    { view: queryTypes.string, iss: queryTypes.string },
+    { history: "push" }
+  );
 
   const [disableAbout] = useQueryState("disableAbout");
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(true);
-
-  const router = useRouter();
-  const { id } = router.query;
 
   const classes = classnames(
     "absolute lg:static inset-0 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm border-r lg:shadow-none justify-items-start bg-gray-500 border-gray-400 text-white bg-opacity-1",
@@ -66,14 +64,18 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
         <div className="flex flex-col flex-grow-0 flex-shrink-0 px-5 py-3">
           <div className="flex items-center justify-between">
             {/* Project selection */}
-            <Link href={`/d/${id}`}>
-              <div className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-400">
-                <div className="w-8 text-white">
-                  <ReactLogo />
-                </div>
-                <div className="text-sm font-medium">React</div>
+            <div
+              className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-400"
+              onMouseDown={async () => {
+                await setLayoutViewParams({ view: null, iss: null });
+                onCloseMenu && onCloseMenu();
+              }}
+            >
+              <div className="w-8 text-white">
+                <ReactLogo />
               </div>
-            </Link>
+              <div className="text-sm font-medium">React</div>
+            </div>
           </div>
 
           {/* Create issue btn */}
@@ -97,7 +99,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onMouseDown={async () => {
-                await setLayoutViewParam("all");
+                await setLayoutViewParams({ view: "all", iss: null });
                 onCloseMenu && onCloseMenu();
               }}
             >
@@ -107,7 +109,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onMouseDown={async () => {
-                await setLayoutViewParam("active");
+                await setLayoutViewParams({ view: "active", iss: null });
                 onCloseMenu && onCloseMenu();
               }}
             >
@@ -117,7 +119,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onMouseDown={async () => {
-                await setLayoutViewParam("backlog");
+                await setLayoutViewParams({ view: "backlog", iss: null });
                 onCloseMenu && onCloseMenu();
               }}
             >
@@ -126,7 +128,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             <div
               className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
               onMouseDown={async () => {
-                await setLayoutViewParam("board");
+                await setLayoutViewParams({ view: "board", iss: null });
                 onCloseMenu && onCloseMenu();
               }}
             >

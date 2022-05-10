@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ReadonlyJSONValue, Replicache } from "replicache";
+import { Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
 import { createClient } from "@supabase/supabase-js";
@@ -27,24 +27,6 @@ export default function Home() {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         licenseKey: process.env.NEXT_PUBLIC_REPLICACHE_LICENSE_KEY!,
       });
-      const unsub = r.subscribe(
-        (tx) => {
-          return tx.get("control/partialSync");
-        },
-        {
-          onData: (result: ReadonlyJSONValue | undefined) => {
-            console.log("partialSync", result);
-            if (
-              (result === undefined ||
-                (result as { endKey?: string }).endKey) !== undefined
-            ) {
-              r.pull();
-            } else {
-              unsub();
-            }
-          },
-        }
-      );
 
       const supabase = createClient(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useReducer } from "react";
-import type { ExperimentalDiff as Diff, Replicache } from "replicache";
+import type {
+  ExperimentalDiff as Diff,
+  ReadTransaction,
+  Replicache,
+} from "replicache";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
 import {
@@ -28,6 +32,7 @@ import IssueBoard from "./issue-board";
 import { isEqual, minBy, sortBy, sortedIndexBy } from "lodash";
 import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
+import { useSubscribe } from "replicache-react";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -335,46 +340,49 @@ function reducer(
 
 interface LayoutProps {
   view: string | null;
+  detailIssueID: string | null;
+  isLoading: boolean;
   state: State;
   rep: Replicache<M>;
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onCreateComment: (comment: Comment) => void;
 }
 
-const Layout = ({
+const MainContent = ({
   view,
+  detailIssueID,
+  isLoading,
   state,
   rep,
   onUpdateIssues,
   onCreateComment,
 }: LayoutProps) => {
-  switch (view) {
-    case "board":
-      return (
-        <IssueBoard
-          issues={state.filteredIssues}
-          onUpdateIssues={onUpdateIssues}
-        />
-      );
-    case "detail":
-      return (
-        <IssueDetail
-          issues={state.filteredIssues}
-          rep={rep}
-          onUpdateIssues={onUpdateIssues}
-          onAddComment={onCreateComment}
-          isLoading={false}
-        />
-      );
-    default:
-      return (
-        <IssueList
-          issues={state.filteredIssues}
-          onUpdateIssues={onUpdateIssues}
-          view={view}
-        />
-      );
+  if (detailIssueID) {
+    return (
+      <IssueDetail
+        issues={state.filteredIssues}
+        rep={rep}
+        onUpdateIssues={onUpdateIssues}
+        onAddComment={onCreateComment}
+        isLoading={isLoading}
+      />
+    );
   }
+  if (view === "board") {
+    return (
+      <IssueBoard
+        issues={state.filteredIssues}
+        onUpdateIssues={onUpdateIssues}
+      />
+    );
+  }
+  return (
+    <IssueList
+      issues={state.filteredIssues}
+      onUpdateIssues={onUpdateIssues}
+      view={view}
+    />
+  );
 };
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
@@ -382,6 +390,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
   const [priorityFilter] = useQueryState("priorityFilter");
   const [statusFilter] = useQueryState("statusFilter");
   const [orderBy] = useQueryState("orderBy");
+  const [detailIssueID] = useQueryState("iss");
   const [menuVisible, setMenuVisible] = useState(false);
 
   const [state, dispatch] = useReducer(timedReducer, {
@@ -391,6 +400,26 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     filters: getFilters(view, priorityFilter, statusFilter),
     issueOrder: getIssueOrder(view, orderBy),
   });
+
+  const partialSyncDefault = { endKey: "PARTIAL_SYNC_SENTINEL" };
+  const partialSync = useSubscribe(
+    rep,
+    async (tx: ReadTransaction) => {
+      return (
+        ((await tx.get("control/partialSync")) as { endKey?: string }) ||
+        partialSyncDefault
+      );
+    },
+    partialSyncDefault
+  );
+
+  const partialSyncComplete = partialSync.endKey === undefined;
+  useEffect(() => {
+    console.log("partialSync", partialSync.endKey);
+    if (!partialSyncComplete) {
+      rep.pull();
+    }
+  }, [rep, partialSync, partialSyncComplete]);
 
   useEffect(() => {
     rep.experimentalWatch(
@@ -463,7 +492,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           onCreateIssue={handleCreateIssue}
         />
         <div className="flex flex-col flex-grow min-w-0">
-          {view !== "detail" && (
+          {detailIssueID === null && (
             <TopFilter
               onToggleMenu={() => setMenuVisible(!menuVisible)}
               title={getTitle(view)}
@@ -476,8 +505,10 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
               showSortOrderMenu={view !== "board"}
             />
           )}
-          <Layout
+          <MainContent
             view={view}
+            detailIssueID={detailIssueID}
+            isLoading={!partialSyncComplete}
             state={state}
             rep={rep}
             onUpdateIssues={handleUpdateIssues}

@@ -3,7 +3,7 @@ import type { Issue, Priority, Status } from "./issue";
 import { formatDate } from "../util/date";
 import PriorityMenu from "./priority-menu";
 import StatusMenu from "./status-menu";
-import { queryTypes, useQueryStates } from "next-usequerystate";
+import { useQueryState } from "next-usequerystate";
 
 interface Props {
   issue: Issue;
@@ -12,13 +12,9 @@ interface Props {
 }
 
 function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
-  const [, setDetailView] = useQueryStates(
-    {
-      view: queryTypes.string,
-      iss: queryTypes.string,
-    },
-    { history: "push" }
-  );
+  const [, setDetailIssueID] = useQueryState("iss", {
+    history: "push",
+  });
   const handleChangePriority = (p: Priority) => {
     if (onChangePriority) onChangePriority(issue, p);
   };
@@ -28,13 +24,10 @@ function IssueRow({ issue, onChangePriority, onChangeStatus }: Props) {
   };
 
   const handleIssueRowClick = async () => {
-    await setDetailView(
-      { view: "detail", iss: issue.id },
-      {
-        scroll: false,
-        shallow: true,
-      }
-    );
+    await setDetailIssueID(issue.id, {
+      scroll: false,
+      shallow: true,
+    });
   };
 
   return (
