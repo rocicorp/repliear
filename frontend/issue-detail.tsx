@@ -217,12 +217,12 @@ export default function IssueDetail({
   };
 
   return (
-    <div className="flex flex-col flex-grow m-3 rounded-md shadow-mdw-7xl	border-gray-850 border min-h-0">
+    <div className="flex flex-col flex-grow m-3 rounded-md shadow-mdw-7xl border-gray-850 border min-h-0 min-w-0">
       <div className="flex bg-gray-850 border border-gray-700 justify-around">
         <div className="flex-1 p-2">
           <div className="flex flex-row flex-initial ml-3">
             <div
-              className="inline-flex items-center justify-center h-6 w-6 rounded  hover:bg-gray-400  cursor-pointer"
+              className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-gray-400  cursor-pointer"
               onMouseDown={handleClose}
             >
               <CloseIcon className="w-4" />
@@ -258,7 +258,7 @@ export default function IssueDetail({
         </div>
       </div>
       <div className="flex flex-1 p-2 overflow-hidden">
-        <div className="flex flex-col flex-[3_3_0%] items-center md:p-3 border-gray-700 md:border-r min-h-0 overflow-auto">
+        <div className="flex flex-col flex-[3_0_0] items-center md:p-3 border-gray-700 md:border-r min-h-0 min-w-0 overflow-auto">
           <div className="flex flex-col w-full lg:max-w-4xl max-w-[90vw]">
             <div className="flex border-solid border-b lg:px-5 justify-between px-2">
               <div className="flex visible md:invisible">
@@ -344,7 +344,7 @@ export default function IssueDetail({
             </div>
           </div>
         </div>
-        <div className="hidden md:block flex flex-1 p-3">
+        <div className="hidden md:block flex flex-[1_0_0] min-w-0 p-3">
           <div className="max-w-4xl">
             <div className="flex border-solid border-b px-5">
               {/* For consistent spacing with left col */}
