@@ -2,7 +2,6 @@ import React, { RefObject, useRef, useState } from "react";
 import AddIcon from "./assets/icons/add.svg";
 import HelpIcon from "./assets/icons/help.svg";
 import MenuIcon from "./assets/icons/menu.svg";
-import Link from "next/link";
 import ItemGroup from "./item-group";
 import { useClickOutside } from "./hooks/useClickOutside";
 import classnames from "classnames";
