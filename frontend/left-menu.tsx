@@ -66,14 +66,18 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
         <div className="flex flex-col flex-grow-0 flex-shrink-0 px-5 py-3">
           <div className="flex items-center justify-between">
             {/* Project selection */}
-            <Link href={`/d/${id}`}>
-              <div className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-400">
-                <div className="w-8 text-white">
-                  <ReactLogo />
-                </div>
-                <div className="text-sm font-medium">React</div>
+            <div
+              className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-400"
+              onMouseDown={async () => {
+                await setLayoutViewParam(null);
+                onCloseMenu && onCloseMenu();
+              }}
+            >
+              <div className="w-8 text-white">
+                <ReactLogo />
               </div>
-            </Link>
+              <div className="text-sm font-medium">React</div>
+            </div>
           </div>
 
           {/* Create issue btn */}
