@@ -7,7 +7,6 @@ import Pusher from "pusher-js";
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
 
-  // TODO: Think through Replicache + SSR.
   useEffect(() => {
     // disabled eslint await requirement
     // eslint-disable-next-line
@@ -27,20 +26,6 @@ export default function Home() {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         licenseKey: process.env.NEXT_PUBLIC_REPLICACHE_LICENSE_KEY!,
       });
-
-      //
-      // const supabase = createClient(
-      //   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      //   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      //   process.env.NEXT_PUBLIC_SUPABASE_KEY!
-      // );
-      // supabase
-      //   .from(`space:id=eq.${spaceID}`)
-      //   .on("*", () => {
-      //     r.pull();
-      //   })
-      //   .subscribe();
 
       const pusher = new Pusher("ca0cbe1442bba8f6e8e0", {
         cluster: "mt1",
