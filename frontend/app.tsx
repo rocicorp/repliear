@@ -340,6 +340,7 @@ function reducer(
 
 interface LayoutProps {
   view: string | null;
+  isLoading: boolean;
   state: State;
   rep: Replicache<M>;
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
@@ -348,6 +349,7 @@ interface LayoutProps {
 
 const Layout = ({
   view,
+  isLoading,
   state,
   rep,
   onUpdateIssues,
@@ -368,7 +370,7 @@ const Layout = ({
           rep={rep}
           onUpdateIssues={onUpdateIssues}
           onAddComment={onCreateComment}
-          isLoading={false}
+          isLoading={isLoading}
         />
       );
     default:
@@ -502,6 +504,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
           )}
           <Layout
             view={view}
+            isLoading={!partialSyncComplete}
             state={state}
             rep={rep}
             onUpdateIssues={handleUpdateIssues}
