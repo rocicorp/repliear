@@ -52,7 +52,10 @@ const CommentsList = (comments: Comment[], isLoading: boolean) => {
   ));
   if (isLoading) {
     elements.push(
-      <div className=" max-w-[85vw] mx-3 bg-gray-400 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto">
+      <div
+        key="loading"
+        className=" max-w-[85vw] mx-3 bg-gray-400 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
+      >
         Loading...
       </div>
     );
