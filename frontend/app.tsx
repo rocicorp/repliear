@@ -34,7 +34,6 @@ import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
 import classnames from "classnames";
-import classNames from "classnames";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -511,7 +510,7 @@ const RawLayout = ({
         />
         <div className="flex flex-col flex-grow min-w-0">
           <div
-            className={classNames("flex flex-col", {
+            className={classnames("flex flex-col", {
               hidden: detailIssueID,
             })}
           >
