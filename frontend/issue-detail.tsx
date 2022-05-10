@@ -26,6 +26,7 @@ import { Remark } from "react-remark";
 import { nanoid } from "nanoid";
 import { timeAgo } from "../util/date";
 import { useKeyPressed } from "./hooks/useKeyPressed";
+import { sortBy } from "lodash";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
@@ -36,20 +37,22 @@ interface Props {
 }
 
 const CommentsList = (comments: Comment[], isLoading: boolean) => {
-  const elements = comments.map((comment) => (
-    <div
-      key={comment.id}
-      className=" max-w-[85vw] mx-3 bg-gray-850 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
-    >
-      <div className="h-6 mb-1 -mt-px relative">
-        <DefaultAvatarIcon className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 float-left mr-2" />
-        {comment.creator} {timeAgo(comment.created)}
+  const elements = sortBy(comments, (comment) => comment.created).map(
+    (comment) => (
+      <div
+        key={comment.id}
+        className=" max-w-[85vw] mx-3 bg-gray-850 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
+      >
+        <div className="h-6 mb-1 -mt-px relative">
+          <DefaultAvatarIcon className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 float-left mr-2" />
+          {comment.creator} {timeAgo(comment.created)}
+        </div>
+        <div className="block flex-1 whitespace-pre-wrap">
+          <Remark>{comment.body}</Remark>
+        </div>
       </div>
-      <div className="block flex-1 whitespace-pre-wrap">
-        <Remark>{comment.body}</Remark>
-      </div>
-    </div>
-  ));
+    )
+  );
   if (isLoading) {
     elements.push(
       <div
@@ -79,8 +82,8 @@ export default function IssueDetail({
   const [currentIssueIdx, setCurrentIssueIdx] = useState<number>(-1);
 
   const [commentText, setCommentText] = useState("");
-  const [titleText, setTitle] = useState("");
-  const [descriptionText, setDescription] = useState("");
+  const [titleText, setTitleText] = useState("");
+  const [descriptionText, setDescriptionText] = useState("");
 
   useEffect(() => {
     if (detailIssueID) {
@@ -142,20 +145,6 @@ export default function IssueDetail({
     [onUpdateIssues, issue]
   );
 
-  const handleChangeDescription = useCallback(
-    (description: string) => {
-      issue && onUpdateIssues([{ id: issue.id, changes: {}, description }]);
-    },
-    [onUpdateIssues, issue]
-  );
-
-  const handleChangeTitle = useCallback(
-    (title: string) => {
-      issue && onUpdateIssues([{ id: issue.id, changes: { title } }]);
-    },
-    [onUpdateIssues, issue]
-  );
-
   const handleAddComment = useCallback(() => {
     if (commentText !== "") {
       onAddComment({
@@ -206,13 +195,32 @@ export default function IssueDetail({
   useKeyPressed("j", handleFwd);
   useKeyPressed("k", handlePrev);
 
+  const handleEdit = () => {
+    setTitleText(issue?.title || "");
+    setDescriptionText(description || "");
+    setEditMode(true);
+  };
+
   const handleCancel = () => {
     setEditMode(false);
   };
 
   const handleSave = () => {
-    handleChangeDescription(descriptionText);
-    handleChangeTitle(titleText || (issue?.title as string));
+    if (issue) {
+      onUpdateIssues([
+        {
+          id: issue.id,
+          changes:
+            titleText !== issue.title
+              ? {
+                  title: titleText,
+                }
+              : {},
+          description:
+            descriptionText !== description ? descriptionText : undefined,
+        },
+      ]);
+    }
     setEditMode(false);
   };
 
@@ -292,9 +300,7 @@ export default function IssueDetail({
                 <div className="text-sm">
                   <EditIcon
                     className="!w-4 cursor-pointer"
-                    onMouseDown={() => {
-                      setEditMode(true);
-                    }}
+                    onMouseDown={handleEdit}
                   />
                 </div>
               )}
@@ -304,8 +310,8 @@ export default function IssueDetail({
                 {editMode ? (
                   <input
                     className="block px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 placeholder-gray-300 placeholder:text-sm"
-                    onChange={(e) => setTitle(e.target.value)}
-                    defaultValue={issue?.title}
+                    onChange={(e) => setTitleText(e.target.value)}
+                    value={titleText}
                   />
                 ) : (
                   issue?.title
@@ -315,8 +321,8 @@ export default function IssueDetail({
                 {editMode ? (
                   <textarea
                     className="block  px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 h-[calc(100vh-340px)] placeholder-gray-300 placeholder:text-sm"
-                    onChange={(e) => setDescription(e.target.value)}
-                    defaultValue={description || ""}
+                    onChange={(e) => setDescriptionText(e.target.value)}
+                    value={descriptionText}
                   />
                 ) : isLoading && description === null ? (
                   "Loading..."
@@ -332,6 +338,7 @@ export default function IssueDetail({
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 min-h-[6rem] placeholder-gray-300 placeholder:text-sm"
                 placeholder="Leave a comment ..."
                 onChange={(e) => setCommentText(e.target.value)}
+                value={commentText}
               />
               <div className="flex justify-end">
                 <button
