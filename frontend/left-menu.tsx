@@ -35,7 +35,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
   const [aboutModalVisible, setAboutModalVisible] = useState(true);
 
   const classes = classnames(
-    "absolute lg:static inset-0 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm border-r lg:shadow-none justify-items-start bg-gray-500 border-gray-400 text-white bg-opacity-1",
+    "absolute lg:static inset-0 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm border-r lg:shadow-none justify-items-start bg-gray border-gray-850 text-white bg-opacity-1",
     {
       /* eslint-disable @typescript-eslint/naming-convention */
       "-translate-x-full shadow-none": !menuVisible,
@@ -57,7 +57,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           className="flex-shrink-0 px-5 ml-2 lg:hidden h-14 focus:outline-none"
           onMouseDown={onCloseMenu}
         >
-          <MenuIcon className="w-3.5 text-gray-2 hover:text-gray-1" />
+          <MenuIcon className="w-3.5 text-gray-50 hover:text-gray-100" />
         </button>
 
         {/* Top menu*/}
@@ -65,7 +65,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <div className="flex items-center justify-between">
             {/* Project selection */}
             <div
-              className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-400"
+              className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-850"
               onMouseDown={async () => {
                 await setLayoutViewParams({ view: null, iss: null });
                 onCloseMenu && onCloseMenu();
@@ -80,7 +80,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
 
           {/* Create issue btn */}
           <button
-            className="inline-flex items-center px-2 py-2 mt-3 bg-gray-400  hover:bg-gray-450 border border-gray-500 rounded focus:outline-none h-7"
+            className="inline-flex items-center px-2 py-2 mt-3 bg-gray-850  hover:bg-gray-900 border border-gray rounded focus:outline-none h-7"
             onMouseDown={() => {
               setIssueModalVisible(true);
               onCloseMenu && onCloseMenu();
@@ -97,7 +97,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
 
           <ItemGroup title="React Issues">
             <div
-              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
+              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-900"
               onMouseDown={async () => {
                 await setLayoutViewParams({ view: "all", iss: null });
                 onCloseMenu && onCloseMenu();
@@ -107,7 +107,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             </div>
 
             <div
-              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
+              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-900"
               onMouseDown={async () => {
                 await setLayoutViewParams({ view: "active", iss: null });
                 onCloseMenu && onCloseMenu();
@@ -117,7 +117,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
             </div>
 
             <div
-              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
+              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-900"
               onMouseDown={async () => {
                 await setLayoutViewParams({ view: "backlog", iss: null });
                 onCloseMenu && onCloseMenu();
@@ -126,7 +126,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
               <span>Backlog</span>
             </div>
             <div
-              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-450"
+              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-900"
               onMouseDown={async () => {
                 await setLayoutViewParams({ view: "board", iss: null });
                 onCloseMenu && onCloseMenu();
@@ -140,7 +140,7 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
           <div className="flex flex-col flex-grow flex-shrink" />
 
           {/* bottom group */}
-          <div className="px-2 pb-2 text-gray-2 mt-7">
+          <div className="px-2 pb-2 text-gray-50 mt-7">
             <button
               className="inline-flex mt-1 focus:outline-none"
               onMouseDown={() => setAboutModalVisible(true)}

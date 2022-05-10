@@ -38,12 +38,14 @@ const FilterStatus = ({ filter, onDelete, label }: FilterStatusProps) => {
   if (!filter || filter.length === 0) return null;
   return (
     <div className="flex items-center pr-4 space-x-[1px]">
-      <span className="px-1 text-gray-2 bg-gray-400 rounded-l">{label} is</span>
-      <span className="px-1 text-gray-2 bg-gray-400 ">
+      <span className="px-1 text-gray-50 bg-gray-850 rounded-l">
+        {label} is
+      </span>
+      <span className="px-1 text-gray-50 bg-gray-850 ">
         {filter.map((f) => displayStrings[f]).join(", ")}
       </span>
       <span
-        className="px-1 text-gray-2 bg-gray-400 rounded-r cursor-pointer"
+        className="px-1 text-gray-50 bg-gray-850 rounded-r cursor-pointer"
         onMouseDown={onDelete}
       >
         &times;
@@ -80,14 +82,14 @@ const TopFilter = ({
 
   return (
     <>
-      <div className="flex justify-between flex-shrink-0 pl-2 lg:pl-9 pr-2 lg:pr-6 border-b border-gray-400 h-14  border-b-color-gray-2">
+      <div className="flex justify-between flex-shrink-0 pl-2 lg:pl-9 pr-2 lg:pr-6 border-b border-gray-850 h-14  border-b-color-gray-50">
         {/* left section */}
         <div className="flex items-center">
           <button
             className="flex-shrink-0 h-full px-5 focus:outline-none lg:hidden"
             onClick={onToggleMenu}
           >
-            <MenuIcon className="w-3.5 text-white hover:text-gray-2" />
+            <MenuIcon className="w-3.5 text-white hover:text-gray-50" />
           </button>
           <div className="p-1 font-semibold cursor-default">{title}</div>
           {filteredIssuesCount ? (
@@ -135,7 +137,7 @@ const TopFilter = ({
       </div>
       {(statusFilters && statusFilters.length) ||
       (priorityFilters && priorityFilters.length) ? (
-        <div className="flex pl-2 lg:pl-9 pr-6 border-b border-gray-400 h-8">
+        <div className="flex pl-2 lg:pl-9 pr-6 border-b border-gray-850 h-8">
           <FilterStatus
             filter={statusFilters}
             onDelete={() => setStatusFilterByParam(null)}

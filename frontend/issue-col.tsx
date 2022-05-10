@@ -78,7 +78,7 @@ function IssueCol({ title, status, issues, onChangePriority }: Props) {
       <div className="flex items-center pb-3 text-sm whitespace-nowrap overflow-hidden">
         {statusIcon}
         <div className="ml-3 mr-3 font-medium">{title}</div>
-        <div className="mr-3 font-normal text-gray-410">
+        <div className="mr-3 font-normal text-gray-400">
           {issues?.length || 0}
         </div>
       </div>

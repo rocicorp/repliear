@@ -46,7 +46,7 @@ const SortOrderMenu = ({ onSelect, order }: Props) => {
       <div
         key={idx}
         className={classNames(
-          "flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100",
+          "flex items-center h-8 px-3 text-gray focus:outline-none hover:text-gray-800 hover:bg-gray-300",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           { "font-semibold text-black": order === orderOption }
         )}
@@ -62,11 +62,11 @@ const SortOrderMenu = ({ onSelect, order }: Props) => {
 
   return (
     <div className="flex flex-row items-center" ref={ref}>
-      <div className="text-white hover:text-gray-2 p-1">
+      <div className="text-white hover:text-gray-50 p-1">
         {displayOrder.get(order)}
       </div>
       <button
-        className="items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-100"
+        className="items-center justify-center w-6 h-6 border-none rounded focus:outline-none hover:bg-gray-300"
         ref={setOrderRef}
         onMouseDown={handleDropdownClick}
       >

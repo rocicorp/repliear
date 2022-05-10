@@ -117,7 +117,7 @@ export default function IssueBoard({ issues, onUpdateIssues }: Props) {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex flex-1 pt-6 pl-8 overflow-scroll-x bg-gray-500 border-color-gray-2 border-right-width-1">
+      <div className="flex flex-1 pt-6 pl-8 overflow-scroll-x bg-gray border-color-gray-50 border-right-width-1">
         <IssueCol
           title={"Backlog"}
           status={Status.BACKLOG}
