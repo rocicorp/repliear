@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import { Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
-import { createClient } from "@supabase/supabase-js";
+import Pusher from "pusher-js";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
 
-  // TODO: Think through Replicache + SSR.
   useEffect(() => {
     // disabled eslint await requirement
     // eslint-disable-next-line
@@ -28,18 +27,20 @@ export default function Home() {
         licenseKey: process.env.NEXT_PUBLIC_REPLICACHE_LICENSE_KEY!,
       });
 
-      const supabase = createClient(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        process.env.NEXT_PUBLIC_SUPABASE_KEY!
-      );
-      supabase
-        .from(`space:id=eq.${spaceID}`)
-        .on("*", () => {
+      if (
+        process.env.NEXT_PUBLIC_PUSHER_KEY &&
+        process.env.NEXT_PUBLIC_PUSHER_CLUSTER
+      ) {
+        Pusher.logToConsole = true;
+        const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+          cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+        });
+
+        const channel = pusher.subscribe("default");
+        channel.bind("poke", () => {
           r.pull();
-        })
-        .subscribe();
+        });
+      }
       setRep(r);
     })();
   }, [rep]);

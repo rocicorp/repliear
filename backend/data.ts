@@ -51,10 +51,6 @@ export async function createSchemaVersion1(executor: Executor) {
       lastmodified timestamp(6) not null
       )`);
 
-  await executor(`alter publication supabase_realtime add table space`);
-  await executor(`alter publication supabase_realtime set 
-      (publish = 'insert, update, delete');`);
-
   await executor(`create table client (
       id text primary key not null,
       lastmutationid integer not null,
