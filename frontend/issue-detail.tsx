@@ -60,7 +60,7 @@ const CommentsList = (comments: Comment[], isLoading: boolean) => {
   return elements;
 };
 
-const handleClickCloseBtn = async () => {
+const handleClose = async () => {
   history.back();
 };
 
@@ -226,7 +226,7 @@ export default function IssueDetail({
           <div className="flex flex-row flex-initial ml-3">
             <div
               className="inline-flex items-center justify-center h-6 w-6 rounded  hover:bg-gray-410  cursor-pointer"
-              onMouseDown={handleClickCloseBtn}
+              onMouseDown={handleClose}
             >
               <CloseIcon className="w-4" />
             </div>
