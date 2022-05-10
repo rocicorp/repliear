@@ -17,14 +17,14 @@ const IssueItemBase = ({
   return (
     <div
       className={classNames(
-        "bg-gray-400 cursor-pointer flex flex-col px-4 py-2 text-white rounded focus:outline-none"
+        "bg-gray-850 cursor-pointer flex flex-col px-4 py-2 text-white rounded focus:outline-none"
       )}
       onClick={handleIssueItemClick}
     >
       <div className="flex justify-between w-full overflow-hidden">
         <div className="flex flex-col">
           <span className="text-xs font-normal uppercase"></span>
-          <span className="mt-1 text-sm font-medium text-gray-2 line-clamp-2 overflow-ellipsis h-10">
+          <span className="mt-1 text-sm font-medium text-gray-50 line-clamp-2 overflow-ellipsis h-10">
             {issue.title}
           </span>
         </div>

@@ -39,7 +39,7 @@ const CommentsList = (comments: Comment[], isLoading: boolean) => {
   const elements = comments.map((comment) => (
     <div
       key={comment.id}
-      className=" max-w-[85vw] mx-3 bg-gray-400 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
+      className=" max-w-[85vw] mx-3 bg-gray-850 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
     >
       <div className="h-6 mb-1 -mt-px relative">
         <DefaultAvatarIcon className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 float-left mr-2" />
@@ -217,12 +217,12 @@ export default function IssueDetail({
   };
 
   return (
-    <div className="flex flex-col flex-grow m-3 rounded-md shadow-mdw-7xl	border-gray-400 border min-h-0">
-      <div className="flex bg-gray-400 border border-gray-300 justify-around">
+    <div className="flex flex-col flex-grow m-3 rounded-md shadow-mdw-7xl	border-gray-850 border min-h-0">
+      <div className="flex bg-gray-850 border border-gray-700 justify-around">
         <div className="flex-1 p-2">
           <div className="flex flex-row flex-initial ml-3">
             <div
-              className="inline-flex items-center justify-center h-6 w-6 rounded  hover:bg-gray-410  cursor-pointer"
+              className="inline-flex items-center justify-center h-6 w-6 rounded  hover:bg-gray-400  cursor-pointer"
               onMouseDown={handleClose}
             >
               <CloseIcon className="w-4" />
@@ -231,7 +231,7 @@ export default function IssueDetail({
               <>
                 <div className="flex flex-row flex-initial select-none cursor-pointer">
                   <button
-                    className="h-6 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-2  hover:bg-gray-410 disabled:opacity-25"
+                    className="h-6 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-2  hover:bg-gray-400 disabled:opacity-25"
                     type="button"
                     onMouseDown={() => handleFwdPrev("prev")}
                     disabled={currentIssueIdx === 0}
@@ -244,7 +244,7 @@ export default function IssueDetail({
                   className="flex flex-row flex-initial select-none cursor-pointer"
                 >
                   <button
-                    className="h-6 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-2  hover:bg-gray-410 disabled:opacity-50"
+                    className="h-6 px-2 rounded border-solid border inline-flex items-center justify-center flex-shrink-0 font-medium m-0 select-none whitespace-no-wrap ml-2  hover:bg-gray-400 disabled:opacity-50"
                     type="button"
                     onMouseDown={() => handleFwdPrev("fwd")}
                     disabled={currentIssueIdx === issues.length - 1}
@@ -258,7 +258,7 @@ export default function IssueDetail({
         </div>
       </div>
       <div className="flex flex-1 p-2 overflow-hidden">
-        <div className="flex flex-col flex-[3_3_0%] items-center md:p-3 border-gray-300 md:border-r min-h-0 overflow-auto">
+        <div className="flex flex-col flex-[3_3_0%] items-center md:p-3 border-gray-700 md:border-r min-h-0 overflow-auto">
           <div className="flex flex-col w-full lg:max-w-4xl max-w-[90vw]">
             <div className="flex border-solid border-b lg:px-5 justify-between px-2">
               <div className="flex visible md:invisible">
@@ -276,13 +276,13 @@ export default function IssueDetail({
               {editMode ? (
                 <div className="text-sm flex mb-1">
                   <button
-                    className="px-2 ml-2 rounded hover:bg-indigo-700 focus:outline-none bg-gray-400 text-white"
+                    className="px-2 ml-2 rounded hover:bg-indigo-700 focus:outline-none bg-gray-850 text-white"
                     onMouseDown={handleSave}
                   >
                     Save
                   </button>
                   <button
-                    className="px-2 ml-2 rounded hover:bg-indigo-700 focus:outline-none bg-gray-300 text-white"
+                    className="px-2 ml-2 rounded hover:bg-indigo-700 focus:outline-none bg-gray-700 text-white"
                     onMouseDown={handleCancel}
                   >
                     Cancel
@@ -303,7 +303,7 @@ export default function IssueDetail({
               <div className="text-md py-4">
                 {editMode ? (
                   <input
-                    className="block px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 placeholder-gray-100 placeholder:text-sm"
+                    className="block px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 placeholder-gray-300 placeholder:text-sm"
                     onChange={(e) => setTitle(e.target.value)}
                     defaultValue={issue?.title}
                   />
@@ -311,10 +311,10 @@ export default function IssueDetail({
                   issue?.title
                 )}
               </div>
-              <div className="text-sm pb-4 text-gray-1 overflow-auto whitespace-pre-wrap">
+              <div className="text-sm pb-4 text-gray-100 overflow-auto whitespace-pre-wrap">
                 {editMode ? (
                   <textarea
-                    className="block  px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 h-[calc(100vh-340px)] placeholder-gray-100 placeholder:text-sm"
+                    className="block  px-2 py-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 h-[calc(100vh-340px)] placeholder-gray-300 placeholder:text-sm"
                     onChange={(e) => setDescription(e.target.value)}
                     defaultValue={description || ""}
                   />
@@ -325,17 +325,17 @@ export default function IssueDetail({
                 )}
               </div>
             </div>
-            <div className="text-md py-4 px-5 text-gray-4">Comments</div>
+            <div className="text-md py-4 px-5 text-white">Comments</div>
             {CommentsList(comments, isLoading)}
-            <div className="mx-3 bg-gray-400 flex-1 mx- mt-0 mb-3 flex-1 border-transparent rounded full py-3 px-3 relative whitespace-pre-wrap ">
+            <div className="mx-3 bg-gray-850 flex-1 mx- mt-0 mb-3 flex-1 border-transparent rounded full py-3 px-3 relative whitespace-pre-wrap ">
               <textarea
-                className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-400 min-h-[6rem] placeholder-gray-100 placeholder:text-sm"
+                className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 min-h-[6rem] placeholder-gray-300 placeholder:text-sm"
                 placeholder="Leave a comment ..."
                 onChange={(e) => setCommentText(e.target.value)}
               />
               <div className="flex justify-end">
                 <button
-                  className="px-3 ml-2 mt-2 rounded h-8 focus:outline-none bg-gray-500 text-white "
+                  className="px-3 ml-2 mt-2 rounded h-8 focus:outline-none bg-gray text-white "
                   onMouseDown={handleAddComment}
                 >
                   Comment

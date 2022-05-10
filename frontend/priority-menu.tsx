@@ -72,7 +72,7 @@ const PriorityMenu = ({
     return (
       <div
         key={idx}
-        className="flex items-center h-8 px-3 text-gray-500 focus:outline-none hover:text-gray-800 hover:bg-gray-100"
+        className="flex items-center h-8 px-3 text-gray focus:outline-none hover:text-gray-800 hover:bg-gray-300"
         onClick={(e: MouseEvent) => {
           onSelect(priority);
           setPriorityDropDownVisible(false);
@@ -88,7 +88,7 @@ const PriorityMenu = ({
   return (
     <div ref={ref}>
       <button
-        className="inline-flex items-center h-6 px-2 border-none rounded focus:outline-none hover:bg-gray-400"
+        className="inline-flex items-center h-6 px-2 border-none rounded focus:outline-none hover:bg-gray-850"
         ref={setPriorityRef}
         onClick={handleDropdownClick}
       >

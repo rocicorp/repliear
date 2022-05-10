@@ -9,11 +9,11 @@ interface Props {
 }
 
 function Title({ children }: { children: string }) {
-  return <div className="text-lg font-normal text-gray-4">{children}</div>;
+  return <div className="text-lg font-normal text-white">{children}</div>;
 }
 
 function H1({ children }: { children: string }) {
-  return <div className="mt-5 text-lg font-normal text-gray-4">{children}</div>;
+  return <div className="mt-5 text-lg font-normal text-white">{children}</div>;
 }
 
 function P({
@@ -25,7 +25,7 @@ function P({
 }) {
   return (
     <div
-      className={classNames("text-sm font-normal text-gray-1", {
+      className={classNames("text-sm font-normal text-gray-100", {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         "mt-3": !noTopMargin,
       })}
@@ -60,10 +60,10 @@ export default function AboutModal({ isOpen, onDismiss }: Props) {
 
   const body = (
     <div className="flex flex-col min-h-0">
-      <div className="flex items-center justify-between flex-shrink-0 py-4 px-8 border-b border-gray-6">
+      <div className="flex items-center justify-between flex-shrink-0 py-4 px-8 border-b border-gray-800">
         <Title>About This Demo</Title>
         <div
-          className="flex items-center justify-center h-7 w-7 rounded hover:bg-gray-400"
+          className="flex items-center justify-center h-7 w-7 rounded hover:bg-gray-850"
           onMouseDown={handleClickCloseBtn}
         >
           <CloseIcon className="w-4" />
@@ -88,7 +88,7 @@ export default function AboutModal({ isOpen, onDismiss }: Props) {
           style={{
             listStyleType: "circle",
           }}
-          className="text-sm font-normal text-gray-1"
+          className="text-sm font-normal text-gray-100"
         >
           <Feature title="Dataset">
             The entire React issue db as of April 2022. ~11k issues, ~50 MB of
@@ -129,7 +129,7 @@ export default function AboutModal({ isOpen, onDismiss }: Props) {
       center={true}
       size="wide"
       onDismiss={onDismiss}
-      className="border border-gray-6"
+      className="border border-gray-800"
     >
       {body}
     </Modal>

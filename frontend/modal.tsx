@@ -38,7 +38,7 @@ function Modal({
     }
   );
   const modalClasses = classnames(
-    "flex flex-col items-center transform bg-gray-470 modal shadow-large-modal rounded-lg",
+    "flex flex-col items-center transform bg-gray-750 modal shadow-large-modal rounded-lg",
     {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       "mt-5 lg:mt-20 mb-2 ": !center,
