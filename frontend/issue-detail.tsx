@@ -60,10 +60,6 @@ const CommentsList = (comments: Comment[], isLoading: boolean) => {
   return elements;
 };
 
-const handleClose = async () => {
-  history.back();
-};
-
 export default function IssueDetail({
   rep,
   onUpdateIssues,
@@ -124,6 +120,10 @@ export default function IssueDetail({
     [],
     [detailIssueID]
   );
+
+  const handleClose = useCallback(async () => {
+    await setDetailIssueID(null);
+  }, [setDetailIssueID]);
 
   const handleChangePriority = useCallback(
     (priority: Priority) => {
