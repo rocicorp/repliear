@@ -443,6 +443,13 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     },
     [setDetailIssueID]
   );
+  const handleCloseMenu = useCallback(() => setMenuVisible(false), [
+    setMenuVisible,
+  ]);
+  const handleToggleMenu = useCallback(() => setMenuVisible(!menuVisible), [
+    setMenuVisible,
+    menuVisible,
+  ]);
 
   return (
     <Layout
@@ -452,7 +459,8 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
       isLoading={!partialSyncComplete}
       state={state}
       rep={rep}
-      setMenuVisible={setMenuVisible}
+      onCloseMenu={handleCloseMenu}
+      onToggleMenu={handleToggleMenu}
       onUpdateIssues={handleUpdateIssues}
       onCreateIssue={handleCreateIssue}
       onCreateComment={handleCreateComment}
@@ -468,7 +476,8 @@ interface LayoutProps {
   isLoading: boolean;
   state: State;
   rep: Replicache<M>;
-  setMenuVisible: (visible: boolean) => void;
+  onCloseMenu: () => void;
+  onToggleMenu: () => void;
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onCreateIssue: (
     issue: Omit<Issue, "kanbanOrder">,
@@ -485,26 +494,19 @@ const RawLayout = ({
   isLoading,
   state,
   rep,
-  setMenuVisible,
+  onCloseMenu,
+  onToggleMenu,
   onUpdateIssues,
   onCreateIssue,
   onCreateComment,
   onOpenDetail,
 }: LayoutProps) => {
-  const handleCloseMenu = useCallback(() => setMenuVisible(false), [
-    setMenuVisible,
-  ]);
-  const handleToggleMenu = useCallback(() => setMenuVisible(!menuVisible), [
-    setMenuVisible,
-    menuVisible,
-  ]);
-
   return (
     <div>
       <div className="flex w-full h-screen overflow-y-hidden">
         <LeftMenu
           menuVisible={menuVisible}
-          onCloseMenu={handleCloseMenu}
+          onCloseMenu={onCloseMenu}
           onCreateIssue={onCreateIssue}
         />
         <div className="flex flex-col flex-grow min-w-0">
@@ -514,7 +516,7 @@ const RawLayout = ({
             })}
           >
             <TopFilter
-              onToggleMenu={handleToggleMenu}
+              onToggleMenu={onToggleMenu}
               title={getTitle(view)}
               filteredIssuesCount={
                 state.filters.hasNonViewFilters
