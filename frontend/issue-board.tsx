@@ -1,6 +1,6 @@
 import { generateNKeysBetween } from "fractional-indexing";
 import { groupBy, indexOf } from "lodash";
-import React, { useCallback } from "react";
+import React, { memo, useCallback } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
 import { Status, Issue, IssueUpdate, Priority } from "./issue";
@@ -73,9 +73,10 @@ export function getKanbanOrderIssueUpdates(
 interface Props {
   issues: Issue[];
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
+  onOpenDetail: (issue: Issue) => void;
 }
 
-export default function IssueBoard({ issues, onUpdateIssues }: Props) {
+function IssueBoard({ issues, onUpdateIssues, onOpenDetail }: Props) {
   const issuesByType = getIssueByType(issues);
 
   const handleDragEnd = useCallback(
@@ -123,32 +124,39 @@ export default function IssueBoard({ issues, onUpdateIssues }: Props) {
           status={Status.BACKLOG}
           issues={issuesByType[Status.BACKLOG]}
           onChangePriority={handleChangePriority}
+          onOpenDetail={onOpenDetail}
         />
         <IssueCol
           title={"Todo"}
           status={Status.TODO}
           issues={issuesByType[Status.TODO]}
           onChangePriority={handleChangePriority}
+          onOpenDetail={onOpenDetail}
         />
         <IssueCol
           title={"In Progress"}
           status={Status.IN_PROGRESS}
           issues={issuesByType[Status.IN_PROGRESS]}
           onChangePriority={handleChangePriority}
+          onOpenDetail={onOpenDetail}
         />
         <IssueCol
           title={"Done"}
           status={Status.DONE}
           issues={issuesByType[Status.DONE]}
           onChangePriority={handleChangePriority}
+          onOpenDetail={onOpenDetail}
         />
         <IssueCol
           title={"Canceled"}
           status={Status.CANCELED}
           issues={issuesByType[Status.CANCELED]}
           onChangePriority={handleChangePriority}
+          onOpenDetail={onOpenDetail}
         />
       </div>
     </DragDropContext>
   );
 }
+
+export default memo(IssueBoard);

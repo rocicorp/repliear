@@ -1,4 +1,4 @@
-import React, { MouseEvent, RefObject, useRef, useState } from "react";
+import React, { memo, MouseEvent, RefObject, useRef, useState } from "react";
 import { usePopper } from "react-popper";
 import StatusIcon from "./status-icon";
 import CancelIcon from "./assets/icons/cancel.svg";
@@ -41,18 +41,12 @@ const getStatusString = (status: StatusEnum) => {
 };
 
 const StatusMenu = ({ labelVisible = false, onSelect, status }: Props) => {
-  const [statusRef, setStatusRef] = useState<HTMLButtonElement | null>(null);
-  const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
+  const [buttonRef, setButtonRef] = useState<HTMLButtonElement | null>(null);
   const [statusDropDownVisible, setStatusDropDownVisible] = useState(false);
-
-  const { styles, attributes, update } = usePopper(statusRef, popperRef, {
-    placement: "bottom-start",
-  });
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
 
   const handleDropdownClick = (e: MouseEvent) => {
-    update && update();
     e.stopPropagation();
     setStatusDropDownVisible(!statusDropDownVisible);
   };
@@ -84,7 +78,7 @@ const StatusMenu = ({ labelVisible = false, onSelect, status }: Props) => {
     <div ref={ref}>
       <button
         className="inline-flex items-center h-6 px-2 border-none rounded focus:outline-none hover:bg-gray-850"
-        ref={setStatusRef}
+        ref={setButtonRef}
         onClick={handleDropdownClick}
       >
         <StatusIcon status={status} />
@@ -94,19 +88,38 @@ const StatusMenu = ({ labelVisible = false, onSelect, status }: Props) => {
           </div>
         )}
       </button>
-      <div
-        ref={setPopperRef}
-        style={{
-          ...styles.popper,
-          display: statusDropDownVisible ? "" : "none",
-        }}
-        {...attributes.popper}
-        className="cursor-default bg-white rounded shadow-modal z-100 w-34"
-      >
-        <div style={styles.offset}>{options}</div>
-      </div>
+      {statusDropDownVisible && (
+        <Popper buttonRef={buttonRef}>{options}</Popper>
+      )}
     </div>
   );
 };
 
-export default StatusMenu;
+const Popper = ({
+  buttonRef,
+  children,
+}: {
+  buttonRef: HTMLButtonElement | null;
+  children: React.ReactNode;
+}) => {
+  const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
+
+  const { styles, attributes } = usePopper(buttonRef, popperRef, {
+    placement: "bottom-start",
+  });
+
+  return (
+    <div
+      ref={setPopperRef}
+      style={{
+        ...styles.popper,
+      }}
+      {...attributes.popper}
+      className="cursor-default bg-white rounded shadow-modal z-100 w-34"
+    >
+      <div style={styles.offset}>{children}</div>
+    </div>
+  );
+};
+
+export default memo(StatusMenu);

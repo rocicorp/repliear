@@ -1,4 +1,4 @@
-import React, { MouseEvent, RefObject, useRef, useState } from "react";
+import React, { memo, MouseEvent, RefObject, useRef, useState } from "react";
 import { usePopper } from "react-popper";
 import PriorityIcon from "./priority-icon";
 import HighPriorityIcon from "./assets/icons/signal-strong.svg";
@@ -28,19 +28,11 @@ const PriorityMenu = ({
   onSelect,
   priority = Priority.NONE,
 }: Props) => {
-  const [priorityRef, setPriorityRef] = useState<HTMLButtonElement | null>(
-    null
-  );
-  const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
+  const [buttonRef, setButtonRef] = useState<HTMLButtonElement | null>(null);
   const [priorityDropDownVisible, setPriorityDropDownVisible] = useState(false);
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
 
-  const { styles, attributes, update } = usePopper(priorityRef, popperRef, {
-    placement: "bottom-start",
-  });
-
   const handleDropdownClick = (e: MouseEvent) => {
-    update && update();
     e.stopPropagation();
     setPriorityDropDownVisible(!priorityDropDownVisible);
   };
@@ -89,7 +81,7 @@ const PriorityMenu = ({
     <div ref={ref}>
       <button
         className="inline-flex items-center h-6 px-2 border-none rounded focus:outline-none hover:bg-gray-850"
-        ref={setPriorityRef}
+        ref={setButtonRef}
         onClick={handleDropdownClick}
       >
         <PriorityIcon priority={priority} />
@@ -99,19 +91,38 @@ const PriorityMenu = ({
           </div>
         )}
       </button>
-      <div
-        ref={setPopperRef}
-        style={{
-          ...styles.popper,
-          display: priorityDropDownVisible ? "" : "none",
-        }}
-        {...attributes.popper}
-        className="cursor-default bg-white rounded shadow-modal z-100 w-34"
-      >
-        <div style={styles.offset}>{options}</div>
-      </div>
+      {priorityDropDownVisible && (
+        <Popper buttonRef={buttonRef}>{options}</Popper>
+      )}
     </div>
   );
 };
 
-export default PriorityMenu;
+const Popper = ({
+  buttonRef,
+  children,
+}: {
+  buttonRef: HTMLButtonElement | null;
+  children: React.ReactNode;
+}) => {
+  const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
+
+  const { styles, attributes } = usePopper(buttonRef, popperRef, {
+    placement: "bottom-start",
+  });
+
+  return (
+    <div
+      ref={setPopperRef}
+      style={{
+        ...styles.popper,
+      }}
+      {...attributes.popper}
+      className="cursor-default bg-white rounded shadow-modal z-100 w-34"
+    >
+      <div style={styles.offset}>{children}</div>
+    </div>
+  );
+};
+
+export default memo(PriorityMenu);

@@ -1,5 +1,5 @@
 import MenuIcon from "./assets/icons/menu.svg";
-import React from "react";
+import React, { memo } from "react";
 
 import SortOrderMenu from "./sort-order-menu";
 import { queryTypes, useQueryState } from "next-usequerystate";
@@ -82,7 +82,7 @@ const TopFilter = ({
 
   return (
     <>
-      <div className="flex justify-between flex-shrink-0 pl-2 lg:pl-9 pr-2 lg:pr-6 border-b border-gray-850 h-14  border-b-color-gray-50">
+      <div className="flex justify-between flex-shrink-0 pl-2 lg:pl-9 pr-2 lg:pr-6 border-b border-gray-850 h-14 border-b-color-gray-50">
         {/* left section */}
         <div className="flex items-center">
           <button
@@ -154,4 +154,4 @@ const TopFilter = ({
   );
 };
 
-export default TopFilter;
+export default memo(TopFilter);
