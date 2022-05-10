@@ -49,6 +49,6 @@ NEXT_PUBLIC_REPLICACHE_LICENSE_KEY="<LICENSE KEY>" DATABASE_URL="<DB URL>" npm r
 - Create a free account on vercel.com
 - Create a new project on vercel, configuring the environment variables using the values from your hosted Supabase project
 
-## Credit
+## Credits
 
 We started this project by forking [linear_clone](https://github.com/tuan3w/linearapp_clone). This enabled us to get the visual styling right much faster than we otherwise could have.
