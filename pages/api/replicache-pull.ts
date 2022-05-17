@@ -9,13 +9,22 @@ import {
   getVersion,
 } from "../../backend/data";
 import { z } from "zod";
+import {
+  PARTIAL_SYNC_STATE_KEY,
+  PartialSyncState,
+  partialSyncStateSchema,
+} from "frontend/control";
 
-const pullRequest = z.object({
+const cookieSchema = z.union([
+  z.object({ version: z.number(), partialSync: partialSyncStateSchema }),
+  z.null(),
+]);
+
+type Cookie = z.TypeOf<typeof cookieSchema>;
+
+const pullRequestSchema = z.object({
   clientID: z.string(),
-  cookie: z.union([
-    z.object({ version: z.number(), endKey: z.string().optional() }),
-    z.null(),
-  ]),
+  cookie: cookieSchema,
 });
 
 const pull = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -23,9 +32,9 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log(`Processing pull`, JSON.stringify(req.body, null, ""));
   const spaceID = req.query["spaceID"].toString();
   const startRequestParse = Date.now();
-  const pull = pullRequest.parse(req.body);
+  const pull = pullRequestSchema.parse(req.body);
   console.log("Request parse took", Date.now() - startRequestParse);
-  const requestCookie = pull.cookie;
+  const requestCookie: Cookie = pull.cookie;
 
   console.log("spaceID", spaceID);
   console.log("clientID", pull.clientID);
@@ -38,14 +47,15 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       return undefined;
     }
     if (!requestCookie) {
-      const lastMutationIDPromise = getLastMutationID(executor, pull.clientID);
-      const entriesPromise = await getIssueEntries(executor, spaceID);
-      const responseCookie = { version, endKey: "" };
-      return Promise.all([
-        entriesPromise,
-        lastMutationIDPromise,
-        responseCookie,
-      ]);
+      const lastMutationIDPromise = await getLastMutationID(
+        executor,
+        pull.clientID
+      );
+      const entries = await getIssueEntries(executor, spaceID);
+      const responseCookie: Cookie = { version, partialSync: "ISSUES_SYNCED" };
+      const partialSyncState: PartialSyncState = "ISSUES_SYNCED";
+      entries.push([PARTIAL_SYNC_STATE_KEY, JSON.stringify(partialSyncState)]);
+      return Promise.all([entries, lastMutationIDPromise, responseCookie]);
     } else {
       const lastMutationIDPromise = getLastMutationID(executor, pull.clientID);
       let entries: [
@@ -53,35 +63,41 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
         value: string,
         deleted?: boolean
       ][] = await getChangedEntries(executor, spaceID, requestCookie.version);
-      let responseEndKey = undefined;
-      if (requestCookie.endKey !== undefined) {
+      let responsePartialSyncState: PartialSyncState = "PARTIAL_SYNC_COMPLETE";
+      if (requestCookie.partialSync !== "PARTIAL_SYNC_COMPLETE") {
         const limit = 3000;
+        const startKey =
+          requestCookie.partialSync === "ISSUES_SYNCED"
+            ? ""
+            : requestCookie.partialSync.endKey;
         const {
           entries: incrementalEntries,
           endSyncOrder,
         } = await getNonIssueEntriesInSyncOrder(
           executor,
           spaceID,
-          requestCookie.endKey,
+          startKey,
           limit
         );
         const startMergeEntries = Date.now();
         entries = [...entries, ...incrementalEntries];
         console.log("merge entries took", Date.now() - startMergeEntries);
-        const initialSyncDone = incrementalEntries.length < limit;
-        if (initialSyncDone) {
-          responseEndKey = undefined;
-        } else {
-          responseEndKey = endSyncOrder;
+        const partialSyncDone =
+          incrementalEntries.length < limit || endSyncOrder === undefined;
+        if (!partialSyncDone) {
+          responsePartialSyncState = {
+            endKey: endSyncOrder,
+          };
         }
         entries.push([
-          "control/partialSync",
-          JSON.stringify({
-            endKey: responseEndKey,
-          }),
+          PARTIAL_SYNC_STATE_KEY,
+          JSON.stringify(responsePartialSyncState),
         ]);
       }
-      const responseCookie = { version, endKey: responseEndKey };
+      const responseCookie: Cookie = {
+        version,
+        partialSync: responsePartialSyncState,
+      };
       return Promise.all([entries, lastMutationIDPromise, responseCookie]);
     }
   });

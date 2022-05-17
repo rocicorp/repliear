@@ -34,6 +34,7 @@ import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
 import classnames from "classnames";
+import { getPartialSyncState, PartialSyncState } from "./control";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -355,21 +356,19 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     issueOrder: getIssueOrder(view, orderBy),
   });
 
-  const partialSyncDefault = { endKey: "PARTIAL_SYNC_SENTINEL" };
-  const partialSync = useSubscribe(
+  const partialSync = useSubscribe<
+    PartialSyncState | "NOT_RECEIVED_FROM_SERVER"
+  >(
     rep,
     async (tx: ReadTransaction) => {
-      return (
-        ((await tx.get("control/partialSync")) as { endKey?: string }) ||
-        partialSyncDefault
-      );
+      return (await getPartialSyncState(tx)) || "NOT_RECEIVED_FROM_SERVER";
     },
-    partialSyncDefault
+    "NOT_RECEIVED_FROM_SERVER"
   );
 
-  const partialSyncComplete = partialSync.endKey === undefined;
+  const partialSyncComplete = partialSync === "PARTIAL_SYNC_COMPLETE";
   useEffect(() => {
-    console.log("partialSync", partialSync.endKey);
+    console.log("partialSync", partialSync);
     if (!partialSyncComplete) {
       rep.pull();
     }
