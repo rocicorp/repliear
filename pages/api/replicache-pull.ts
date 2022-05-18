@@ -52,9 +52,15 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
         pull.clientID
       );
       const entries = await getIssueEntries(executor, spaceID);
-      const responseCookie: Cookie = { version, partialSync: "ISSUES_SYNCED" };
-      const partialSyncState: PartialSyncState = "ISSUES_SYNCED";
-      entries.push([PARTIAL_SYNC_STATE_KEY, JSON.stringify(partialSyncState)]);
+      const responsePartialSyncState: PartialSyncState = "ISSUES_SYNCED";
+      const responseCookie: Cookie = {
+        version,
+        partialSync: responsePartialSyncState,
+      };
+      entries.push([
+        PARTIAL_SYNC_STATE_KEY,
+        JSON.stringify(responsePartialSyncState),
+      ]);
       return Promise.all([entries, lastMutationIDPromise, responseCookie]);
     } else {
       const lastMutationIDPromise = getLastMutationID(executor, pull.clientID);
