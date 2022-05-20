@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useEffect, useReducer } from "react";
 import type {
   ExperimentalDiff as Diff,
+  ReadonlyJSONValue,
   ReadTransaction,
   Replicache,
 } from "replicache";
@@ -29,7 +30,7 @@ import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
-import { isEqual, minBy, sortBy, sortedIndexBy } from "lodash";
+import { isEqual, minBy, partial, sortBy, sortedIndexBy } from "lodash";
 import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
@@ -180,6 +181,34 @@ function timedReducer(
   return result;
 }
 
+function getOrderValue(issueOrder: Order, issue: Issue): string {
+  let orderValue: string;
+  switch (issueOrder) {
+    case Order.CREATED:
+      orderValue = reverseTimestampSortKey(issue.created, issue.id);
+      break;
+    case Order.MODIFIED:
+      orderValue = reverseTimestampSortKey(issue.modified, issue.id);
+      break;
+    case Order.STATUS:
+      orderValue =
+        statusOrderValues[issue.status] +
+        "-" +
+        reverseTimestampSortKey(issue.modified, issue.id);
+      break;
+    case Order.PRIORITY:
+      orderValue =
+        priorityOrderValues[issue.priority] +
+        "-" +
+        reverseTimestampSortKey(issue.modified, issue.id);
+      break;
+    case Order.KANBAN:
+      orderValue = issue.kanbanOrder + "-" + issue.id;
+      break;
+  }
+  return orderValue;
+}
+
 function reducer(
   state: State,
   action:
@@ -199,38 +228,11 @@ function reducer(
   const filters = action.type === "setFilters" ? action.filters : state.filters;
   const issueOrder =
     action.type === "setIssueOrder" ? action.issueOrder : state.issueOrder;
-
-  function order(issue: Issue): string {
-    let orderValue: string;
-    switch (issueOrder) {
-      case Order.CREATED:
-        orderValue = reverseTimestampSortKey(issue.created, issue.id);
-        break;
-      case Order.MODIFIED:
-        orderValue = reverseTimestampSortKey(issue.modified, issue.id);
-        break;
-      case Order.STATUS:
-        orderValue =
-          statusOrderValues[issue.status] +
-          "-" +
-          reverseTimestampSortKey(issue.modified, issue.id);
-        break;
-      case Order.PRIORITY:
-        orderValue =
-          priorityOrderValues[issue.priority] +
-          "-" +
-          reverseTimestampSortKey(issue.modified, issue.id);
-        break;
-      case Order.KANBAN:
-        orderValue = issue.kanbanOrder + "-" + issue.id;
-        break;
-    }
-    return orderValue;
-  }
+  const orderIteratee = partial(getOrderValue, issueOrder);
   function filterAndSort(issues: Issue[]): Issue[] {
     return sortBy(
       issues.filter((issue) => filters.issuesFilter(issue)),
-      order
+      orderIteratee
     );
   }
   function countViewIssues(issues: Issue[]): number {
@@ -245,73 +247,7 @@ function reducer(
 
   switch (action.type) {
     case "diff": {
-      if (action.diff.length === 0) {
-        return state;
-      }
-      const newAllIssuesMap = new Map(state.allIssuesMap);
-      let newViewIssueCount = state.viewIssueCount;
-      const newFilteredIssues = [...state.filteredIssues];
-      for (const diffOp of action.diff) {
-        switch (diffOp.op) {
-          case "add": {
-            const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
-            newAllIssuesMap.set(diffOp.key, newIssue);
-            if (filters.viewFilter(newIssue)) {
-              newViewIssueCount++;
-            }
-            if (filters.issuesFilter(newIssue)) {
-              newFilteredIssues.splice(
-                sortedIndexBy(newFilteredIssues, newIssue, order),
-                0,
-                newIssue
-              );
-            }
-
-            break;
-          }
-          case "del": {
-            const oldIssue = issueFromKeyAndValue(diffOp.key, diffOp.oldValue);
-            const index = sortedIndexBy(newFilteredIssues, oldIssue, order);
-            newAllIssuesMap.delete(diffOp.key);
-            if (filters.viewFilter(oldIssue)) {
-              newViewIssueCount--;
-            }
-            if (newFilteredIssues[index]?.id === oldIssue.id) {
-              newFilteredIssues.splice(index, 1);
-            }
-            break;
-          }
-          case "change": {
-            const oldIssue = issueFromKeyAndValue(diffOp.key, diffOp.oldValue);
-            const index = sortedIndexBy(newFilteredIssues, oldIssue, order);
-            if (filters.viewFilter(oldIssue)) {
-              newViewIssueCount--;
-            }
-            if (newFilteredIssues[index]?.id === oldIssue.id) {
-              newFilteredIssues.splice(index, 1);
-            }
-            const newIssue = issueFromKeyAndValue(diffOp.key, diffOp.newValue);
-            newAllIssuesMap.set(diffOp.key, newIssue);
-            if (filters.viewFilter(newIssue)) {
-              newViewIssueCount++;
-            }
-            if (filters.issuesFilter(newIssue)) {
-              newFilteredIssues.splice(
-                sortedIndexBy(newFilteredIssues, newIssue, order),
-                0,
-                newIssue
-              );
-            }
-            break;
-          }
-        }
-      }
-      return {
-        ...state,
-        allIssuesMap: newAllIssuesMap,
-        viewIssueCount: newViewIssueCount,
-        filteredIssues: newFilteredIssues,
-      };
+      return diffReducer(state, action.diff);
     }
     case "setFilters": {
       if (action.filters.equals(state.filters)) {
@@ -331,13 +267,71 @@ function reducer(
       }
       return {
         ...state,
-        filteredIssues: sortBy(state.filteredIssues, order),
+        filteredIssues: sortBy(state.filteredIssues, orderIteratee),
         issueOrder: action.issueOrder,
       };
     }
   }
 
   return state;
+}
+
+function diffReducer(state: State, diff: Diff): State {
+  if (diff.length === 0) {
+    return state;
+  }
+  const newAllIssuesMap = new Map(state.allIssuesMap);
+  let newViewIssueCount = state.viewIssueCount;
+  const newFilteredIssues = [...state.filteredIssues];
+  const orderIteratee = partial(getOrderValue, state.issueOrder);
+
+  function add(key: string, newValue: ReadonlyJSONValue) {
+    const newIssue = issueFromKeyAndValue(key, newValue);
+    newAllIssuesMap.set(key, newIssue);
+    if (state.filters.viewFilter(newIssue)) {
+      newViewIssueCount++;
+    }
+    if (state.filters.issuesFilter(newIssue)) {
+      newFilteredIssues.splice(
+        sortedIndexBy(newFilteredIssues, newIssue, orderIteratee),
+        0,
+        newIssue
+      );
+    }
+  }
+  function del(key: string, oldValue: ReadonlyJSONValue) {
+    const oldIssue = issueFromKeyAndValue(key, oldValue);
+    const index = sortedIndexBy(newFilteredIssues, oldIssue, orderIteratee);
+    newAllIssuesMap.delete(key);
+    if (state.filters.viewFilter(oldIssue)) {
+      newViewIssueCount--;
+    }
+    if (newFilteredIssues[index]?.id === oldIssue.id) {
+      newFilteredIssues.splice(index, 1);
+    }
+  }
+  for (const diffOp of diff) {
+    switch (diffOp.op) {
+      case "add": {
+        add(diffOp.key, diffOp.newValue);
+        break;
+      }
+      case "del": {
+        del(diffOp.key, diffOp.oldValue);
+        break;
+      }
+      case "change": {
+        del(diffOp.key, diffOp.oldValue);
+        break;
+      }
+    }
+  }
+  return {
+    ...state,
+    allIssuesMap: newAllIssuesMap,
+    viewIssueCount: newViewIssueCount,
+    filteredIssues: newFilteredIssues,
+  };
 }
 
 const App = ({ rep }: { rep: Replicache<M> }) => {
