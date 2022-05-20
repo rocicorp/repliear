@@ -36,6 +36,7 @@ import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
 import classnames from "classnames";
 import { getPartialSyncState, PartialSyncState } from "./control";
+import { DiscFull } from "@mui/icons-material";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -322,6 +323,7 @@ function diffReducer(state: State, diff: Diff): State {
       }
       case "change": {
         del(diffOp.key, diffOp.oldValue);
+        add(diffOp.key, diffOp.newValue);
         break;
       }
     }
