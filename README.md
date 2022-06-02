@@ -3,7 +3,7 @@
 A high-performance issue tracker in the style of [Linear](https://linear.app/).
 
 Built with [Replicache](https://replicache.dev), [Next.js](https://nextjs.org/),
-[Pusher](https://pusher.com/), and [Postgres](https://mysql.com/).
+[Pusher](https://pusher.com/), and [Postgres](https://www.postgresql.org/).
 
 Running at [repliear.herokuapp.com](https://repliear.herokuapp.com/).
 
