@@ -26,6 +26,7 @@ export NEXT_PUBLIC_PUSHER_KEY=<pusherkey>
 export NEXT_PUBLIC_PUSHER_SECRET=<pushersecret>
 export NEXT_PUBLIC_PUSHER_CLUSTER=<pushercluster>
 
+npm install
 npm run dev
 ```
 
