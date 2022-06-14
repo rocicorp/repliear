@@ -15,8 +15,7 @@ Running at [repliear.herokuapp.com](https://repliear.herokuapp.com/).
 
 # To run locally
 
-Get the Pusher environment variables from the ["App Keys" section](https://i.imgur.com/7DNmTKZ.png
-) of the Pusher App UI.
+Get the Pusher environment variables from the ["App Keys" section](https://i.imgur.com/7DNmTKZ.png) of the Pusher App UI.
 
 **Note:** These instructions assume you installed PostgreSQL via Postgres.app on MacOS. If you installed some other way, or configured PostgreSQL specially, you may additionally need to set the `PGUSER` and `PGPASSWORD` environment variables.</p>
 
