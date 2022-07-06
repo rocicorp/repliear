@@ -313,16 +313,16 @@ function diffReducer(state: State, diff: Diff): State {
   for (const diffOp of diff) {
     switch (diffOp.op) {
       case "add": {
-        add(diffOp.key, diffOp.newValue);
+        add(diffOp.key as string, diffOp.newValue);
         break;
       }
       case "del": {
-        del(diffOp.key, diffOp.oldValue);
+        del(diffOp.key as string, diffOp.oldValue);
         break;
       }
       case "change": {
-        del(diffOp.key, diffOp.oldValue);
-        add(diffOp.key, diffOp.newValue);
+        del(diffOp.key as string, diffOp.oldValue);
+        add(diffOp.key as string, diffOp.newValue);
         break;
       }
     }
