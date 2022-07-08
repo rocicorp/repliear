@@ -101,7 +101,10 @@ export const issueValueSchema = issueSchema.omit({
 export type IssueUpdate = {
   id: string;
   changes: Partial<IssueValue>;
+  undoChanges: Partial<IssueValue>;
   description?: Description;
+  undoDescription?: Description;
+  modified?: number;
 };
 
 export async function getIssue(
@@ -199,6 +202,34 @@ export const commentValueSchema = commentSchema.omit({
 });
 
 export async function getIssueComments(
+  tx: ReadTransaction,
+  issueID: string
+): Promise<Comment[]> {
+  const entries = await tx
+    .scan({ prefix: COMMENT_KEY_PREFIX + issueID })
+    .entries()
+    .toArray();
+  return entries.map(([key, val]) => {
+    const ids = commentIDs(key);
+    return {
+      ...commentValueSchema.parse(val),
+      id: ids.commentID,
+      issueID: ids.issueID,
+    };
+  });
+}
+
+export async function deleteIssueComments(
+  tx: WriteTransaction,
+  issueID: string
+): Promise<void> {
+  const entries = (await getIssueComments(tx, issueID)) || [];
+  await entries
+    .map((c) => commentKey(c.issueID, c.id))
+    .map((comment) => tx.del(comment));
+}
+
+export async function deleteIssueDescription(
   tx: ReadTransaction,
   issueID: string
 ): Promise<Comment[]> {

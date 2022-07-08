@@ -59,12 +59,14 @@ export function getKanbanOrderIssueUpdates(
     {
       id: issueToMove.id,
       changes: { kanbanOrder: newKanbanOrderKeys[0] },
+      undoChanges: { kanbanOrder: issueToMove.kanbanOrder },
     },
   ];
   for (let i = 0; i < issueIDsToRekey.length; i++) {
     issueUpdates.push({
       id: issueIDsToRekey[i],
       changes: { kanbanOrder: newKanbanOrderKeys[i + 1] },
+      undoChanges: { kanbanOrder: issueToMove.kanbanOrder },
     });
   }
   return issueUpdates;
@@ -100,9 +102,13 @@ function IssueBoard({ issues, onUpdateIssues, onOpenDetail }: Props) {
       }
       const issueUpdates = issueToInsertBefore
         ? getKanbanOrderIssueUpdates(draggedIssue, issueToInsertBefore, issues)
-        : [{ id: draggedIssue.id, changes: {} }];
+        : [{ id: draggedIssue.id, changes: {}, undoChanges: {} }];
       if (newStatus !== sourceStatus) {
-        issueUpdates[0].changes.status = newStatus;
+        issueUpdates[0] = {
+          id: issueUpdates[0].id,
+          changes: { status: newStatus },
+          undoChanges: { status: sourceStatus },
+        };
       }
       onUpdateIssues(issueUpdates);
     },
@@ -111,7 +117,13 @@ function IssueBoard({ issues, onUpdateIssues, onOpenDetail }: Props) {
 
   const handleChangePriority = useCallback(
     (issue: Issue, priority: Priority) => {
-      onUpdateIssues([{ id: issue.id, changes: { priority } }]);
+      onUpdateIssues([
+        {
+          id: issue.id,
+          changes: { priority },
+          undoChanges: { priority: issue.priority },
+        },
+      ]);
     },
     [onUpdateIssues]
   );

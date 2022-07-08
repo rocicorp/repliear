@@ -36,6 +36,8 @@ import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
 import classnames from "classnames";
 import { getPartialSyncState, PartialSyncState } from "./control";
+import type { UndoManager } from "@rocicorp/undo";
+import { HotKeys } from "react-hotkeys";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -335,7 +337,13 @@ function diffReducer(state: State, diff: Diff): State {
   };
 }
 
-const App = ({ rep }: { rep: Replicache<M> }) => {
+type AppProps = {
+  rep: Replicache<M>;
+  undoManager: UndoManager;
+  canUndoRedo: { canUndo: boolean; canRedo: boolean };
+};
+
+const App = ({ rep, canUndoRedo, undoManager }: AppProps) => {
   const [view] = useQueryState("view");
   const [priorityFilter] = useQueryState("priorityFilter");
   const [statusFilter] = useQueryState("statusFilter");
@@ -351,6 +359,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     issueOrder: getIssueOrder(view, orderBy),
   });
 
+  canUndoRedo;
   const partialSync = useSubscribe<
     PartialSyncState | "NOT_RECEIVED_FROM_SERVER"
   >(
@@ -404,15 +413,25 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
       const minKanbanOrder = minKanbanOrderIssue
         ? minKanbanOrderIssue.kanbanOrder
         : null;
-      await rep.mutate.putIssue({
-        issue: {
-          ...issue,
-          kanbanOrder: generateKeyBetween(null, minKanbanOrder),
-        },
-        description,
+
+      const putIssue = {
+        ...issue,
+        kanbanOrder: generateKeyBetween(null, minKanbanOrder),
+      };
+      const createIssue = () =>
+        rep.mutate.putIssue({
+          issue: putIssue,
+          description,
+        });
+
+      const deleteIssue = () => rep.mutate.deleteIssues([putIssue.id]);
+
+      await undoManager.add({
+        execute: createIssue,
+        undo: deleteIssue,
       });
     },
-    [rep, state.allIssuesMap]
+    [rep.mutate, state.allIssuesMap, undoManager]
   );
   const handleCreateComment = useCallback(
     (comment: Comment) => rep.mutate.putIssueComment(comment),
@@ -422,13 +441,30 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     async (
       issueUpdates: {
         id: string;
+        undoChanges: Partial<IssueValue>;
         changes: Partial<IssueValue>;
         description?: Description;
       }[]
     ) => {
-      await rep.mutate.updateIssues(issueUpdates);
+      console.log(">>>", issueUpdates);
+      const updateIssue = () => rep.mutate.updateIssues(issueUpdates);
+
+      const uChanges = issueUpdates.map((i) => {
+        return {
+          ...i,
+          changes: i.undoChanges,
+        };
+      });
+      const undoUpdateIssue = () => rep.mutate.updateIssues(uChanges);
+
+      console.log(">>>", undoUpdateIssue, updateIssue);
+
+      await undoManager.add({
+        execute: updateIssue,
+        undo: undoUpdateIssue,
+      });
     },
-    [rep]
+    [rep.mutate, undoManager]
   );
   const handleOpenDetail = useCallback(
     async (issue: Issue) => {
@@ -444,22 +480,39 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     menuVisible,
   ]);
 
+  const handlers = {
+    undo: () => undoManager.undo(),
+    redo: () => undoManager.redo(),
+  };
+
   return (
-    <Layout
-      menuVisible={menuVisible}
-      view={view}
-      detailIssueID={detailIssueID}
-      isLoading={!partialSyncComplete}
-      state={state}
-      rep={rep}
-      onCloseMenu={handleCloseMenu}
-      onToggleMenu={handleToggleMenu}
-      onUpdateIssues={handleUpdateIssues}
-      onCreateIssue={handleCreateIssue}
-      onCreateComment={handleCreateComment}
-      onOpenDetail={handleOpenDetail}
-    ></Layout>
+    <HotKeys
+      {...{
+        keyMap,
+        handlers,
+      }}
+    >
+      <Layout
+        menuVisible={menuVisible}
+        view={view}
+        detailIssueID={detailIssueID}
+        isLoading={!partialSyncComplete}
+        state={state}
+        rep={rep}
+        onCloseMenu={handleCloseMenu}
+        onToggleMenu={handleToggleMenu}
+        onUpdateIssues={handleUpdateIssues}
+        onCreateIssue={handleCreateIssue}
+        onCreateComment={handleCreateComment}
+        onOpenDetail={handleOpenDetail}
+      ></Layout>
+    </HotKeys>
   );
+};
+
+const keyMap = {
+  undo: ["ctrl+z", "command+z"],
+  redo: ["ctrl+y", "command+shift+z", "ctrl+shift+z"],
 };
 
 interface LayoutProps {

@@ -9,6 +9,10 @@ import {
   Comment,
   Issue,
   IssueUpdate,
+  commentKey,
+  deleteIssueComments,
+  descriptionKey,
+  deleteIssueDescription,
 } from "./issue";
 
 export type M = typeof mutators;
@@ -47,6 +51,8 @@ export const mutators = {
   },
   deleteIssues: async (tx: WriteTransaction, ids: string[]): Promise<void> => {
     for (const id of ids) {
+      await deleteIssueComments(tx, id);
+      await deleteIssueDescription(tx, id);
       await tx.del(issueKey(id));
     }
   },
@@ -65,5 +71,19 @@ export const mutators = {
       await putIssue(tx, changed);
     }
     await putIssueComment(tx, comment);
+  },
+
+  deleteIssueDescription: async (
+    tx: WriteTransaction,
+    issueID: string
+  ): Promise<void> => {
+    await tx.del(descriptionKey(issueID));
+  },
+
+  deleteIssueComment: async (
+    tx: WriteTransaction,
+    comment: Comment
+  ): Promise<void> => {
+    await tx.del(commentKey(comment.issueID, comment.id));
   },
 };

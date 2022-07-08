@@ -3,10 +3,15 @@ import { Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
 import Pusher from "pusher-js";
+import { UndoManager } from "@rocicorp/undo";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
-
+  const [undoManager, setUndoManager] = useState<UndoManager | null>(null);
+  const [canUndoRedo, setCanUndoRedo] = useState({
+    canUndo: false,
+    canRedo: false,
+  });
   useEffect(() => {
     // disabled eslint await requirement
     // eslint-disable-next-line
@@ -41,16 +46,21 @@ export default function Home() {
           r.pull();
         });
       }
+      setUndoManager(
+        new UndoManager({
+          onChange: setCanUndoRedo,
+        })
+      );
       setRep(r);
     })();
   }, [rep]);
 
-  if (!rep) {
+  if (!rep || !undoManager) {
     return null;
   }
   return (
     <div className="repliear">
-      <App rep={rep} />
+      <App rep={rep} canUndoRedo={canUndoRedo} undoManager={undoManager} />
     </div>
   );
 }

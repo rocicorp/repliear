@@ -132,15 +132,29 @@ export default function IssueDetail({
   }, [setDetailIssueID]);
 
   const handleChangePriority = useCallback(
-    (priority: Priority) => {
-      issue && onUpdateIssues([{ id: issue.id, changes: { priority } }]);
+    (priority: Priority, prevPriority: Priority) => {
+      issue &&
+        onUpdateIssues([
+          {
+            id: issue.id,
+            changes: { priority },
+            undoChanges: { priority: prevPriority },
+          },
+        ]);
     },
     [onUpdateIssues, issue]
   );
 
   const handleChangeStatus = useCallback(
-    (status: Status) => {
-      issue && onUpdateIssues([{ id: issue.id, changes: { status } }]);
+    (status: Status, prevStatus: Status) => {
+      issue &&
+        onUpdateIssues([
+          {
+            id: issue.id,
+            changes: { status },
+            undoChanges: { status: prevStatus },
+          },
+        ]);
     },
     [onUpdateIssues, issue]
   );
@@ -218,6 +232,10 @@ export default function IssueDetail({
               : {},
           description:
             descriptionText !== description ? descriptionText : undefined,
+          undoChanges: {
+            title: issue.title,
+          },
+          undoDescription: description as string,
         },
       ]);
     }
@@ -271,12 +289,16 @@ export default function IssueDetail({
             <div className="flex border-solid border-b lg:px-5 justify-between px-2">
               <div className="flex visible md:invisible">
                 <StatusMenu
-                  onSelect={handleChangeStatus}
+                  onSelect={(s) =>
+                    handleChangeStatus(s, issue?.status || Status.BACKLOG)
+                  }
                   status={issue?.status || Status.BACKLOG}
                   labelVisible={true}
                 />
                 <PriorityMenu
-                  onSelect={handleChangePriority}
+                  onSelect={(p) =>
+                    handleChangePriority(p, issue?.priority || Priority.NONE)
+                  }
                   labelVisible={true}
                   priority={issue?.priority || Priority.NONE}
                 />
@@ -363,7 +385,9 @@ export default function IssueDetail({
               <div className="flex flex-row items-center my-1">
                 <div className="w-20">Status</div>
                 <StatusMenu
-                  onSelect={handleChangeStatus}
+                  onSelect={(s) =>
+                    handleChangeStatus(s, issue?.status || Status.BACKLOG)
+                  }
                   status={issue?.status || Status.BACKLOG}
                   labelVisible={true}
                 />
@@ -371,7 +395,9 @@ export default function IssueDetail({
               <div className="flex flex-row items-center my-1">
                 <div className="w-20">Priority</div>
                 <PriorityMenu
-                  onSelect={handleChangePriority}
+                  onSelect={(p) =>
+                    handleChangePriority(p, issue?.priority || Priority.NONE)
+                  }
                   labelVisible={true}
                   priority={issue?.priority || Priority.NONE}
                 />

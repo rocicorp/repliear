@@ -56,14 +56,26 @@ const IssueList = ({ onUpdateIssues, onOpenDetail, issues, view }: Props) => {
 
   const handleChangePriority = useCallback(
     (issue: Issue, priority: Priority) => {
-      onUpdateIssues([{ id: issue.id, changes: { priority } }]);
+      onUpdateIssues([
+        {
+          id: issue.id,
+          changes: { priority },
+          undoChanges: { priority: issue.priority },
+        },
+      ]);
     },
     [onUpdateIssues]
   );
 
   const handleChangeStatus = useCallback(
     (issue: Issue, status: Status) => {
-      onUpdateIssues([{ id: issue.id, changes: { status } }]);
+      onUpdateIssues([
+        {
+          id: issue.id,
+          changes: { status },
+          undoChanges: { status: issue.status },
+        },
+      ]);
     },
     [onUpdateIssues]
   );
