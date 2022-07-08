@@ -434,8 +434,15 @@ const App = ({ rep, canUndoRedo, undoManager }: AppProps) => {
     [rep.mutate, state.allIssuesMap, undoManager]
   );
   const handleCreateComment = useCallback(
-    (comment: Comment) => rep.mutate.putIssueComment(comment),
-    [rep]
+    async (comment: Comment) => {
+      const createComment = () => rep.mutate.putIssueComment(comment);
+      const deleteComment = () => rep.mutate.deleteIssueComment(comment);
+      await undoManager.add({
+        execute: createComment,
+        undo: deleteComment,
+      });
+    },
+    [rep, undoManager]
   );
   const handleUpdateIssues = useCallback(
     async (
@@ -444,20 +451,19 @@ const App = ({ rep, canUndoRedo, undoManager }: AppProps) => {
         undoChanges: Partial<IssueValue>;
         changes: Partial<IssueValue>;
         description?: Description;
+        undoDescription?: Description;
       }[]
     ) => {
-      console.log(">>>", issueUpdates);
       const updateIssue = () => rep.mutate.updateIssues(issueUpdates);
 
       const uChanges = issueUpdates.map((i) => {
         return {
           ...i,
           changes: i.undoChanges,
+          description: i.undoDescription,
         };
       });
       const undoUpdateIssue = () => rep.mutate.updateIssues(uChanges);
-
-      console.log(">>>", undoUpdateIssue, updateIssue);
 
       await undoManager.add({
         execute: updateIssue,
