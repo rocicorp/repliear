@@ -340,10 +340,9 @@ function diffReducer(state: State, diff: Diff): State {
 type AppProps = {
   rep: Replicache<M>;
   undoManager: UndoManager;
-  canUndoRedo: { canUndo: boolean; canRedo: boolean };
 };
 
-const App = ({ rep, canUndoRedo, undoManager }: AppProps) => {
+const App = ({ rep, undoManager }: AppProps) => {
   const [view] = useQueryState("view");
   const [priorityFilter] = useQueryState("priorityFilter");
   const [statusFilter] = useQueryState("statusFilter");
@@ -359,7 +358,6 @@ const App = ({ rep, canUndoRedo, undoManager }: AppProps) => {
     issueOrder: getIssueOrder(view, orderBy),
   });
 
-  canUndoRedo;
   const partialSync = useSubscribe<
     PartialSyncState | "NOT_RECEIVED_FROM_SERVER"
   >(

@@ -11,7 +11,6 @@ import {
   IssueUpdate,
   commentKey,
   deleteIssueComments,
-  descriptionKey,
   deleteIssueDescription,
 } from "./issue";
 
@@ -72,14 +71,6 @@ export const mutators = {
     }
     await putIssueComment(tx, comment);
   },
-
-  deleteIssueDescription: async (
-    tx: WriteTransaction,
-    issueID: string
-  ): Promise<void> => {
-    await tx.del(descriptionKey(issueID));
-  },
-
   deleteIssueComment: async (
     tx: WriteTransaction,
     comment: Comment

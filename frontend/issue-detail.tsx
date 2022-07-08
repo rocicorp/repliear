@@ -235,7 +235,7 @@ export default function IssueDetail({
           undoChanges: {
             title: issue.title,
           },
-          undoDescription: description as string,
+          undoDescription: description ? description : undefined,
         },
       ]);
     }

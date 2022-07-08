@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
@@ -7,11 +7,7 @@ import { UndoManager } from "@rocicorp/undo";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
-  const [undoManager, setUndoManager] = useState<UndoManager | null>(null);
-  const [canUndoRedo, setCanUndoRedo] = useState({
-    canUndo: false,
-    canRedo: false,
-  });
+  const undoManagerRef = useRef(new UndoManager());
   useEffect(() => {
     // disabled eslint await requirement
     // eslint-disable-next-line
@@ -46,21 +42,17 @@ export default function Home() {
           r.pull();
         });
       }
-      setUndoManager(
-        new UndoManager({
-          onChange: setCanUndoRedo,
-        })
-      );
+
       setRep(r);
     })();
   }, [rep]);
 
-  if (!rep || !undoManager) {
+  if (!rep) {
     return null;
   }
   return (
     <div className="repliear">
-      <App rep={rep} canUndoRedo={canUndoRedo} undoManager={undoManager} />
+      <App rep={rep} undoManager={undoManagerRef.current} />
     </div>
   );
 }

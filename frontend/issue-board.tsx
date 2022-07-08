@@ -104,11 +104,8 @@ function IssueBoard({ issues, onUpdateIssues, onOpenDetail }: Props) {
         ? getKanbanOrderIssueUpdates(draggedIssue, issueToInsertBefore, issues)
         : [{ id: draggedIssue.id, changes: {}, undoChanges: {} }];
       if (newStatus !== sourceStatus) {
-        issueUpdates[0] = {
-          id: issueUpdates[0].id,
-          changes: { status: newStatus },
-          undoChanges: { status: sourceStatus },
-        };
+        issueUpdates[0].changes.status = newStatus;
+        issueUpdates[0].undoChanges.status = sourceStatus;
       }
       onUpdateIssues(issueUpdates);
     },
