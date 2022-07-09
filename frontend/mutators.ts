@@ -8,10 +8,10 @@ import {
   putIssueComment,
   Comment,
   Issue,
-  IssueUpdate,
   commentKey,
   deleteIssueComments,
   deleteIssueDescription,
+  IssueUpdateWithID,
 } from "./issue";
 
 export type M = typeof mutators;
@@ -31,10 +31,10 @@ export const mutators = {
   },
   updateIssues: async (
     tx: WriteTransaction,
-    issueUpdates: IssueUpdate[]
+    issueUpdates: IssueUpdateWithID[]
   ): Promise<void> => {
     const modified = Date.now();
-    for (const { id, changes, description } of issueUpdates) {
+    for (const { id, changes } of issueUpdates) {
       const issue = await getIssue(tx, id);
       if (issue === undefined) {
         console.info(`Issue ${id} not found`);
@@ -43,9 +43,6 @@ export const mutators = {
       const changed = { ...issue, ...changes };
       changed.modified = modified;
       await putIssue(tx, changed);
-      if (description) {
-        await putIssueDescription(tx, id, description);
-      }
     }
   },
   deleteIssues: async (tx: WriteTransaction, ids: string[]): Promise<void> => {
@@ -76,5 +73,24 @@ export const mutators = {
     comment: Comment
   ): Promise<void> => {
     await tx.del(commentKey(comment.issueID, comment.id));
+  },
+  updateIssueDescription: async (
+    tx: WriteTransaction,
+    {
+      issueID,
+      description,
+    }: {
+      issueID: string;
+      description: Description;
+    }
+  ): Promise<void> => {
+    const issue = await getIssue(tx, issueID);
+    if (issue === undefined) {
+      console.info(`Issue ${issueID} not found`);
+      return;
+    }
+    const updateModifiedTime = { ...issue, modified: Date.now() };
+    await putIssue(tx, updateModifiedTime);
+    await putIssueDescription(tx, issueID, description);
   },
 };

@@ -11,7 +11,6 @@ import {
   Issue,
   issueFromKeyAndValue,
   ISSUE_KEY_PREFIX,
-  IssueValue,
   Order,
   orderEnumSchema,
   Priority,
@@ -30,7 +29,7 @@ import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
-import { isEqual, minBy, partial, sortBy, sortedIndexBy } from "lodash";
+import { isEqual, minBy, partial, pickBy, sortBy, sortedIndexBy } from "lodash";
 import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
@@ -412,17 +411,16 @@ const App = ({ rep, undoManager }: AppProps) => {
         ? minKanbanOrderIssue.kanbanOrder
         : null;
 
-      const putIssue = {
-        ...issue,
-        kanbanOrder: generateKeyBetween(null, minKanbanOrder),
-      };
       const createIssue = () =>
         rep.mutate.putIssue({
-          issue: putIssue,
+          issue: {
+            ...issue,
+            kanbanOrder: generateKeyBetween(null, minKanbanOrder),
+          },
           description,
         });
 
-      const deleteIssue = () => rep.mutate.deleteIssues([putIssue.id]);
+      const deleteIssue = () => rep.mutate.deleteIssues([issue.id]);
 
       await undoManager.add({
         execute: createIssue,
@@ -440,29 +438,46 @@ const App = ({ rep, undoManager }: AppProps) => {
         undo: deleteComment,
       });
     },
-    [rep, undoManager]
+    [rep.mutate, undoManager]
   );
-  const handleUpdateIssues = useCallback(
-    async (
-      issueUpdates: {
-        id: string;
-        undoChanges: Partial<IssueValue>;
-        changes: Partial<IssueValue>;
-        description?: Description;
-        undoDescription?: Description;
-      }[]
-    ) => {
-      const updateIssue = () => rep.mutate.updateIssues(issueUpdates);
 
-      const uChanges = issueUpdates.map((i) => {
-        return {
-          ...i,
-          changes: i.undoChanges,
-          description: i.undoDescription,
-        };
+  const handleUpdateDescription = useCallback(
+    async (
+      issueID: string,
+      description: Description | undefined,
+      undoDescription: Description
+    ) => {
+      if (description !== undefined) {
+        await undoManager.add({
+          execute: () =>
+            rep.mutate.updateIssueDescription({ issueID, description }),
+          undo: () =>
+            rep.mutate.updateIssueDescription({
+              issueID,
+              description: undoDescription,
+            }),
+        });
+      }
+    },
+    [rep.mutate, undoManager]
+  );
+
+  const handleUpdateIssues = useCallback(
+    async (issueUpdates: Array<IssueUpdate>) => {
+      const updateIssue = () =>
+        rep.mutate.updateIssues(
+          issueUpdates.map(({ issue, changes }) => {
+            return { id: issue.id, changes };
+          })
+        );
+      const uChanges = issueUpdates.map((issueUpdate) => {
+        const undoChanges = pickBy(
+          issueUpdate.issue,
+          (_, key) => key in issueUpdate.changes
+        );
+        return { id: issueUpdate.issue.id, changes: undoChanges };
       });
       const undoUpdateIssue = () => rep.mutate.updateIssues(uChanges);
-
       await undoManager.add({
         execute: updateIssue,
         undo: undoUpdateIssue,
@@ -470,6 +485,7 @@ const App = ({ rep, undoManager }: AppProps) => {
     },
     [rep.mutate, undoManager]
   );
+
   const handleOpenDetail = useCallback(
     async (issue: Issue) => {
       await setDetailIssueID(issue.id, { scroll: false, shallow: true });
@@ -506,6 +522,7 @@ const App = ({ rep, undoManager }: AppProps) => {
         onCloseMenu={handleCloseMenu}
         onToggleMenu={handleToggleMenu}
         onUpdateIssues={handleUpdateIssues}
+        onUpdateDescription={handleUpdateDescription}
         onCreateIssue={handleCreateIssue}
         onCreateComment={handleCreateComment}
         onOpenDetail={handleOpenDetail}
@@ -529,6 +546,11 @@ interface LayoutProps {
   onCloseMenu: () => void;
   onToggleMenu: () => void;
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
+  onUpdateDescription: (
+    issueId: string,
+    description: Description | undefined,
+    undoDescription: Description
+  ) => void;
   onCreateIssue: (
     issue: Omit<Issue, "kanbanOrder">,
     description: Description
@@ -550,6 +572,7 @@ const RawLayout = ({
   onCreateIssue,
   onCreateComment,
   onOpenDetail,
+  onUpdateDescription,
 }: LayoutProps) => {
   return (
     <div>
@@ -584,6 +607,7 @@ const RawLayout = ({
                 rep={rep}
                 onUpdateIssues={onUpdateIssues}
                 onAddComment={onCreateComment}
+                onUpdateDescription={onUpdateDescription}
                 isLoading={isLoading}
               />
             )}

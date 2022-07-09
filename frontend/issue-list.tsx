@@ -58,9 +58,8 @@ const IssueList = ({ onUpdateIssues, onOpenDetail, issues, view }: Props) => {
     (issue: Issue, priority: Priority) => {
       onUpdateIssues([
         {
-          id: issue.id,
+          issue,
           changes: { priority },
-          undoChanges: { priority: issue.priority },
         },
       ]);
     },
@@ -71,9 +70,8 @@ const IssueList = ({ onUpdateIssues, onOpenDetail, issues, view }: Props) => {
     (issue: Issue, status: Status) => {
       onUpdateIssues([
         {
-          id: issue.id,
+          issue,
           changes: { status },
-          undoChanges: { status: issue.status },
         },
       ]);
     },
