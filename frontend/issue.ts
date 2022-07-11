@@ -100,12 +100,17 @@ export const issueValueSchema = issueSchema.omit({
 
 export type IssueUpdate = {
   issue: Issue;
-  changes: Partial<IssueValue>;
+  issueChanges: Partial<IssueValue>;
+  descriptionUpdate?: {
+    description: Description;
+    descriptionChange: Description;
+  };
 };
 
 export type IssueUpdateWithID = {
   id: string;
-  changes: Partial<IssueValue>;
+  issueChanges: Partial<IssueValue>;
+  descriptionChange?: Description;
 };
 
 export async function getIssue(

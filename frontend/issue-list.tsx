@@ -59,7 +59,7 @@ const IssueList = ({ onUpdateIssues, onOpenDetail, issues, view }: Props) => {
       onUpdateIssues([
         {
           issue,
-          changes: { priority },
+          issueChanges: { priority },
         },
       ]);
     },
@@ -71,7 +71,7 @@ const IssueList = ({ onUpdateIssues, onOpenDetail, issues, view }: Props) => {
       onUpdateIssues([
         {
           issue,
-          changes: { status },
+          issueChanges: { status },
         },
       ]);
     },

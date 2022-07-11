@@ -34,7 +34,11 @@ export const mutators = {
     issueUpdates: IssueUpdateWithID[]
   ): Promise<void> => {
     const modified = Date.now();
-    for (const { id, changes } of issueUpdates) {
+    for (const {
+      id,
+      issueChanges: changes,
+      descriptionChange,
+    } of issueUpdates) {
       const issue = await getIssue(tx, id);
       if (issue === undefined) {
         console.info(`Issue ${id} not found`);
@@ -43,6 +47,9 @@ export const mutators = {
       const changed = { ...issue, ...changes };
       changed.modified = modified;
       await putIssue(tx, changed);
+      if (descriptionChange) {
+        await putIssueDescription(tx, id, descriptionChange);
+      }
     }
   },
   deleteIssues: async (tx: WriteTransaction, ids: string[]): Promise<void> => {

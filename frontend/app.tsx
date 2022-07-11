@@ -23,6 +23,7 @@ import {
   reverseTimestampSortKey,
   statusOrderValues,
   priorityOrderValues,
+  IssueUpdateWithID,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
@@ -411,76 +412,57 @@ const App = ({ rep, undoManager }: AppProps) => {
         ? minKanbanOrderIssue.kanbanOrder
         : null;
 
-      const createIssue = () =>
-        rep.mutate.putIssue({
-          issue: {
-            ...issue,
-            kanbanOrder: generateKeyBetween(null, minKanbanOrder),
-          },
-          description,
-        });
-
-      const deleteIssue = () => rep.mutate.deleteIssues([issue.id]);
-
       await undoManager.add({
-        execute: createIssue,
-        undo: deleteIssue,
+        execute: () =>
+          rep.mutate.putIssue({
+            issue: {
+              ...issue,
+              kanbanOrder: generateKeyBetween(null, minKanbanOrder),
+            },
+            description,
+          }),
+        undo: () => rep.mutate.deleteIssues([issue.id]),
       });
     },
     [rep.mutate, state.allIssuesMap, undoManager]
   );
   const handleCreateComment = useCallback(
     async (comment: Comment) => {
-      const createComment = () => rep.mutate.putIssueComment(comment);
-      const deleteComment = () => rep.mutate.deleteIssueComment(comment);
       await undoManager.add({
-        execute: createComment,
-        undo: deleteComment,
+        execute: () => rep.mutate.putIssueComment(comment),
+        undo: () => rep.mutate.deleteIssueComment(comment),
       });
-    },
-    [rep.mutate, undoManager]
-  );
-
-  const handleUpdateDescription = useCallback(
-    async (
-      issueID: string,
-      description: Description | undefined,
-      undoDescription: Description
-    ) => {
-      if (description !== undefined) {
-        await undoManager.add({
-          execute: () =>
-            rep.mutate.updateIssueDescription({ issueID, description }),
-          undo: () =>
-            rep.mutate.updateIssueDescription({
-              issueID,
-              description: undoDescription,
-            }),
-        });
-      }
     },
     [rep.mutate, undoManager]
   );
 
   const handleUpdateIssues = useCallback(
     async (issueUpdates: Array<IssueUpdate>) => {
-      const updateIssue = () =>
-        rep.mutate.updateIssues(
-          issueUpdates.map(({ issue, changes }) => {
-            return { id: issue.id, changes };
-          })
-        );
-      const uChanges = issueUpdates.map((issueUpdate) => {
-        const undoChanges = pickBy(
-          issueUpdate.issue,
-          (_, key) => key in issueUpdate.changes
-        );
-        return { id: issueUpdate.issue.id, changes: undoChanges };
-      });
-      const undoUpdateIssue = () => rep.mutate.updateIssues(uChanges);
+      const uChanges: Array<IssueUpdateWithID> = issueUpdates.map<IssueUpdateWithID>(
+        (issueUpdate) => {
+          const undoChanges = pickBy(
+            issueUpdate.issue,
+            (_, key) => key in issueUpdate.issueChanges
+          );
+          return {
+            id: issueUpdate.issue.id,
+            issueChanges: undoChanges,
+            descriptionChange: issueUpdate.descriptionUpdate?.description,
+          };
+        }
+      );
       await undoManager.add({
-        execute: updateIssue,
-        undo: undoUpdateIssue,
+        execute: () =>
+          rep.mutate.updateIssues(
+            issueUpdates.map(({ issue, issueChanges, descriptionUpdate }) => {
+              return {
+                id: issue.id,
+                issueChanges,
+                descriptionChange: descriptionUpdate?.descriptionChange,
+              };
+            })
+          ),
+        undo: () => rep.mutate.updateIssues(uChanges),
       });
     },
     [rep.mutate, undoManager]
@@ -522,7 +504,6 @@ const App = ({ rep, undoManager }: AppProps) => {
         onCloseMenu={handleCloseMenu}
         onToggleMenu={handleToggleMenu}
         onUpdateIssues={handleUpdateIssues}
-        onUpdateDescription={handleUpdateDescription}
         onCreateIssue={handleCreateIssue}
         onCreateComment={handleCreateComment}
         onOpenDetail={handleOpenDetail}
@@ -546,11 +527,6 @@ interface LayoutProps {
   onCloseMenu: () => void;
   onToggleMenu: () => void;
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
-  onUpdateDescription: (
-    issueId: string,
-    description: Description | undefined,
-    undoDescription: Description
-  ) => void;
   onCreateIssue: (
     issue: Omit<Issue, "kanbanOrder">,
     description: Description
@@ -572,7 +548,6 @@ const RawLayout = ({
   onCreateIssue,
   onCreateComment,
   onOpenDetail,
-  onUpdateDescription,
 }: LayoutProps) => {
   return (
     <div>
@@ -607,7 +582,6 @@ const RawLayout = ({
                 rep={rep}
                 onUpdateIssues={onUpdateIssues}
                 onAddComment={onCreateComment}
-                onUpdateDescription={onUpdateDescription}
                 isLoading={isLoading}
               />
             )}

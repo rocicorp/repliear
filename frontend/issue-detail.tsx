@@ -30,11 +30,6 @@ import { sortBy } from "lodash";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
-  onUpdateDescription: (
-    issueId: string,
-    description: Description | undefined,
-    undoDescription: Description
-  ) => void;
   onAddComment: (comment: Comment) => void;
   issues: Issue[];
   isLoading: boolean;
@@ -75,7 +70,6 @@ export default function IssueDetail({
   rep,
   onUpdateIssues,
   onAddComment,
-  onUpdateDescription,
   issues,
   isLoading,
 }: Props) {
@@ -139,26 +133,14 @@ export default function IssueDetail({
 
   const handleChangePriority = useCallback(
     (priority: Priority) => {
-      issue &&
-        onUpdateIssues([
-          {
-            issue,
-            changes: { priority },
-          },
-        ]);
+      issue && onUpdateIssues([{ issue, issueChanges: { priority } }]);
     },
     [onUpdateIssues, issue]
   );
 
   const handleChangeStatus = useCallback(
     (status: Status) => {
-      issue &&
-        onUpdateIssues([
-          {
-            issue,
-            changes: { status },
-          },
-        ]);
+      issue && onUpdateIssues([{ issue, issueChanges: { status } }]);
     },
     [onUpdateIssues, issue]
   );
@@ -225,22 +207,26 @@ export default function IssueDetail({
 
   const handleSave = () => {
     if (issue) {
+      const descriptionUpdate =
+        descriptionText !== description
+          ? {
+              description: description || "",
+              descriptionChange: descriptionText,
+            }
+          : undefined;
+
       onUpdateIssues([
         {
           issue,
-          changes:
+          issueChanges:
             titleText !== issue.title
               ? {
                   title: titleText,
                 }
               : {},
+          descriptionUpdate,
         },
       ]);
-      onUpdateDescription(
-        issue.id,
-        descriptionText !== description ? descriptionText : undefined,
-        description ? description : ""
-      );
     }
     setEditMode(false);
   };
@@ -292,12 +278,12 @@ export default function IssueDetail({
             <div className="flex border-solid border-b lg:px-5 justify-between px-2">
               <div className="flex visible md:invisible">
                 <StatusMenu
-                  onSelect={(s) => handleChangeStatus(s)}
+                  onSelect={handleChangeStatus}
                   status={issue?.status || Status.BACKLOG}
                   labelVisible={true}
                 />
                 <PriorityMenu
-                  onSelect={(p) => handleChangePriority(p)}
+                  onSelect={handleChangePriority}
                   labelVisible={true}
                   priority={issue?.priority || Priority.NONE}
                 />
@@ -384,7 +370,7 @@ export default function IssueDetail({
               <div className="flex flex-row items-center my-1">
                 <div className="w-20">Status</div>
                 <StatusMenu
-                  onSelect={(s) => handleChangeStatus(s)}
+                  onSelect={handleChangeStatus}
                   status={issue?.status || Status.BACKLOG}
                   labelVisible={true}
                 />
@@ -392,7 +378,7 @@ export default function IssueDetail({
               <div className="flex flex-row items-center my-1">
                 <div className="w-20">Priority</div>
                 <PriorityMenu
-                  onSelect={(p) => handleChangePriority(p)}
+                  onSelect={handleChangePriority}
                   labelVisible={true}
                   priority={issue?.priority || Priority.NONE}
                 />

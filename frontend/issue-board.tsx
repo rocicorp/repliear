@@ -58,13 +58,13 @@ export function getKanbanOrderIssueUpdates(
   const issueUpdates = [
     {
       issue: issueToMove,
-      changes: { kanbanOrder: newKanbanOrderKeys[0] },
+      issueChanges: { kanbanOrder: newKanbanOrderKeys[0] },
     },
   ];
   for (let i = 0; i < issuesToReKey.length; i++) {
     issueUpdates.push({
       issue: issuesToReKey[i],
-      changes: { kanbanOrder: newKanbanOrderKeys[i + 1] },
+      issueChanges: { kanbanOrder: newKanbanOrderKeys[i + 1] },
     });
   }
   return issueUpdates;
@@ -100,9 +100,9 @@ function IssueBoard({ issues, onUpdateIssues, onOpenDetail }: Props) {
       }
       const issueUpdates = issueToInsertBefore
         ? getKanbanOrderIssueUpdates(draggedIssue, issueToInsertBefore, issues)
-        : [{ issue: draggedIssue, changes: {} }];
+        : [{ issue: draggedIssue, issueChanges: {} }];
       if (newStatus !== sourceStatus) {
-        issueUpdates[0].changes.status = newStatus;
+        issueUpdates[0].issueChanges.status = newStatus;
       }
       onUpdateIssues(issueUpdates);
     },
@@ -114,7 +114,7 @@ function IssueBoard({ issues, onUpdateIssues, onOpenDetail }: Props) {
       onUpdateIssues([
         {
           issue,
-          changes: { priority },
+          issueChanges: { priority },
         },
       ]);
     },
