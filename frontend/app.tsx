@@ -412,19 +412,15 @@ const App = ({ rep, undoManager }: AppProps) => {
         ? minKanbanOrderIssue.kanbanOrder
         : null;
 
-      await undoManager.add({
-        execute: () =>
-          rep.mutate.putIssue({
-            issue: {
-              ...issue,
-              kanbanOrder: generateKeyBetween(null, minKanbanOrder),
-            },
-            description,
-          }),
-        undo: () => rep.mutate.deleteIssues([issue.id]),
+      await rep.mutate.putIssue({
+        issue: {
+          ...issue,
+          kanbanOrder: generateKeyBetween(null, minKanbanOrder),
+        },
+        description,
       });
     },
-    [rep.mutate, state.allIssuesMap, undoManager]
+    [rep.mutate, state.allIssuesMap]
   );
   const handleCreateComment = useCallback(
     async (comment: Comment) => {

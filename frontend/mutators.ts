@@ -26,6 +26,7 @@ export const mutators = {
       description: Description;
     }
   ): Promise<void> => {
+    console.log("mutators.putIssue", issue);
     await putIssue(tx, issue);
     await putIssueDescription(tx, issue.id, description);
   },
@@ -80,24 +81,5 @@ export const mutators = {
     comment: Comment
   ): Promise<void> => {
     await tx.del(commentKey(comment.issueID, comment.id));
-  },
-  updateIssueDescription: async (
-    tx: WriteTransaction,
-    {
-      issueID,
-      description,
-    }: {
-      issueID: string;
-      description: Description;
-    }
-  ): Promise<void> => {
-    const issue = await getIssue(tx, issueID);
-    if (issue === undefined) {
-      console.info(`Issue ${issueID} not found`);
-      return;
-    }
-    const updateModifiedTime = { ...issue, modified: Date.now() };
-    await putIssue(tx, updateModifiedTime);
-    await putIssueDescription(tx, issueID, description);
   },
 };

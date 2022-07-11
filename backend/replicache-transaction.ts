@@ -71,13 +71,13 @@ export class ReplicacheTransaction implements WriteTransaction {
 
   // TODO!
   async isEmpty(): Promise<boolean> {
-    throw new Error("not implemented");
+    throw new Error("Method isEmpty not implemented");
   }
   scan(): ScanResult<string, JSONValue>;
   scan<Options extends ScanOptions>(
     _options?: Options
   ): ScanResult<KeyTypeForScanOptions<Options>, JSONValue> {
-    throw new Error("Method not implemented.");
+    throw new Error("Method scan not implemented.");
   }
 
   async flush(): Promise<void> {

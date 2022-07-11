@@ -85,7 +85,8 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
         await mutator(tx, mutation.args);
       } catch (e) {
         console.error(
-          `Error executing mutator: ${JSON.stringify(mutator)}: ${e}`
+          `Error executing mutator: ${JSON.stringify(mutation)}`,
+          e
         );
       }
 
