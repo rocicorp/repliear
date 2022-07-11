@@ -2,15 +2,12 @@ import type { WriteTransaction } from "replicache";
 import {
   putIssue,
   getIssue,
-  issueKey,
   Description,
   putIssueDescription,
   putIssueComment,
   Comment,
   Issue,
   commentKey,
-  deleteIssueComments,
-  deleteIssueDescription,
   IssueUpdateWithID,
 } from "./issue";
 
@@ -51,13 +48,6 @@ export const mutators = {
       if (descriptionChange) {
         await putIssueDescription(tx, id, descriptionChange);
       }
-    }
-  },
-  deleteIssues: async (tx: WriteTransaction, ids: string[]): Promise<void> => {
-    for (const id of ids) {
-      await deleteIssueComments(tx, id);
-      await deleteIssueDescription(tx, id);
-      await tx.del(issueKey(id));
     }
   },
   putIssueComment: async (

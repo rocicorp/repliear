@@ -225,25 +225,6 @@ export async function getIssueComments(
   });
 }
 
-export async function deleteIssueComments(
-  tx: WriteTransaction,
-  issueID: string
-): Promise<void> {
-  const entries = (await getIssueComments(tx, issueID)) || [];
-  await Promise.all(
-    entries
-      .map((c) => commentKey(c.issueID, c.id))
-      .map((comment) => tx.del(comment))
-  );
-}
-
-export async function deleteIssueDescription(
-  tx: WriteTransaction,
-  issueID: string
-): Promise<void> {
-  await tx.del(descriptionKey(issueID));
-}
-
 export async function putIssueComment(
   tx: WriteTransaction,
   comment: Comment
