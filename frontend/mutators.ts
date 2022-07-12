@@ -2,13 +2,13 @@ import type { WriteTransaction } from "replicache";
 import {
   putIssue,
   getIssue,
-  issueKey,
   Description,
   putIssueDescription,
   putIssueComment,
   Comment,
   Issue,
-  IssueUpdate,
+  commentKey,
+  IssueUpdateWithID,
 } from "./issue";
 
 export type M = typeof mutators;
@@ -23,15 +23,20 @@ export const mutators = {
       description: Description;
     }
   ): Promise<void> => {
+    console.log("mutators.putIssue", issue);
     await putIssue(tx, issue);
     await putIssueDescription(tx, issue.id, description);
   },
   updateIssues: async (
     tx: WriteTransaction,
-    issueUpdates: IssueUpdate[]
+    issueUpdates: IssueUpdateWithID[]
   ): Promise<void> => {
     const modified = Date.now();
-    for (const { id, changes, description } of issueUpdates) {
+    for (const {
+      id,
+      issueChanges: changes,
+      descriptionChange,
+    } of issueUpdates) {
       const issue = await getIssue(tx, id);
       if (issue === undefined) {
         console.info(`Issue ${id} not found`);
@@ -40,14 +45,9 @@ export const mutators = {
       const changed = { ...issue, ...changes };
       changed.modified = modified;
       await putIssue(tx, changed);
-      if (description) {
-        await putIssueDescription(tx, id, description);
+      if (descriptionChange) {
+        await putIssueDescription(tx, id, descriptionChange);
       }
-    }
-  },
-  deleteIssues: async (tx: WriteTransaction, ids: string[]): Promise<void> => {
-    for (const id of ids) {
-      await tx.del(issueKey(id));
     }
   },
   putIssueComment: async (
@@ -65,5 +65,11 @@ export const mutators = {
       await putIssue(tx, changed);
     }
     await putIssueComment(tx, comment);
+  },
+  deleteIssueComment: async (
+    tx: WriteTransaction,
+    comment: Comment
+  ): Promise<void> => {
+    await tx.del(commentKey(comment.issueID, comment.id));
   },
 };

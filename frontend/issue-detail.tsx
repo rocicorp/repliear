@@ -133,14 +133,14 @@ export default function IssueDetail({
 
   const handleChangePriority = useCallback(
     (priority: Priority) => {
-      issue && onUpdateIssues([{ id: issue.id, changes: { priority } }]);
+      issue && onUpdateIssues([{ issue, issueChanges: { priority } }]);
     },
     [onUpdateIssues, issue]
   );
 
   const handleChangeStatus = useCallback(
     (status: Status) => {
-      issue && onUpdateIssues([{ id: issue.id, changes: { status } }]);
+      issue && onUpdateIssues([{ issue, issueChanges: { status } }]);
     },
     [onUpdateIssues, issue]
   );
@@ -207,17 +207,24 @@ export default function IssueDetail({
 
   const handleSave = () => {
     if (issue) {
+      const descriptionUpdate =
+        descriptionText !== description
+          ? {
+              description: description || "",
+              descriptionChange: descriptionText,
+            }
+          : undefined;
+
       onUpdateIssues([
         {
-          id: issue.id,
-          changes:
+          issue,
+          issueChanges:
             titleText !== issue.title
               ? {
                   title: titleText,
                 }
               : {},
-          description:
-            descriptionText !== description ? descriptionText : undefined,
+          descriptionUpdate,
         },
       ]);
     }

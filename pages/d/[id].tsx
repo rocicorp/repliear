@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Replicache } from "replicache";
 import { M, mutators } from "../../frontend/mutators";
 import App from "../../frontend/app";
 import Pusher from "pusher-js";
+import { UndoManager } from "@rocicorp/undo";
 
 export default function Home() {
   const [rep, setRep] = useState<Replicache<M> | null>(null);
-
+  const undoManagerRef = useRef(new UndoManager());
   useEffect(() => {
     // disabled eslint await requirement
     // eslint-disable-next-line
@@ -41,6 +42,7 @@ export default function Home() {
           r.pull();
         });
       }
+
       setRep(r);
     })();
   }, [rep]);
@@ -50,7 +52,7 @@ export default function Home() {
   }
   return (
     <div className="repliear">
-      <App rep={rep} />
+      <App rep={rep} undoManager={undoManagerRef.current} />
     </div>
   );
 }

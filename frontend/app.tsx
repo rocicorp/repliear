@@ -11,7 +11,6 @@ import {
   Issue,
   issueFromKeyAndValue,
   ISSUE_KEY_PREFIX,
-  IssueValue,
   Order,
   orderEnumSchema,
   Priority,
@@ -24,18 +23,21 @@ import {
   reverseTimestampSortKey,
   statusOrderValues,
   priorityOrderValues,
+  IssueUpdateWithID,
 } from "./issue";
 import { useState } from "react";
 import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
-import { isEqual, minBy, partial, sortBy, sortedIndexBy } from "lodash";
+import { isEqual, minBy, partial, pickBy, sortBy, sortedIndexBy } from "lodash";
 import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
 import classnames from "classnames";
 import { getPartialSyncState, PartialSyncState } from "./control";
+import type { UndoManager } from "@rocicorp/undo";
+import { HotKeys } from "react-hotkeys";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -335,7 +337,12 @@ function diffReducer(state: State, diff: Diff): State {
   };
 }
 
-const App = ({ rep }: { rep: Replicache<M> }) => {
+type AppProps = {
+  rep: Replicache<M>;
+  undoManager: UndoManager;
+};
+
+const App = ({ rep, undoManager }: AppProps) => {
   const [view] = useQueryState("view");
   const [priorityFilter] = useQueryState("priorityFilter");
   const [statusFilter] = useQueryState("statusFilter");
@@ -404,6 +411,7 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
       const minKanbanOrder = minKanbanOrderIssue
         ? minKanbanOrderIssue.kanbanOrder
         : null;
+
       await rep.mutate.putIssue({
         issue: {
           ...issue,
@@ -412,24 +420,50 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
         description,
       });
     },
-    [rep, state.allIssuesMap]
+    [rep.mutate, state.allIssuesMap]
   );
   const handleCreateComment = useCallback(
-    (comment: Comment) => rep.mutate.putIssueComment(comment),
-    [rep]
-  );
-  const handleUpdateIssues = useCallback(
-    async (
-      issueUpdates: {
-        id: string;
-        changes: Partial<IssueValue>;
-        description?: Description;
-      }[]
-    ) => {
-      await rep.mutate.updateIssues(issueUpdates);
+    async (comment: Comment) => {
+      await undoManager.add({
+        execute: () => rep.mutate.putIssueComment(comment),
+        undo: () => rep.mutate.deleteIssueComment(comment),
+      });
     },
-    [rep]
+    [rep.mutate, undoManager]
   );
+
+  const handleUpdateIssues = useCallback(
+    async (issueUpdates: Array<IssueUpdate>) => {
+      const uChanges: Array<IssueUpdateWithID> = issueUpdates.map<IssueUpdateWithID>(
+        (issueUpdate) => {
+          const undoChanges = pickBy(
+            issueUpdate.issue,
+            (_, key) => key in issueUpdate.issueChanges
+          );
+          return {
+            id: issueUpdate.issue.id,
+            issueChanges: undoChanges,
+            descriptionChange: issueUpdate.descriptionUpdate?.description,
+          };
+        }
+      );
+      await undoManager.add({
+        execute: () =>
+          rep.mutate.updateIssues(
+            issueUpdates.map(({ issue, issueChanges, descriptionUpdate }) => {
+              return {
+                id: issue.id,
+                issueChanges,
+                descriptionChange: descriptionUpdate?.descriptionChange,
+              };
+            })
+          ),
+        undo: () => rep.mutate.updateIssues(uChanges),
+      });
+    },
+    [rep.mutate, undoManager]
+  );
+
   const handleOpenDetail = useCallback(
     async (issue: Issue) => {
       await setDetailIssueID(issue.id, { scroll: false, shallow: true });
@@ -444,22 +478,39 @@ const App = ({ rep }: { rep: Replicache<M> }) => {
     menuVisible,
   ]);
 
+  const handlers = {
+    undo: () => undoManager.undo(),
+    redo: () => undoManager.redo(),
+  };
+
   return (
-    <Layout
-      menuVisible={menuVisible}
-      view={view}
-      detailIssueID={detailIssueID}
-      isLoading={!partialSyncComplete}
-      state={state}
-      rep={rep}
-      onCloseMenu={handleCloseMenu}
-      onToggleMenu={handleToggleMenu}
-      onUpdateIssues={handleUpdateIssues}
-      onCreateIssue={handleCreateIssue}
-      onCreateComment={handleCreateComment}
-      onOpenDetail={handleOpenDetail}
-    ></Layout>
+    <HotKeys
+      {...{
+        keyMap,
+        handlers,
+      }}
+    >
+      <Layout
+        menuVisible={menuVisible}
+        view={view}
+        detailIssueID={detailIssueID}
+        isLoading={!partialSyncComplete}
+        state={state}
+        rep={rep}
+        onCloseMenu={handleCloseMenu}
+        onToggleMenu={handleToggleMenu}
+        onUpdateIssues={handleUpdateIssues}
+        onCreateIssue={handleCreateIssue}
+        onCreateComment={handleCreateComment}
+        onOpenDetail={handleOpenDetail}
+      ></Layout>
+    </HotKeys>
   );
+};
+
+const keyMap = {
+  undo: ["ctrl+z", "command+z"],
+  redo: ["ctrl+y", "command+shift+z", "ctrl+shift+z"],
 };
 
 interface LayoutProps {

@@ -38,7 +38,7 @@ export function getKanbanOrderIssueUpdates(
     beforeKey = issues[indexInKanbanOrder - 1].kanbanOrder;
   }
   let afterKey: string | null = null;
-  const issueIDsToRekey: string[] = [];
+  const issuesToReKey: Issue[] = [];
   // If the issues we are trying to move between
   // have identical kanbanOrder values, we need to fix up the
   // collision by re-keying the issues.
@@ -47,24 +47,24 @@ export function getKanbanOrderIssueUpdates(
       afterKey = issues[i].kanbanOrder;
       break;
     }
-    issueIDsToRekey.push(issues[i].id);
+    issuesToReKey.push(issues[i]);
   }
   const newKanbanOrderKeys = generateNKeysBetween(
     beforeKey,
     afterKey,
-    issueIDsToRekey.length + 1 // +1 for the dragged issue
+    issuesToReKey.length + 1 // +1 for the dragged issue
   );
 
   const issueUpdates = [
     {
-      id: issueToMove.id,
-      changes: { kanbanOrder: newKanbanOrderKeys[0] },
+      issue: issueToMove,
+      issueChanges: { kanbanOrder: newKanbanOrderKeys[0] },
     },
   ];
-  for (let i = 0; i < issueIDsToRekey.length; i++) {
+  for (let i = 0; i < issuesToReKey.length; i++) {
     issueUpdates.push({
-      id: issueIDsToRekey[i],
-      changes: { kanbanOrder: newKanbanOrderKeys[i + 1] },
+      issue: issuesToReKey[i],
+      issueChanges: { kanbanOrder: newKanbanOrderKeys[i + 1] },
     });
   }
   return issueUpdates;
@@ -100,9 +100,9 @@ function IssueBoard({ issues, onUpdateIssues, onOpenDetail }: Props) {
       }
       const issueUpdates = issueToInsertBefore
         ? getKanbanOrderIssueUpdates(draggedIssue, issueToInsertBefore, issues)
-        : [{ id: draggedIssue.id, changes: {} }];
+        : [{ issue: draggedIssue, issueChanges: {} }];
       if (newStatus !== sourceStatus) {
-        issueUpdates[0].changes.status = newStatus;
+        issueUpdates[0].issueChanges.status = newStatus;
       }
       onUpdateIssues(issueUpdates);
     },
@@ -111,7 +111,12 @@ function IssueBoard({ issues, onUpdateIssues, onOpenDetail }: Props) {
 
   const handleChangePriority = useCallback(
     (issue: Issue, priority: Priority) => {
-      onUpdateIssues([{ id: issue.id, changes: { priority } }]);
+      onUpdateIssues([
+        {
+          issue,
+          issueChanges: { priority },
+        },
+      ]);
     },
     [onUpdateIssues]
   );
