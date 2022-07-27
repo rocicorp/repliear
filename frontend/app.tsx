@@ -1,6 +1,5 @@
 import React, { memo, useCallback, useEffect, useReducer } from "react";
 import type {
-  ExperimentalDiff as Diff,
   ReadonlyJSONValue,
   ReadTransaction,
   Replicache,
@@ -9,7 +8,6 @@ import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
 import {
   Issue,
-  issueFromKeyAndValue,
   ISSUE_KEY_PREFIX,
   Order,
   orderEnumSchema,
@@ -30,7 +28,7 @@ import TopFilter from "./top-filter";
 import IssueList from "./issue-list";
 import { useQueryState } from "next-usequerystate";
 import IssueBoard from "./issue-board";
-import { isEqual, minBy, partial, pickBy, sortBy, sortedIndexBy } from "lodash";
+import { isEqual, minBy, partial, pickBy } from "lodash";
 import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
@@ -38,7 +36,7 @@ import classnames from "classnames";
 import { getPartialSyncState, PartialSyncState } from "./control";
 import type { UndoManager } from "@rocicorp/undo";
 import { HotKeys } from "react-hotkeys";
-import { createLens, Entry } from "./lens";
+import { createLens, Lens } from "./lens";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -166,12 +164,8 @@ function timedReducer(
   state: State,
   action:
     | {
-        type: "diff";
-        diff: Diff;
-      }
-    | {
         type: "lens";
-        entries: Entry[];
+        entries: ReadonlyJSONValue[];
       }
     | {
         type: "setFilters";
@@ -220,12 +214,8 @@ function reducer(
   state: State,
   action:
     | {
-        type: "diff";
-        diff: Diff;
-      }
-    | {
         type: "lens";
-        entries: Entry[];
+        entries: ReadonlyJSONValue[];
       }
     | {
         type: "setFilters";
@@ -236,127 +226,42 @@ function reducer(
         issueOrder: Order;
       }
 ): State {
-  const filters = action.type === "setFilters" ? action.filters : state.filters;
   const issueOrder =
     action.type === "setIssueOrder" ? action.issueOrder : state.issueOrder;
   const orderIteratee = partial(getOrderValue, issueOrder);
-  function filterAndSort(issues: Issue[]): Issue[] {
-    return sortBy(
-      issues.filter((issue) => filters.issuesFilter(issue)),
-      orderIteratee
-    );
-  }
-  function countViewIssues(issues: Issue[]): number {
-    let count = 0;
-    for (const issue of issues) {
-      if (filters.viewFilter(issue)) {
-        count++;
-      }
-    }
-    return count;
-  }
 
   switch (action.type) {
-    case "diff": {
-      return diffReducer(state, action.diff);
-    }
     case "lens": {
-      return lensReducer(state, action.entries);
+      return lensReducer(state, action.entries as Issue[]);
     }
     case "setFilters": {
       if (action.filters.equals(state.filters)) {
         return state;
       }
-      const allIssues = [...state.allIssuesMap.values()];
+      lens.setFilter((i) => action.filters.issuesFilter(i));
       return {
         ...state,
-        viewIssueCount: countViewIssues(allIssues),
         filters: action.filters,
-        filteredIssues: filterAndSort(allIssues),
       };
     }
     case "setIssueOrder": {
       if (action.issueOrder === state.issueOrder) {
         return state;
       }
+      lens.setSortBy(orderIteratee);
       return {
         ...state,
-        filteredIssues: sortBy(state.filteredIssues, orderIteratee),
         issueOrder: action.issueOrder,
       };
     }
   }
-
-  return state;
 }
 
-function lensReducer(state: State, entries: Entry[]): State {
-  const issues = entries.map(({ value }) => value as Issue);
-  const sortedIssues = sortBy(issues, ({ modified }) => -modified);
+function lensReducer(state: State, issues: Issue[]): State {
   return {
     ...state,
-    viewIssueCount: entries.length,
-    // TODO: genericize Entry
-    filteredIssues: sortedIssues,
-  };
-}
-
-function diffReducer(state: State, diff: Diff): State {
-  if (diff.length === 0) {
-    return state;
-  }
-  const newAllIssuesMap = new Map(state.allIssuesMap);
-  let newViewIssueCount = state.viewIssueCount;
-  const newFilteredIssues = [...state.filteredIssues];
-  const orderIteratee = partial(getOrderValue, state.issueOrder);
-
-  function add(key: string, newValue: ReadonlyJSONValue) {
-    const newIssue = issueFromKeyAndValue(key, newValue);
-    newAllIssuesMap.set(key, newIssue);
-    if (state.filters.viewFilter(newIssue)) {
-      newViewIssueCount++;
-    }
-    if (state.filters.issuesFilter(newIssue)) {
-      newFilteredIssues.splice(
-        sortedIndexBy(newFilteredIssues, newIssue, orderIteratee),
-        0,
-        newIssue
-      );
-    }
-  }
-  function del(key: string, oldValue: ReadonlyJSONValue) {
-    const oldIssue = issueFromKeyAndValue(key, oldValue);
-    const index = sortedIndexBy(newFilteredIssues, oldIssue, orderIteratee);
-    newAllIssuesMap.delete(key);
-    if (state.filters.viewFilter(oldIssue)) {
-      newViewIssueCount--;
-    }
-    if (newFilteredIssues[index]?.id === oldIssue.id) {
-      newFilteredIssues.splice(index, 1);
-    }
-  }
-  for (const diffOp of diff) {
-    switch (diffOp.op) {
-      case "add": {
-        add(diffOp.key as string, diffOp.newValue);
-        break;
-      }
-      case "del": {
-        del(diffOp.key as string, diffOp.oldValue);
-        break;
-      }
-      case "change": {
-        del(diffOp.key as string, diffOp.oldValue);
-        add(diffOp.key as string, diffOp.newValue);
-        break;
-      }
-    }
-  }
-  return {
-    ...state,
-    allIssuesMap: newAllIssuesMap,
-    viewIssueCount: newViewIssueCount,
-    filteredIssues: newFilteredIssues,
+    viewIssueCount: issues.length,
+    filteredIssues: issues,
   };
 }
 
@@ -400,9 +305,9 @@ const App = ({ rep, undoManager }: AppProps) => {
   }, [rep, partialSync, partialSyncComplete]);
 
   useEffect(() => {
-    createLens(rep, {
+    lens = createLens(rep, {
       onChange: (entries) => {
-        dispatch({ type: "lens", entries });
+        dispatch({ type: "lens", entries: entries as ReadonlyJSONValue[] });
       },
       prefix: ISSUE_KEY_PREFIX,
     });
@@ -533,7 +438,7 @@ const keyMap = {
   redo: ["ctrl+y", "command+shift+z", "ctrl+shift+z"],
 };
 
-let lens: Lens = null;
+let lens: Lens<Issue>;
 
 interface LayoutProps {
   menuVisible: boolean;

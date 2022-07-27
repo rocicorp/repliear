@@ -1,41 +1,42 @@
+import { sortBy } from "lodash";
 import type {
   ExperimentalDiff as Diff,
   ReadonlyJSONValue,
   Replicache,
 } from "replicache";
 
-export type Entry = {
+export type Entry<T> = {
   key: string;
-  value: ReadonlyJSONValue;
+  value: T;
 };
 
 // Note: this is a long way of saying that the WatchOptions are the same as
 // the ScanOptions but with the extension of WatchOptionsExt below. I think
 // there is a refactor possible to clean this up, I can talk about that
 // separately.
-export type LensOptions = {
+export type LensOptions<T> = {
   prefix?: string;
-  filter?: (entry: Entry) => boolean;
-  sort?: (a: Entry, b: Entry) => number;
-  onChange?: (result: Entry[]) => void;
+  filter?: (entry: T) => boolean;
+  sortBy?: (entry: ReadonlyJSONValue) => number | string;
+  onChange?: (result: ReadonlyJSONValue[]) => void;
   // onRaw?: (changes: WatchChange[]),
 };
 
-export class Lens {
+export class Lens<T extends ReadonlyJSONValue> {
   private rep: Replicache;
-  private options: LensOptions;
-  private onChange: ((result: Entry[]) => void) | undefined;
-  private filter: (entry: Entry) => boolean;
-  private sort: ((a: Entry, b: Entry) => number) | undefined;
+  private options: LensOptions<T>;
+  private onChange: ((result: T[]) => void) | undefined;
+  private filter: (entry: T) => boolean;
+  private sortBy: ((entry: T) => number | string) | undefined;
 
-  private raw: Map<string, Entry>;
-  private result: Entry[];
+  private raw: Map<string, T>;
+  private result: T[];
 
-  constructor(rep: Replicache, options: LensOptions) {
+  constructor(rep: Replicache, options: LensOptions<T>) {
     this.rep = rep;
     this.options = options;
     this.onChange = options.onChange;
-    this.sort = options.sort;
+    this.sortBy = options.sortBy;
     this.filter = options.filter || (() => true);
     this.raw = new Map();
     this.result = [];
@@ -51,7 +52,7 @@ export class Lens {
     for (const diffOp of diff) {
       switch (diffOp.op) {
         case "add": {
-          this.add(diffOp.key as string, diffOp.newValue);
+          this.add(diffOp.key as string, diffOp.newValue as T);
           break;
         }
         case "del": {
@@ -60,7 +61,7 @@ export class Lens {
         }
         case "change": {
           this.del(diffOp.key as string);
-          this.add(diffOp.key as string, diffOp.newValue);
+          this.add(diffOp.key as string, diffOp.newValue as T);
           break;
         }
       }
@@ -74,21 +75,37 @@ export class Lens {
     }
   }
 
-  add(key: string, value: ReadonlyJSONValue) {
-    this.raw.set(key, { key, value });
+  add(key: string, value: T) {
+    this.raw.set(key, value);
   }
 
   del(key: string) {
     this.raw.delete(key as string);
   }
 
-  doFilter() {
-    // TODO: early out
-    const filtered: Entry[] = [];
+  setFilter(filter: (entry: T) => boolean) {
+    this.filter = filter;
+    this.doFilter();
+    this.doSort();
+    if (this.onChange) {
+      this.onChange(this.result);
+    }
+  }
 
-    for (const entry of this.raw.values()) {
-      if (this.filter(entry)) {
-        filtered.push(entry);
+  setSortBy(sortBy: (entry: T) => number | string) {
+    this.sortBy = sortBy;
+    this.doSort();
+    if (this.onChange) {
+      this.onChange(this.result);
+    }
+  }
+
+  doFilter() {
+    const filtered: T[] = [];
+
+    for (const o of this.raw.values()) {
+      if (this.filter(o)) {
+        filtered.push(o);
       }
     }
 
@@ -99,14 +116,17 @@ export class Lens {
     // TODO: early out
     // TODO: does this preserve reference equality?
     // TODO: insert into sorted array instead of sorting entire thing
-    if (this.sort) {
-      this.result.sort(this.sort);
+    if (this.sortBy) {
+      this.result = sortBy(this.result, this.sortBy);
     }
   }
 }
 
-export function createLens(rep: Replicache, options: LensOptions): Lens {
-  return new Lens(rep, options);
+export function createLens<T>(
+  rep: Replicache,
+  options: LensOptions<T>
+): Lens<T> {
+  return new Lens<T>(rep, options);
 }
 
 // type Unwatch = () => void;
