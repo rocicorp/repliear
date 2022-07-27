@@ -1,9 +1,5 @@
 import React, { memo, useCallback, useEffect, useReducer } from "react";
-import type {
-  ReadonlyJSONValue,
-  ReadTransaction,
-  Replicache,
-} from "replicache";
+import type { ReadTransaction, Replicache } from "replicache";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
 import {
@@ -36,7 +32,7 @@ import classnames from "classnames";
 import { getPartialSyncState, PartialSyncState } from "./control";
 import type { UndoManager } from "@rocicorp/undo";
 import { HotKeys } from "react-hotkeys";
-import { createLens, Lens } from "./lens";
+import { createView, View } from "./view";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -164,8 +160,8 @@ function timedReducer(
   state: State,
   action:
     | {
-        type: "lens";
-        entries: ReadonlyJSONValue[];
+        type: "viewUpdate";
+        issues: Issue[];
       }
     | {
         type: "setFilters";
@@ -214,8 +210,8 @@ function reducer(
   state: State,
   action:
     | {
-        type: "lens";
-        entries: ReadonlyJSONValue[];
+        type: "viewUpdate";
+        issues: Issue[];
       }
     | {
         type: "setFilters";
@@ -231,14 +227,14 @@ function reducer(
   const orderIteratee = partial(getOrderValue, issueOrder);
 
   switch (action.type) {
-    case "lens": {
-      return lensReducer(state, action.entries as Issue[]);
+    case "viewUpdate": {
+      return viewReducer(state, action.issues);
     }
     case "setFilters": {
       if (action.filters.equals(state.filters)) {
         return state;
       }
-      lens.setFilter((i) => action.filters.issuesFilter(i));
+      replicacheView.filter = (i) => action.filters.issuesFilter(i);
       return {
         ...state,
         filters: action.filters,
@@ -248,7 +244,7 @@ function reducer(
       if (action.issueOrder === state.issueOrder) {
         return state;
       }
-      lens.setSortBy(orderIteratee);
+      replicacheView.sortBy = orderIteratee;
       return {
         ...state,
         issueOrder: action.issueOrder,
@@ -257,7 +253,7 @@ function reducer(
   }
 }
 
-function lensReducer(state: State, issues: Issue[]): State {
+function viewReducer(state: State, issues: Issue[]): State {
   return {
     ...state,
     viewIssueCount: issues.length,
@@ -305,9 +301,11 @@ const App = ({ rep, undoManager }: AppProps) => {
   }, [rep, partialSync, partialSyncComplete]);
 
   useEffect(() => {
-    lens = createLens(rep, {
+    replicacheView = createView(rep, {
+      filter: (i) => state.filters.issuesFilter(i),
+      sortBy: partial(getOrderValue, state.issueOrder),
       onChange: (entries) => {
-        dispatch({ type: "lens", entries: entries as ReadonlyJSONValue[] });
+        dispatch({ type: "viewUpdate", issues: entries as Issue[] });
       },
       prefix: ISSUE_KEY_PREFIX,
     });
@@ -438,7 +436,7 @@ const keyMap = {
   redo: ["ctrl+y", "command+shift+z", "ctrl+shift+z"],
 };
 
-let lens: Lens<Issue>;
+let replicacheView: View<Issue>;
 
 interface LayoutProps {
   menuVisible: boolean;
