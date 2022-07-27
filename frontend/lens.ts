@@ -4,7 +4,7 @@ import type {
   Replicache,
 } from "replicache";
 
-type Entry = {
+export type Entry = {
   key: string;
   value: ReadonlyJSONValue;
 };
@@ -13,7 +13,7 @@ type Entry = {
 // the ScanOptions but with the extension of WatchOptionsExt below. I think
 // there is a refactor possible to clean this up, I can talk about that
 // separately.
-type LensOptions = {
+export type LensOptions = {
   prefix?: string;
   filter?: (entry: Entry) => boolean;
   sort?: (a: Entry, b: Entry) => number;
@@ -21,7 +21,7 @@ type LensOptions = {
   // onRaw?: (changes: WatchChange[]),
 };
 
-class Lens {
+export class Lens {
   private rep: Replicache;
   private options: LensOptions;
   private onChange: ((result: Entry[]) => void) | undefined;
@@ -105,17 +105,11 @@ class Lens {
   }
 }
 
-const lenses = new Set<Lens>();
-
-export function createLens(rep: Replicache, options: LensOptions): Unwatch {
-  lenses.add(new Lens(rep, options));
-
-  return () => {
-    throw new Error("Not implemented");
-  };
+export function createLens(rep: Replicache, options: LensOptions): Lens {
+  return new Lens(rep, options);
 }
 
-type Unwatch = () => void;
+// type Unwatch = () => void;
 
 // type WatchChange = {
 // 	at: number,

@@ -38,6 +38,7 @@ import classnames from "classnames";
 import { getPartialSyncState, PartialSyncState } from "./control";
 import type { UndoManager } from "@rocicorp/undo";
 import { HotKeys } from "react-hotkeys";
+import { createLens, Entry } from "./lens";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -169,6 +170,10 @@ function timedReducer(
         diff: Diff;
       }
     | {
+        type: "lens";
+        entries: Entry[];
+      }
+    | {
         type: "setFilters";
         filters: Filters;
       }
@@ -219,6 +224,10 @@ function reducer(
         diff: Diff;
       }
     | {
+        type: "lens";
+        entries: Entry[];
+      }
+    | {
         type: "setFilters";
         filters: Filters;
       }
@@ -251,6 +260,9 @@ function reducer(
     case "diff": {
       return diffReducer(state, action.diff);
     }
+    case "lens": {
+      return lensReducer(state, action.entries);
+    }
     case "setFilters": {
       if (action.filters.equals(state.filters)) {
         return state;
@@ -276,6 +288,17 @@ function reducer(
   }
 
   return state;
+}
+
+function lensReducer(state: State, entries: Entry[]): State {
+  const issues = entries.map(({ value }) => value as Issue);
+  const sortedIssues = sortBy(issues, ({ modified }) => -modified);
+  return {
+    ...state,
+    viewIssueCount: entries.length,
+    // TODO: genericize Entry
+    filteredIssues: sortedIssues,
+  };
 }
 
 function diffReducer(state: State, diff: Diff): State {
@@ -377,15 +400,12 @@ const App = ({ rep, undoManager }: AppProps) => {
   }, [rep, partialSync, partialSyncComplete]);
 
   useEffect(() => {
-    rep.experimentalWatch(
-      (diff) => {
-        dispatch({
-          type: "diff",
-          diff,
-        });
+    createLens(rep, {
+      onChange: (entries) => {
+        dispatch({ type: "lens", entries });
       },
-      { prefix: ISSUE_KEY_PREFIX, initialValuesInFirstDiff: true }
-    );
+      prefix: ISSUE_KEY_PREFIX,
+    });
   }, [rep]);
 
   useEffect(() => {
@@ -512,6 +532,8 @@ const keyMap = {
   undo: ["ctrl+z", "command+z"],
   redo: ["ctrl+y", "command+shift+z", "ctrl+shift+z"],
 };
+
+let lens: Lens = null;
 
 interface LayoutProps {
   menuVisible: boolean;
