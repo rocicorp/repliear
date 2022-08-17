@@ -27,6 +27,8 @@ import { nanoid } from "nanoid";
 import { timeAgo } from "../util/date";
 import { useKeyPressed } from "./hooks/useKeyPressed";
 import { sortBy } from "lodash";
+import { useAtom } from "jotai";
+import { detailIssueIDAtom } from "./state";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
@@ -73,9 +75,7 @@ export default function IssueDetail({
   issues,
   isLoading,
 }: Props) {
-  const [detailIssueID, setDetailIssueID] = useQueryState("iss", {
-    history: "push",
-  });
+  const [detailIssueID, setDetailIssueID] = useAtom(detailIssueIDAtom);
 
   const [editMode, setEditMode] = useState(false);
 

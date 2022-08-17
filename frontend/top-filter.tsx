@@ -2,11 +2,10 @@ import MenuIcon from "./assets/icons/menu.svg";
 import React, { memo } from "react";
 
 import SortOrderMenu from "./sort-order-menu";
-import { queryTypes, useQueryState } from "next-usequerystate";
 import FilterMenu from "./filter-menu";
 import { Priority, Status } from "./issue";
 import { useAtom } from "jotai";
-import { orderByQueryAtom } from "./store";
+import { orderByAtom, priorityFilterAtom, statusFilterAtom } from "./state";
 
 interface Props {
   title: string;
@@ -63,19 +62,21 @@ const TopFilter = ({
   issuesCount,
   showSortOrderMenu,
 }: Props) => {
-  const [orderBy, setOrderByParam] = useAtom(orderByQueryAtom);
-  const [statusFilters, setStatusFilterByParam] = useQueryState(
-    "statusFilter",
-    queryTypes.array<Status>(
-      queryTypes.stringEnum<Status>(Object.values(Status))
-    )
+  const [orderBy, setOrderByParam] = useAtom(orderByAtom);
+  const [statusFilters, setStatusFilterByParam] = useAtom(statusFilterAtom);
+  //   "statusFilter",
+  //   queryTypes.array<Status>(
+  //     queryTypes.stringEnum<Status>(Object.values(Status))
+  //   )
+  // );
+  const [priorityFilters, setPriorityFilterByParam] = useAtom(
+    priorityFilterAtom
   );
-  const [priorityFilters, setPriorityFilterByParam] = useQueryState(
-    "priorityFilter",
-    queryTypes.array<Priority>(
-      queryTypes.stringEnum<Priority>(Object.values(Priority))
-    )
-  );
+  //   "priorityFilter",
+  //   queryTypes.array<Priority>(
+  //     queryTypes.stringEnum<Priority>(Object.values(Priority))
+  //   )
+  // );
 
   return (
     <>
@@ -105,7 +106,7 @@ const TopFilter = ({
                 prioritySet.add(priority);
               }
               await setPriorityFilterByParam(
-                prioritySet.size === 0 ? null : [...prioritySet]
+                prioritySet.size === 0 ? [] : [...prioritySet]
               );
             }}
             onSelectStatus={async (status) => {
@@ -116,7 +117,7 @@ const TopFilter = ({
                 statusSet.add(status);
               }
               await setStatusFilterByParam(
-                statusSet.size === 0 ? null : [...statusSet]
+                statusSet.size === 0 ? [] : [...statusSet]
               );
             }}
           />
@@ -137,12 +138,12 @@ const TopFilter = ({
         <div className="flex pl-2 lg:pl-9 pr-6 border-b border-gray-850 h-8">
           <FilterStatus
             filter={statusFilters}
-            onDelete={() => setStatusFilterByParam(null)}
+            onDelete={() => setStatusFilterByParam([])}
             label="Status"
           />
           <FilterStatus
             filter={priorityFilters}
-            onDelete={() => setPriorityFilterByParam(null)}
+            onDelete={() => setPriorityFilterByParam([])}
             label="Priority"
           />
         </div>

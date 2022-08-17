@@ -9,8 +9,10 @@ import SearchBox from "./searchbox";
 import IssueModal from "./issue-modal";
 import ReactLogo from "./assets/images/logo.svg";
 import type { Description, Issue } from "./issue";
-import { queryTypes, useQueryState, useQueryStates } from "next-usequerystate";
+import { useQueryState } from "next-usequerystate";
 import AboutModal from "./about-modal";
+import { detailIssueIDAtom, viewAtom } from "./state";
+import { useAtom } from "jotai";
 
 interface Props {
   // Show menu (for small screen only)
@@ -23,10 +25,8 @@ interface Props {
 }
 
 const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
-  const [, setLayoutViewParams] = useQueryStates(
-    { view: queryTypes.string, iss: queryTypes.string },
-    { history: "push" }
-  );
+  const [, setView] = useAtom(viewAtom);
+  const [, setIss] = useAtom(detailIssueIDAtom);
 
   const [disableAbout] = useQueryState("disableAbout");
 
@@ -49,6 +49,14 @@ const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
       onCloseMenu();
     }
   });
+
+  function setLayoutViewParams(params: {
+    view: string | null;
+    iss: string | null;
+  }) {
+    setView(params.view);
+    setIss(params.iss);
+  }
 
   return (
     <>
