@@ -4,7 +4,9 @@ import React, { memo } from "react";
 import SortOrderMenu from "./sort-order-menu";
 import { queryTypes, useQueryState } from "next-usequerystate";
 import FilterMenu from "./filter-menu";
-import { Order, Priority, Status } from "./issue";
+import { Priority, Status } from "./issue";
+import { useAtom } from "jotai";
+import { orderByQueryAtom } from "./store";
 
 interface Props {
   title: string;
@@ -61,12 +63,7 @@ const TopFilter = ({
   issuesCount,
   showSortOrderMenu,
 }: Props) => {
-  const [orderBy, setOrderByParam] = useQueryState(
-    "orderBy",
-    queryTypes
-      .stringEnum<Order>(Object.values(Order))
-      .withDefault(Order.MODIFIED)
-  );
+  const [orderBy, setOrderByParam] = useAtom(orderByQueryAtom);
   const [statusFilters, setStatusFilterByParam] = useQueryState(
     "statusFilter",
     queryTypes.array<Status>(
