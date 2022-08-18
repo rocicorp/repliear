@@ -17,7 +17,6 @@ import {
   IssueUpdate,
 } from "./issue";
 import StatusMenu from "./status-menu";
-import { useQueryState } from "next-usequerystate";
 
 import type { Replicache } from "replicache";
 import type { M } from "./mutators";
