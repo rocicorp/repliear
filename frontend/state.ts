@@ -1,7 +1,12 @@
-import { atom } from "jotai";
+import { atom, WritableAtom } from "jotai";
+import { atomFamily } from "jotai/utils";
 import { isEqual, partial, sortBy, sortedIndexBy } from "lodash";
 import type { ExperimentalDiff, ReadonlyJSONValue } from "replicache";
 import {
+  Comment,
+  commentIDs,
+  Description,
+  DESCRIPTION_KEY_PREFIX,
   Issue,
   issueFromKeyAndValue,
   Order,
@@ -101,21 +106,11 @@ export class Filters {
 }
 
 export const allIssuesMapAtom = atom<Map<string, Issue>>(new Map());
-const rawDisplayedIssuesAtom = atom<Issue[]>([]);
+export const allIssuesAtomFamily = atomFamily(() => atom({} as Issue));
 export const viewIssueCountAtom = atom(0);
 
-// read only atom used for display
+const rawDisplayedIssuesAtom = atom<Issue[]>([]);
 export const displayedIssuesAtom = atom((get) => get(rawDisplayedIssuesAtom));
-
-type ViewPreset = "all" | "active" | "backlog" | "board";
-const rawViewAtom = atom<ViewPreset>("all");
-export const viewAtom = atom<ViewPreset, ViewPreset>(
-  (get) => get(rawViewAtom),
-  (_, set, view) => {
-    set(rawViewAtom, view);
-    set(refreshDisplayIssuesAtom);
-  }
-);
 
 // filters
 const rawFiltersAtom = atom<Filters>(new Filters(null, null, null));
@@ -143,7 +138,7 @@ export const issueOrderAtom = atom(
   }
 );
 
-export const diffHandlerAtom = atom<unknown, ExperimentalDiff>(
+export const issueDiffHandlerAtom = atom<null, ExperimentalDiff>(
   null,
   (get, set, diff) => {
     if (diff.length === 0) {
@@ -169,6 +164,7 @@ export const diffHandlerAtom = atom<unknown, ExperimentalDiff>(
           newIssue
         );
       }
+      set(allIssuesAtomFamily(newIssue.id), newIssue);
     }
     function del(key: string, oldValue: ReadonlyJSONValue) {
       const oldIssue = issueFromKeyAndValue(key, oldValue);
@@ -180,6 +176,7 @@ export const diffHandlerAtom = atom<unknown, ExperimentalDiff>(
       if (newFilteredIssues[index]?.id === oldIssue.id) {
         newFilteredIssues.splice(index, 1);
       }
+      allIssuesAtomFamily.remove(oldIssue.id);
     }
     for (const diffOp of diff) {
       switch (diffOp.op) {
@@ -260,3 +257,67 @@ export function getOrderValue(issueOrder: Order, issue: Issue): string {
   }
   return orderValue;
 }
+
+export const descriptionFamilyAtom = atomFamily(() => atom("DEFAULT"));
+
+export const descriptionDiffHandlerAtom = atom<null, ExperimentalDiff>(
+  null,
+  (_, set, diff) => {
+    for (const diffOp of diff) {
+      const issueId = (diffOp.key as string).substring(
+        DESCRIPTION_KEY_PREFIX.length
+      );
+      switch (diffOp.op) {
+        case "add":
+        case "change": {
+          set(descriptionFamilyAtom(issueId), diffOp.newValue as Description);
+          break;
+        }
+        case "del": {
+          descriptionFamilyAtom.remove(issueId);
+          break;
+        }
+      }
+    }
+  }
+);
+
+export const issueCommentsAtomsFamily = atomFamily(() =>
+  atom<WritableAtom<Comment, Comment>[]>([])
+);
+export const commentDiffHandlerAtom = atom<null, ExperimentalDiff>(
+  null,
+  (get, set, diff) => {
+    for (const diffOp of diff) {
+      const { issueID, commentID } = commentIDs(diffOp.key as string);
+      const issueCommentsAtom = issueCommentsAtomsFamily(issueID);
+      switch (diffOp.op) {
+        case "add": {
+          const newComments = [
+            ...get(issueCommentsAtom),
+            atom(diffOp.newValue as Comment),
+          ];
+          newComments.sort((a, b) => get(a).created - get(b).created);
+          set(issueCommentsAtom, newComments);
+          break;
+        }
+        case "del":
+          set(
+            issueCommentsAtom,
+            get(issueCommentsAtom).filter(
+              (comment) => get(comment).id !== commentID
+            )
+          );
+          break;
+        case "change": {
+          for (const commentAtom of get(issueCommentsAtom)) {
+            if (get(commentAtom).id === commentID) {
+              set(commentAtom, diffOp.newValue as Comment);
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+);

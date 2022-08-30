@@ -1,78 +1,75 @@
-import React, { useCallback, useEffect, useState } from "react";
-import CloseIcon from "./assets/icons/close.svg";
+import { useCallback, useEffect, useState } from "react";
 import ArrowIcon from "./assets/icons/arrow.svg";
+import CloseIcon from "./assets/icons/close.svg";
 
-import DefaultAvatarIcon from "./assets/icons/avatar.svg";
 import EditIcon from "@mui/icons-material/Edit";
+import DefaultAvatarIcon from "./assets/icons/avatar.svg";
+import { Comment, IssueUpdate, Priority, Status } from "./issue";
 import PriorityMenu from "./priority-menu";
 import {
-  Comment,
-  getIssueComments,
-  Description,
-  getIssueDescription,
-  Issue,
-  Priority,
-  Status,
-  getIssue,
-  IssueUpdate,
-} from "./issue";
+  allIssuesAtomFamily,
+  descriptionFamilyAtom,
+  displayedIssuesAtom,
+  issueCommentsAtomsFamily,
+} from "./state";
 import StatusMenu from "./status-menu";
-import { useQueryState } from "next-usequerystate";
 
-import type { Replicache } from "replicache";
-import type { M } from "./mutators";
-import { useSubscribe } from "replicache-react";
-import { Remark } from "react-remark";
+import { Atom, useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
+import { useQueryState } from "next-usequerystate";
+import { Remark } from "react-remark";
 import { timeAgo } from "../util/date";
 import { useKeyPressed } from "./hooks/useKeyPressed";
-import { sortBy } from "lodash";
-import { useAtomValue } from "jotai";
-import { displayedIssuesAtom } from "./state";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onAddComment: (comment: Comment) => void;
-  // issues: Issue[];
   isLoading: boolean;
-  rep: Replicache<M>;
 }
 
-const CommentsList = (comments: Comment[], isLoading: boolean) => {
-  const elements = sortBy(comments, (comment) => comment.created).map(
-    (comment) => (
-      <div
-        key={comment.id}
-        className=" max-w-[85vw] mx-3 bg-gray-850 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
-      >
-        <div className="h-6 mb-1 -mt-px relative">
-          <DefaultAvatarIcon className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 float-left mr-2" />
-          {comment.creator} {timeAgo(comment.created)}
-        </div>
-        <div className="block flex-1 whitespace-pre-wrap">
-          <Remark>{comment.body}</Remark>
-        </div>
+const CommentItem = ({ commentAtom }: { commentAtom: Atom<Comment> }) => {
+  const [comment] = useAtom(commentAtom);
+  return (
+    <div
+      key={comment.id}
+      className=" max-w-[85vw] mx-3 bg-gray-850 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
+    >
+      <div className="h-6 mb-1 -mt-px relative">
+        <DefaultAvatarIcon className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 float-left mr-2" />
+        {comment.creator} {timeAgo(comment.created)}
       </div>
-    )
+      <div className="block flex-1 whitespace-pre-wrap">
+        <Remark>{comment.body}</Remark>
+      </div>
+    </div>
   );
-  if (isLoading) {
-    elements.push(
+};
+
+const CommentsList = ({
+  commentAtoms,
+  isLoading,
+}: {
+  commentAtoms: Atom<Comment>[];
+  isLoading: boolean;
+}) => (
+  <>
+    {commentAtoms.map((comment) => (
+      <CommentItem key={`${comment}`} commentAtom={comment} />
+    ))}
+    {isLoading && (
       <div
         key="loading"
         className=" max-w-[85vw] mx-3 bg-gray-400 mt-0 mb-5 border-transparent rounded py-3 px-3 relative whitespace-pre-wrap overflow-auto"
       >
         Loading...
       </div>
-    );
-  }
-  return elements;
-};
+    )}
+  </>
+);
 
 export default function IssueDetail({
-  rep,
   onUpdateIssues,
   onAddComment,
-  // issues,
   isLoading,
 }: Props) {
   const issues = useAtomValue(displayedIssuesAtom);
@@ -95,40 +92,10 @@ export default function IssueDetail({
     }
   }, [issues, detailIssueID]);
 
-  const issue = useSubscribe<Issue | null>(
-    rep,
-    async (tx) => {
-      if (detailIssueID) {
-        return (await getIssue(tx, detailIssueID)) || null;
-      }
-      return null;
-    },
-    null,
-    [detailIssueID]
-  );
-  const description = useSubscribe<Description | null>(
-    rep,
-    async (tx) => {
-      if (detailIssueID) {
-        return (await getIssueDescription(tx, detailIssueID)) || null;
-      }
-      return null;
-    },
-    null,
-    [detailIssueID]
-  );
+  const issue = useAtomValue(allIssuesAtomFamily(detailIssueID));
 
-  const comments = useSubscribe<Comment[] | []>(
-    rep,
-    async (tx) => {
-      if (detailIssueID) {
-        return (await getIssueComments(tx, detailIssueID)) || [];
-      }
-      return [];
-    },
-    [],
-    [detailIssueID]
-  );
+  const [description] = useAtom(descriptionFamilyAtom(detailIssueID || ""));
+  const [commentAtoms] = useAtom(issueCommentsAtomsFamily(detailIssueID || ""));
 
   const handleClose = useCallback(async () => {
     await setDetailIssueID(null);
@@ -342,7 +309,10 @@ export default function IssueDetail({
               </div>
             </div>
             <div className="text-md py-4 px-5 text-white">Comments</div>
-            {CommentsList(comments, isLoading && description === null)}
+            <CommentsList
+              commentAtoms={commentAtoms}
+              isLoading={isLoading && description === null}
+            />
             <div className="mx-3 bg-gray-850 flex-1 mx- mt-0 mb-3 flex-1 border-transparent rounded full py-3 px-3 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 min-h-[6rem] placeholder-gray-300 placeholder:text-sm"

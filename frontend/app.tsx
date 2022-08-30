@@ -11,7 +11,9 @@ import { useSubscribe } from "replicache-react";
 import { getPartialSyncState, PartialSyncState } from "./control";
 import {
   Comment,
+  COMMENT_KEY_PREFIX,
   Description,
+  DESCRIPTION_KEY_PREFIX,
   Issue,
   IssueUpdate,
   IssueUpdateWithID,
@@ -26,9 +28,11 @@ import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
 import {
   allIssuesMapAtom,
-  diffHandlerAtom,
+  issueDiffHandlerAtom,
   Filters,
   filtersAtom,
+  commentDiffHandlerAtom,
+  descriptionDiffHandlerAtom,
   issueOrderAtom,
 } from "./state";
 import TopFilter from "./top-filter";
@@ -65,7 +69,9 @@ const App = ({ rep, undoManager }: AppProps) => {
   const allIssuesMap = useAtomValue(allIssuesMapAtom);
   const setFilters = useSetAtom(filtersAtom);
   const setOrderBy = useSetAtom(issueOrderAtom);
-  const diffHandler = useSetAtom(diffHandlerAtom);
+  const issueDiffHandler = useSetAtom(issueDiffHandlerAtom);
+  const descriptionDiffHandler = useSetAtom(descriptionDiffHandlerAtom);
+  const commentDiffHandler = useSetAtom(commentDiffHandlerAtom);
 
   const partialSync = useSubscribe<
     PartialSyncState | "NOT_RECEIVED_FROM_SERVER"
@@ -86,11 +92,25 @@ const App = ({ rep, undoManager }: AppProps) => {
   }, [rep, partialSync, partialSyncComplete]);
 
   useEffect(() => {
-    rep.experimentalWatch(diffHandler, {
+    rep.experimentalWatch(issueDiffHandler, {
       prefix: ISSUE_KEY_PREFIX,
       initialValuesInFirstDiff: true,
     });
-  }, [rep]);
+  }, [rep, issueDiffHandler]);
+
+  useEffect(() => {
+    rep.experimentalWatch(descriptionDiffHandler, {
+      prefix: DESCRIPTION_KEY_PREFIX,
+      initialValuesInFirstDiff: true,
+    });
+  }, [rep, descriptionDiffHandler]);
+
+  useEffect(() => {
+    rep.experimentalWatch(commentDiffHandler, {
+      prefix: COMMENT_KEY_PREFIX,
+      initialValuesInFirstDiff: true,
+    });
+  }, [rep, commentDiffHandler]);
 
   useEffect(() => setFilters(getFilters(view, priorityFilter, statusFilter)), [
     view,
@@ -198,7 +218,6 @@ const App = ({ rep, undoManager }: AppProps) => {
         view={view}
         detailIssueID={detailIssueID}
         isLoading={!partialSyncComplete}
-        rep={rep}
         onCloseMenu={handleCloseMenu}
         onToggleMenu={handleToggleMenu}
         onUpdateIssues={handleUpdateIssues}
@@ -220,7 +239,6 @@ interface LayoutProps {
   view: string | null;
   detailIssueID: string | null;
   isLoading: boolean;
-  rep: Replicache<M>;
   onCloseMenu: () => void;
   onToggleMenu: () => void;
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
@@ -237,7 +255,6 @@ const RawLayout = ({
   view,
   detailIssueID,
   isLoading,
-  rep,
   onCloseMenu,
   onToggleMenu,
   onUpdateIssues,
@@ -267,7 +284,6 @@ const RawLayout = ({
           <div className="relative flex flex-1 min-h-0">
             {detailIssueID && (
               <IssueDetail
-                rep={rep}
                 onUpdateIssues={onUpdateIssues}
                 onAddComment={onCreateComment}
                 isLoading={isLoading}
