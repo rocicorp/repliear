@@ -27,11 +27,13 @@ import { nanoid } from "nanoid";
 import { timeAgo } from "../util/date";
 import { useKeyPressed } from "./hooks/useKeyPressed";
 import { sortBy } from "lodash";
+import { useAtomValue } from "jotai";
+import { displayedIssuesAtom } from "./state";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onAddComment: (comment: Comment) => void;
-  issues: Issue[];
+  // issues: Issue[];
   isLoading: boolean;
   rep: Replicache<M>;
 }
@@ -70,9 +72,10 @@ export default function IssueDetail({
   rep,
   onUpdateIssues,
   onAddComment,
-  issues,
+  // issues,
   isLoading,
 }: Props) {
+  const issues = useAtomValue(displayedIssuesAtom);
   const [detailIssueID, setDetailIssueID] = useQueryState("iss", {
     history: "push",
   });

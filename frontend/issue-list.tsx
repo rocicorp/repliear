@@ -10,12 +10,13 @@ import IssueRow from "./issue-row";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 import type { Issue, IssueUpdate, Priority, Status } from "./issue";
+import { displayedIssuesAtom } from "./state";
+import { useAtomValue } from "jotai";
+import { useQueryState } from "next-usequerystate";
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onOpenDetail: (issue: Issue) => void;
-  issues: Issue[];
-  view: string | null;
 }
 
 type ListData = {
@@ -48,7 +49,9 @@ const RawRow = ({
 
 const Row = memo(RawRow);
 
-const IssueList = ({ onUpdateIssues, onOpenDetail, issues, view }: Props) => {
+const IssueList = ({ onUpdateIssues, onOpenDetail }: Props) => {
+  const [view] = useQueryState("view");
+  const issues = useAtomValue(displayedIssuesAtom);
   const fixedSizeListRef = useRef<FixedSizeList>(null);
   useEffect(() => {
     fixedSizeListRef.current?.scrollTo(0);

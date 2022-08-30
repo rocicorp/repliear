@@ -1,10 +1,12 @@
 import { generateNKeysBetween } from "fractional-indexing";
+import { useAtomValue } from "jotai";
 import { groupBy, indexOf } from "lodash";
 import React, { memo, useCallback } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
 import { Status, Issue, IssueUpdate, Priority } from "./issue";
 import IssueCol from "./issue-col";
+import { displayedIssuesAtom } from "./state";
 
 export type IssuesByStatusType = {
   [Status.BACKLOG]: Issue[];
@@ -71,12 +73,13 @@ export function getKanbanOrderIssueUpdates(
 }
 
 interface Props {
-  issues: Issue[];
+  // issues: Issue[];
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onOpenDetail: (issue: Issue) => void;
 }
 
-function IssueBoard({ issues, onUpdateIssues, onOpenDetail }: Props) {
+function IssueBoard({ onUpdateIssues, onOpenDetail }: Props) {
+  const issues = useAtomValue(displayedIssuesAtom);
   const issuesByType = getIssueByType(issues);
 
   const handleDragEnd = useCallback(

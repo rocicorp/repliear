@@ -1,16 +1,15 @@
+import { memo } from "react";
 import MenuIcon from "./assets/icons/menu.svg";
-import React, { memo } from "react";
 
-import SortOrderMenu from "./sort-order-menu";
+import { useAtomValue } from "jotai";
 import { queryTypes, useQueryState } from "next-usequerystate";
 import FilterMenu from "./filter-menu";
 import { Order, Priority, Status } from "./issue";
+import SortOrderMenu from "./sort-order-menu";
+import { displayedIssuesAtom, filtersAtom, viewIssueCountAtom } from "./state";
 
 interface Props {
-  title: string;
   onToggleMenu?: () => void;
-  filteredIssuesCount?: number;
-  issuesCount: number;
   showSortOrderMenu: boolean;
 }
 
@@ -18,6 +17,19 @@ interface FilterStatusProps {
   filter: Status[] | Priority[] | null;
   onDelete: () => void;
   label: string;
+}
+
+function getTitle(view: string | null) {
+  switch (view?.toLowerCase()) {
+    case "active":
+      return "Active issues";
+    case "backlog":
+      return "Backlog issues";
+    case "board":
+      return "Board";
+    default:
+      return "All issues";
+  }
 }
 
 const displayStrings: Record<Priority | Status, string> = {
@@ -54,13 +66,17 @@ const FilterStatus = ({ filter, onDelete, label }: FilterStatusProps) => {
   );
 };
 
-const TopFilter = ({
-  title,
-  onToggleMenu,
-  filteredIssuesCount,
-  issuesCount,
-  showSortOrderMenu,
-}: Props) => {
+const TopFilter = ({ onToggleMenu }: Props) => {
+  const [view] = useQueryState("view");
+  const title = getTitle(view);
+  const showSortOrderMenu = view !== "board";
+  const filters = useAtomValue(filtersAtom);
+  const issuesCount = useAtomValue(viewIssueCountAtom);
+  const displayedIssues = useAtomValue(displayedIssuesAtom);
+  const filteredIssuesCount = filters.hasNonViewFilters
+    ? displayedIssues.length
+    : undefined;
+
   const [orderBy, setOrderByParam] = useQueryState(
     "orderBy",
     queryTypes
