@@ -42,6 +42,7 @@ const RowPreMemo = ({ data, index, style }: RowProps) => {
     <Draggable draggableId={issue.id} index={index} key={issue.id}>
       {(provided: DraggableProvided) => {
         return (
+          // @ts-expect-error @types/react@17 are wrong but react 18 does not work with next
           <div
             {...provided.draggableProps}
             {...provided.dragHandleProps}
@@ -102,6 +103,7 @@ function IssueCol({
           renderClone={(provided, _snapshot, rubric) => {
             const issue = issues[rubric.source.index];
             return (
+              // @ts-expect-error @types/react@17 are wrong but react 18 does not work with nextjs
               <div
                 ref={provided.innerRef}
                 {...provided.draggableProps}

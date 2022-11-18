@@ -4,6 +4,7 @@ import type {
   WriteTransaction,
 } from "replicache";
 import { z } from "zod";
+import type { Immutable } from "./immutable";
 
 export const ISSUE_KEY_PREFIX = `issue/`;
 export const issueKey = (id: string) => `${ISSUE_KEY_PREFIX}${id}`;
@@ -92,8 +93,8 @@ export const issueSchema = z.object({
   kanbanOrder: z.string(),
 });
 
-export type Issue = z.TypeOf<typeof issueSchema>;
-export type IssueValue = z.TypeOf<typeof issueValueSchema>;
+export type Issue = Immutable<z.TypeOf<typeof issueSchema>>;
+export type IssueValue = Immutable<z.TypeOf<typeof issueValueSchema>>;
 export const issueValueSchema = issueSchema.omit({
   id: true,
 });
@@ -101,17 +102,19 @@ export const issueValueSchema = issueSchema.omit({
 export type IssueUpdate = {
   issue: Issue;
   issueChanges: Partial<IssueValue>;
-  descriptionUpdate?: {
-    description: Description;
-    descriptionChange: Description;
-  };
+  descriptionUpdate?:
+    | {
+        description: Description;
+        descriptionChange: Description;
+      }
+    | undefined;
 };
 
-export type IssueUpdateWithID = {
+export type IssueUpdateWithID = Immutable<{
   id: string;
   issueChanges: Partial<IssueValue>;
   descriptionChange?: Description;
-};
+}>;
 
 export async function getIssue(
   tx: ReadTransaction,
@@ -155,7 +158,7 @@ export const getDescriptionIssueId = (key: string) => {
   return key.substring(DESCRIPTION_KEY_PREFIX.length);
 };
 
-export type Description = z.TypeOf<typeof descriptionSchema>;
+export type Description = Immutable<z.TypeOf<typeof descriptionSchema>>;
 export async function getIssueDescription(
   tx: ReadTransaction,
   issueID: string
@@ -200,8 +203,8 @@ export const commentSchema = z.object({
   creator: z.string(),
 });
 
-export type Comment = z.TypeOf<typeof commentSchema>;
-export type CommentValue = z.TypeOf<typeof commentValueSchema>;
+export type Comment = Immutable<z.TypeOf<typeof commentSchema>>;
+export type CommentValue = Immutable<z.TypeOf<typeof commentValueSchema>>;
 export const commentValueSchema = commentSchema.omit({
   id: true,
   issueID: true,

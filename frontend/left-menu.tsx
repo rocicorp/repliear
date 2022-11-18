@@ -11,6 +11,7 @@ import ReactLogo from "./assets/images/logo.svg";
 import type { Description, Issue } from "./issue";
 import { queryTypes, useQueryState, useQueryStates } from "next-usequerystate";
 import AboutModal from "./about-modal";
+import { noop } from "lodash";
 
 interface Props {
   // Show menu (for small screen only)
@@ -22,7 +23,11 @@ interface Props {
   ) => void;
 }
 
-const LeftMenu = ({ menuVisible, onCloseMenu, onCreateIssue }: Props) => {
+const LeftMenu = ({
+  menuVisible,
+  onCloseMenu = noop,
+  onCreateIssue,
+}: Props) => {
   const [, setLayoutViewParams] = useQueryStates(
     { view: queryTypes.string, iss: queryTypes.string },
     { history: "push" }
