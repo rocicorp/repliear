@@ -5,11 +5,12 @@ import SortOrderMenu from "./sort-order-menu";
 import { queryTypes, useQueryState } from "next-usequerystate";
 import FilterMenu from "./filter-menu";
 import { Order, Priority, Status } from "./issue";
+import { noop } from "lodash";
 
 interface Props {
   title: string;
-  onToggleMenu?: () => void;
-  filteredIssuesCount?: number;
+  onToggleMenu?: (() => void) | undefined;
+  filteredIssuesCount?: number | undefined;
   issuesCount: number;
   showSortOrderMenu: boolean;
 }
@@ -56,7 +57,7 @@ const FilterStatus = ({ filter, onDelete, label }: FilterStatusProps) => {
 
 const TopFilter = ({
   title,
-  onToggleMenu,
+  onToggleMenu = noop,
   filteredIssuesCount,
   issuesCount,
   showSortOrderMenu,

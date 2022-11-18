@@ -9,7 +9,7 @@ interface Props {
   center: boolean;
   className?: string;
   /* function called when modal is closed */
-  onDismiss?: () => void;
+  onDismiss?: (() => void) | undefined;
   children?: React.ReactNode;
   size: "normal" | "large" | "wide";
 }
@@ -47,9 +47,9 @@ function Modal({
     className
   );
   const handleClick = useCallback(
-    (e) => {
+    (e: React.MouseEvent<HTMLDivElement>) => {
       if (!onDismiss) return;
-      if (ref.current && !ref.current.contains(e.target)) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         onDismiss();
       }
     },

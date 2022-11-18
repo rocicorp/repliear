@@ -6,14 +6,14 @@ export const useClickOutside = (
   outerRef?: RefObject<Element>
 ): void => {
   const handleClick = useCallback(
-    (event) => {
+    (event: MouseEvent) => {
       if (
         outerRef &&
         outerRef.current &&
-        !outerRef.current.contains(event.target)
+        !outerRef.current.contains(event.target as Node)
       )
         return;
-      if (ref.current && !ref.current.contains(event.target)) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
         callback(event);
       }
     },

@@ -440,22 +440,35 @@ const App = ({ rep, undoManager }: AppProps) => {
             issueUpdate.issue,
             (_, key) => key in issueUpdate.issueChanges
           );
-          return {
+          const rv: IssueUpdateWithID = {
             id: issueUpdate.issue.id,
             issueChanges: undoChanges,
-            descriptionChange: issueUpdate.descriptionUpdate?.description,
           };
+          const { descriptionUpdate } = issueUpdate;
+          if (descriptionUpdate) {
+            return {
+              ...rv,
+              descriptionChange: descriptionUpdate.description,
+            };
+          }
+          return rv;
         }
       );
       await undoManager.add({
         execute: () =>
           rep.mutate.updateIssues(
             issueUpdates.map(({ issue, issueChanges, descriptionUpdate }) => {
-              return {
+              const rv: IssueUpdateWithID = {
                 id: issue.id,
                 issueChanges,
-                descriptionChange: descriptionUpdate?.descriptionChange,
               };
+              if (descriptionUpdate) {
+                return {
+                  ...rv,
+                  descriptionChange: descriptionUpdate.description,
+                };
+              }
+              return rv;
             })
           ),
         undo: () => rep.mutate.updateIssues(uChanges),

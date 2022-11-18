@@ -3,6 +3,7 @@ import SearchIcon from "./assets/icons/search.svg";
 import classnames from "classnames";
 import { usePopper } from "react-popper";
 import { useClickOutside } from "./hooks/useClickOutside";
+import { noop } from "lodash";
 
 interface Props {
   placeholder: string;
@@ -11,7 +12,11 @@ interface Props {
   className?: string;
 }
 
-function SearchBox({ placeholder = "Search", onChange, className }: Props) {
+function SearchBox({
+  placeholder = "Search",
+  onChange = noop,
+  className,
+}: Props) {
   const [alertRef, setAlertRef] = useState<HTMLInputElement | null>(null);
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [alertVisible, setAlertVisible] = useState(false);
