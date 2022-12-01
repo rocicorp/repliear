@@ -40,6 +40,7 @@
     "react-window": "^1.8.6",
     "replicache": "^12.0.0",
     "replicache-react": "^2.10.0",
+    "replicache-transaction": "^0.2.0-beta.0",
     "zod": "^3.13.4"
   },
   "devDependencies": {

@@ -3,17 +3,20 @@ import {
   COMMENT_KEY_PREFIX,
   DESCRIPTION_KEY_PREFIX,
   getDescriptionIssueId,
-  getIssue,
+  issueKey,
   issueSchema,
   ISSUE_KEY_PREFIX,
   reverseTimestampSortKey,
 } from "../frontend/issue";
-import type { JSONValue, ReadTransaction } from "replicache";
+import { getEntry } from "./data";
+import type { ReadonlyJSONValue } from "replicache";
 import { assertNotUndefined } from "../util/asserts";
+import type { Executor } from "./pg";
 
 export async function getSyncOrder(
-  tx: ReadTransaction,
-  entry: [key: string, value: JSONValue]
+  executor: Executor,
+  spaceId: string,
+  entry: [key: string, value: ReadonlyJSONValue]
 ): Promise<string> {
   // The default view is a list of issues in reverse modified order, so it is
   // preferable to sync entries in reverse modified order of their
@@ -29,9 +32,15 @@ export async function getSyncOrder(
     issue = issueSchema.parse(value);
   } else if (key.startsWith(COMMENT_KEY_PREFIX)) {
     const comment = commentSchema.parse(value);
-    issue = await getIssue(tx, comment.issueID);
+    issue = await getEntry(executor, spaceId, issueKey(comment.issueID));
+    issue = issueSchema.parse(issue);
   } else if (key.startsWith(DESCRIPTION_KEY_PREFIX)) {
-    issue = await getIssue(tx, getDescriptionIssueId(key));
+    issue = await getEntry(
+      executor,
+      spaceId,
+      issueKey(getDescriptionIssueId(key))
+    );
+    issue = issueSchema.parse(issue);
   }
   assertNotUndefined(issue);
   return reverseTimestampSortKey(issue.modified, issue.id) + "-" + key;

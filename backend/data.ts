@@ -1,13 +1,13 @@
-import type { JSONValue } from "replicache";
+import type { JSONValue, ReadonlyJSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
-import { ReplicacheTransaction } from "./replicache-transaction";
+import { ReplicacheTransaction } from "replicache-transaction";
 import type { Issue, Comment, Description } from "../frontend/issue";
 import { mutators } from "../frontend/mutators";
 import { flatten } from "lodash";
-import { getSyncOrder } from "./sync-order";
 import { nanoid } from "nanoid";
-
+import { getSyncOrder } from "./sync-order";
+import { PostgresStorage } from "./postgres-storage";
 export type SampleData = {
   issue: Issue;
   description: Description;
@@ -107,13 +107,16 @@ export async function initSpace(
       sampleDataBatchs[sampleDataBatchs.length - 1].push(sampleData[i]);
     }
     for (const sampleDataBatch of sampleDataBatchs) {
-      const tx = new ReplicacheTransaction(
-        executor,
+      const storage = new PostgresStorage(
         BASE_SPACE_ID,
-        "fake-client-id-for-server-init",
         INITIAL_SPACE_VERSION,
-        getSyncOrder
+        executor
       );
+      const tx = new ReplicacheTransaction(
+        storage,
+        "fake-client-id-for-server-init"
+      );
+
       for (const { issue, description, comments } of sampleDataBatch) {
         await mutators.putIssue(tx, { issue, description });
         for (const comment of comments) {
@@ -169,12 +172,22 @@ export async function getEntry(
 export async function putEntries(
   executor: Executor,
   spaceID: string,
-  entries: [key: string, value: JSONValue, syncOrder: string][],
+  entries: [key: string, value: ReadonlyJSONValue][],
   version: number
 ): Promise<void> {
   if (entries.length === 0) {
     return;
   }
+
+  const entriesToPut: [string, ReadonlyJSONValue, string][] = [];
+  for (const entry of entries) {
+    entriesToPut.push([
+      entry[0],
+      entry[1],
+      await getSyncOrder(executor, spaceID, [entry[0], entry[1]]),
+    ]);
+  }
+
   const valuesSql = Array.from(
     { length: entries.length },
     (_, i) =>
@@ -193,7 +206,7 @@ export async function putEntries(
       spaceID,
       version,
       ...flatten(
-        entries.map(([key, value, syncOrder]) => [
+        entriesToPut.map(([key, value, syncOrder]) => [
           key,
           JSON.stringify(value),
           syncOrder,
