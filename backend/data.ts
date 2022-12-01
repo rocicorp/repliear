@@ -2,8 +2,15 @@ import type { JSONValue, ReadonlyJSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
 import { ReplicacheTransaction } from "replicache-transaction";
-import type { Issue, Comment, Description } from "../frontend/issue";
-import { mutators } from "../frontend/mutators";
+import {
+  Issue,
+  Comment,
+  Description,
+  putIssue,
+  putIssueDescription,
+  putIssueComment,
+} from "../frontend/issue";
+
 import { flatten } from "lodash";
 import { nanoid } from "nanoid";
 import { getSyncOrder } from "./sync-order";
@@ -112,18 +119,26 @@ export async function initSpace(
         INITIAL_SPACE_VERSION,
         executor
       );
-      const tx = new ReplicacheTransaction(
+      const issuesTx = new ReplicacheTransaction(
         storage,
         "fake-client-id-for-server-init"
       );
 
+      for (const { issue } of sampleDataBatch) {
+        await putIssue(issuesTx, issue);
+      }
+      await issuesTx.flush();
+      const descAndCommentsTx = new ReplicacheTransaction(
+        storage,
+        "fake-client-id-for-server-init"
+      );
       for (const { issue, description, comments } of sampleDataBatch) {
-        await mutators.putIssue(tx, { issue, description });
+        await putIssueDescription(descAndCommentsTx, issue.id, description);
         for (const comment of comments) {
-          await mutators.putIssueComment(tx, comment, false);
+          await putIssueComment(descAndCommentsTx, comment);
         }
       }
-      await tx.flush();
+      await descAndCommentsTx.flush();
     }
     console.log("Initing base space took " + (Date.now() - start) + "ms");
   }
