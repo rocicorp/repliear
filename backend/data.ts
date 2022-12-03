@@ -1,20 +1,18 @@
 import type { JSONValue, ReadonlyJSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
-import { ReplicacheTransaction } from "replicache-transaction";
 import {
   Issue,
   Comment,
   Description,
-  putIssue,
-  putIssueDescription,
-  putIssueComment,
+  issueKey,
+  descriptionKey,
+  commentKey,
 } from "../frontend/issue";
-
 import { flatten } from "lodash";
 import { nanoid } from "nanoid";
 import { getSyncOrder } from "./sync-order";
-import { PostgresStorage } from "./postgres-storage";
+
 export type SampleData = {
   issue: Issue;
   description: Description;
@@ -113,33 +111,48 @@ export async function initSpace(
       }
       sampleDataBatchs[sampleDataBatchs.length - 1].push(sampleData[i]);
     }
-    for (const sampleDataBatch of sampleDataBatchs) {
-      const storage = new PostgresStorage(
-        BASE_SPACE_ID,
-        INITIAL_SPACE_VERSION,
-        executor
-      );
-      const issuesTx = new ReplicacheTransaction(
-        storage,
-        "fake-client-id-for-server-init"
-      );
 
-      for (const { issue } of sampleDataBatch) {
-        await putIssue(issuesTx, issue);
-      }
-      await issuesTx.flush();
-      const descAndCommentsTx = new ReplicacheTransaction(
-        storage,
-        "fake-client-id-for-server-init"
-      );
+    for (const sampleDataBatch of sampleDataBatchs) {
+      const entries: [
+        key: string,
+        value: ReadonlyJSONValue,
+        syncOrder: string
+      ][] = [];
       for (const { issue, description, comments } of sampleDataBatch) {
-        await putIssueDescription(descAndCommentsTx, issue.id, description);
+        entries.push([
+          issueKey(issue.id),
+          issue,
+          await getSyncOrder(executor, BASE_SPACE_ID, [
+            issueKey(issue.id),
+            issue,
+          ]),
+        ]);
+        entries.push([
+          descriptionKey(issue.id),
+          description,
+          await getSyncOrder(
+            executor,
+            BASE_SPACE_ID,
+            [descriptionKey(issue.id), description],
+            issue
+          ),
+        ]);
         for (const comment of comments) {
-          await putIssueComment(descAndCommentsTx, comment);
+          entries.push([
+            commentKey(issue.id, comment.id),
+            comment,
+            await getSyncOrder(
+              executor,
+              BASE_SPACE_ID,
+              [commentKey(issue.id, comment.id), comment],
+              issue
+            ),
+          ]);
         }
       }
-      await descAndCommentsTx.flush();
+      await putEntries(executor, BASE_SPACE_ID, entries, INITIAL_SPACE_VERSION);
     }
+
     console.log("Initing base space took " + (Date.now() - start) + "ms");
   }
   const spaceID = nanoid(10);
@@ -183,24 +196,34 @@ export async function getEntry(
   }
   return JSON.parse(value);
 }
-
 export async function putEntries(
   executor: Executor,
   spaceID: string,
-  entries: [key: string, value: ReadonlyJSONValue][],
+  entries: [key: string, value: ReadonlyJSONValue, syncOrder?: string][],
   version: number
 ): Promise<void> {
   if (entries.length === 0) {
     return;
   }
 
-  const entriesToPut: [string, ReadonlyJSONValue, string][] = [];
+  const syncOrderPromises: (string | Promise<string>)[] = [];
   for (const entry of entries) {
-    entriesToPut.push([
-      entry[0],
-      entry[1],
-      await getSyncOrder(executor, spaceID, [entry[0], entry[1]]),
-    ]);
+    const [key, value, syncOrder] = entry;
+    syncOrderPromises.push(
+      syncOrder ?? getSyncOrder(executor, spaceID, [key, value])
+    );
+  }
+  const syncOrders: string[] = await Promise.all(syncOrderPromises);
+  const entriesToPut: [
+    key: string,
+    value: ReadonlyJSONValue,
+    syncOrder: string
+  ][] = [];
+
+  for (let i = 0; i < entries.length; i++) {
+    const [key, value] = entries[i];
+    const syncOrder = syncOrders[i];
+    entriesToPut.push([key, JSON.stringify(value), syncOrder]);
   }
 
   const valuesSql = Array.from(
@@ -208,6 +231,7 @@ export async function putEntries(
     (_, i) =>
       `($1, $${i * 3 + 3}, $${i * 3 + 4}, $${i * 3 + 5}, false, $2, now())`
   ).join();
+
   await executor(
     `
     insert into entry (
@@ -217,17 +241,7 @@ export async function putEntries(
     update set value = excluded.value, syncorder = excluded.syncorder, 
       deleted = false, version = excluded.version, lastmodified = now()
     `,
-    [
-      spaceID,
-      version,
-      ...flatten(
-        entriesToPut.map(([key, value, syncOrder]) => [
-          key,
-          JSON.stringify(value),
-          syncOrder,
-        ])
-      ),
-    ]
+    [spaceID, version, ...flatten(entriesToPut)]
   );
 }
 
