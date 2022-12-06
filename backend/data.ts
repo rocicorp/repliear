@@ -1,12 +1,17 @@
-import type { JSONValue } from "replicache";
+import type { JSONValue, ReadonlyJSONValue } from "replicache";
 import { z } from "zod";
 import type { Executor } from "./pg";
-import { ReplicacheTransaction } from "./replicache-transaction";
-import type { Issue, Comment, Description } from "../frontend/issue";
-import { mutators } from "../frontend/mutators";
+import {
+  Issue,
+  Comment,
+  Description,
+  issueKey,
+  descriptionKey,
+  commentKey,
+} from "../frontend/issue";
 import { flatten } from "lodash";
-import { getSyncOrder } from "./sync-order";
 import { nanoid } from "nanoid";
+import { getSyncOrder } from "./sync-order";
 
 export type SampleData = {
   issue: Issue;
@@ -106,22 +111,48 @@ export async function initSpace(
       }
       sampleDataBatchs[sampleDataBatchs.length - 1].push(sampleData[i]);
     }
+
     for (const sampleDataBatch of sampleDataBatchs) {
-      const tx = new ReplicacheTransaction(
-        executor,
-        BASE_SPACE_ID,
-        "fake-client-id-for-server-init",
-        INITIAL_SPACE_VERSION,
-        getSyncOrder
-      );
+      const entries: [
+        key: string,
+        value: ReadonlyJSONValue,
+        syncOrder: string
+      ][] = [];
       for (const { issue, description, comments } of sampleDataBatch) {
-        await mutators.putIssue(tx, { issue, description });
+        entries.push([
+          issueKey(issue.id),
+          issue,
+          await getSyncOrder(executor, BASE_SPACE_ID, [
+            issueKey(issue.id),
+            issue,
+          ]),
+        ]);
+        entries.push([
+          descriptionKey(issue.id),
+          description,
+          await getSyncOrder(
+            executor,
+            BASE_SPACE_ID,
+            [descriptionKey(issue.id), description],
+            issue
+          ),
+        ]);
         for (const comment of comments) {
-          await mutators.putIssueComment(tx, comment, false);
+          entries.push([
+            commentKey(issue.id, comment.id),
+            comment,
+            await getSyncOrder(
+              executor,
+              BASE_SPACE_ID,
+              [commentKey(issue.id, comment.id), comment],
+              issue
+            ),
+          ]);
         }
       }
-      await tx.flush();
+      await putEntries(executor, BASE_SPACE_ID, entries, INITIAL_SPACE_VERSION);
     }
+
     console.log("Initing base space took " + (Date.now() - start) + "ms");
   }
   const spaceID = nanoid(10);
@@ -165,21 +196,42 @@ export async function getEntry(
   }
   return JSON.parse(value);
 }
-
 export async function putEntries(
   executor: Executor,
   spaceID: string,
-  entries: [key: string, value: JSONValue, syncOrder: string][],
+  entries: [key: string, value: ReadonlyJSONValue, syncOrder?: string][],
   version: number
 ): Promise<void> {
   if (entries.length === 0) {
     return;
   }
+
+  const syncOrderPromises: (string | Promise<string>)[] = [];
+  for (const entry of entries) {
+    const [key, value, syncOrder] = entry;
+    syncOrderPromises.push(
+      syncOrder ?? getSyncOrder(executor, spaceID, [key, value])
+    );
+  }
+  const syncOrders: string[] = await Promise.all(syncOrderPromises);
+  const entriesToPut: [
+    key: string,
+    value: ReadonlyJSONValue,
+    syncOrder: string
+  ][] = [];
+
+  for (let i = 0; i < entries.length; i++) {
+    const [key, value] = entries[i];
+    const syncOrder = syncOrders[i];
+    entriesToPut.push([key, JSON.stringify(value), syncOrder]);
+  }
+
   const valuesSql = Array.from(
     { length: entries.length },
     (_, i) =>
       `($1, $${i * 3 + 3}, $${i * 3 + 4}, $${i * 3 + 5}, false, $2, now())`
   ).join();
+
   await executor(
     `
     insert into entry (
@@ -189,17 +241,7 @@ export async function putEntries(
     update set value = excluded.value, syncorder = excluded.syncorder, 
       deleted = false, version = excluded.version, lastmodified = now()
     `,
-    [
-      spaceID,
-      version,
-      ...flatten(
-        entries.map(([key, value, syncOrder]) => [
-          key,
-          JSON.stringify(value),
-          syncOrder,
-        ])
-      ),
-    ]
+    [spaceID, version, ...flatten(entriesToPut)]
   );
 }
 
