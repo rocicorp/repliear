@@ -42,7 +42,7 @@ export async function getReactSampleData(): Promise<SampleData> {
   );
   for (const comment of comments) {
     const issue = issues.find((issue) => issue.issue.id === comment.issueID);
-    if (issue && !issue.comments.find((c) => c.id === comment.id)) {
+    if (issue) {
       issue.comments.push(comment);
     }
   }
