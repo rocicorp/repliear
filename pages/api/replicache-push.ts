@@ -7,13 +7,13 @@ import {
   setVersion,
 } from "../../backend/data";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { ReplicacheTransaction } from "replicache-transaction";
+import { ReplicacheTransaction } from "../../backend/replicache-transaction";
+import { getSyncOrder } from "../../backend/sync-order";
 import { mutators } from "../../frontend/mutators";
 import { z } from "zod";
 import { jsonSchema } from "../../util/json";
 import type { MutatorDefs } from "replicache";
 import Pusher from "pusher";
-import { PostgresStorage } from "backend/postgres-storage";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
 // See notes in bug: https://github.com/rocicorp/replidraw/issues/47
@@ -49,8 +49,13 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
     console.log("prevVersion: ", prevVersion);
     console.log("lastMutationID:", lastMutationID);
 
-    const storage = new PostgresStorage(spaceID, nextVersion, executor);
-    const tx = new ReplicacheTransaction(storage, push.clientID);
+    const tx = new ReplicacheTransaction(
+      executor,
+      spaceID,
+      push.clientID,
+      nextVersion,
+      getSyncOrder
+    );
 
     for (let i = 0; i < push.mutations.length; i++) {
       const mutation = push.mutations[i];
