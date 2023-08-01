@@ -4,7 +4,7 @@ import {
   createDatabase,
   getChangedEntries,
   getIssueEntries,
-  getLastMutationID,
+  getLastMutationIDsSince,
   getNonIssueEntriesInSyncOrder,
   getVersion,
 } from "../../backend/data";
@@ -16,14 +16,22 @@ import {
 } from "frontend/control";
 
 const cookieSchema = z.union([
-  z.object({ version: z.number(), partialSync: partialSyncStateSchema }),
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  z.object({
+    version: z.number(),
+    partialSync: partialSyncStateSchema,
+    order: z.number(),
+  }),
   z.null(),
 ]);
 
 type Cookie = z.TypeOf<typeof cookieSchema>;
 
 const pullRequestSchema = z.object({
-  clientID: z.string(),
+  profileID: z.string(),
+  clientGroupID: z.string(),
+  pullVersion: z.number(),
+  schemaVersion: z.string(),
   cookie: cookieSchema,
 });
 
@@ -37,7 +45,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   const requestCookie: Cookie = pull.cookie;
 
   console.log("spaceID", spaceID);
-  console.log("clientID", pull.clientID);
+  console.log("clientGroupID", pull.clientGroupID);
 
   const startTransact = Date.now();
   const result = await transact(async (executor) => {
@@ -47,17 +55,27 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       return undefined;
     }
     if (!requestCookie) {
-      const lastMutationIDPromise = await getLastMutationID(
+      const lastMutationIDPromise = await getLastMutationIDsSince(
         executor,
-        pull.clientID
+        pull.clientGroupID,
+        0
       );
       const entries = await getIssueEntries(executor, spaceID);
-      const responseCookie: Cookie = { version, partialSync: "ISSUES_SYNCED" };
+      const responseCookie: Cookie = {
+        version,
+        partialSync: "ISSUES_SYNCED",
+        order: version,
+      };
       const partialSyncState: PartialSyncState = "ISSUES_SYNCED";
       entries.push([PARTIAL_SYNC_STATE_KEY, JSON.stringify(partialSyncState)]);
       return Promise.all([entries, lastMutationIDPromise, responseCookie]);
     } else {
-      const lastMutationIDPromise = getLastMutationID(executor, pull.clientID);
+      const lastMutationIDPromise = getLastMutationIDsSince(
+        executor,
+        pull.clientGroupID,
+        requestCookie.version
+      );
+      console.log("requestCookie", requestCookie);
       let entries: [
         key: string,
         value: string,
@@ -97,6 +115,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       const responseCookie: Cookie = {
         version,
         partialSync: responsePartialSyncState,
+        order: version,
       };
       return Promise.all([entries, lastMutationIDPromise, responseCookie]);
     }
@@ -109,12 +128,12 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
   const startBuildingPatch = Date.now();
-  const [entries, lastMutationID, responseCookie] = result;
+  const [entries, lastMutationIDChanges, responseCookie] = result;
 
-  console.log("lastMutationID: ", lastMutationID);
+  console.log("lastMutationIDChanges: ", lastMutationIDChanges);
   console.log("responseCookie: ", responseCookie);
   const resp = `{
-    "lastMutationID": ${lastMutationID ?? 0},
+    "lastMutationIDChanges": ${JSON.stringify(lastMutationIDChanges) ?? 0},
     "cookie": ${JSON.stringify(responseCookie) ?? 0},
     "patch": [${entries
       .map(([key, value, deleted]) => {

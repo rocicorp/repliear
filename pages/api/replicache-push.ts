@@ -1,9 +1,9 @@
 import { transact } from "../../backend/pg";
 import {
   createDatabase,
-  getLastMutationID,
+  getLastMutationIDs,
   getVersion,
-  setLastMutationID,
+  setLastMutationIDs,
   setVersion,
 } from "../../backend/data";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -11,20 +11,21 @@ import { ReplicacheTransaction } from "../../backend/replicache-transaction";
 import { getSyncOrder } from "../../backend/sync-order";
 import { mutators } from "../../frontend/mutators";
 import { z } from "zod";
-import { jsonSchema } from "../../util/json";
 import type { MutatorDefs } from "replicache";
 import Pusher from "pusher";
 
 // TODO: Either generate schema from mutator types, or vice versa, to tighten this.
 // See notes in bug: https://github.com/rocicorp/replidraw/issues/47
 const mutationSchema = z.object({
+  clientID: z.string(),
   id: z.number(),
   name: z.string(),
-  args: jsonSchema,
+  args: z.any(),
 });
 
 const pushRequestSchema = z.object({
-  clientID: z.string(),
+  profileID: z.string(),
+  clientGroupID: z.string(),
   mutations: z.array(mutationSchema),
 });
 
@@ -43,22 +44,21 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
       return undefined;
     }
     const nextVersion = prevVersion + 1;
-    let lastMutationID =
-      (await getLastMutationID(executor, push.clientID)) ?? 0;
+    const clientIDs = [...new Set(push.mutations.map((m) => m.clientID))];
 
-    console.log("prevVersion: ", prevVersion);
-    console.log("lastMutationID:", lastMutationID);
+    const lastMutationIDs = await getLastMutationIDs(executor, clientIDs);
 
-    const tx = new ReplicacheTransaction(
-      executor,
-      spaceID,
-      push.clientID,
-      nextVersion,
-      getSyncOrder
-    );
+    console.log(JSON.stringify({ prevVersion, nextVersion, lastMutationIDs }));
 
     for (let i = 0; i < push.mutations.length; i++) {
       const mutation = push.mutations[i];
+      const { clientID } = mutation;
+      const lastMutationID = lastMutationIDs[clientID];
+      if (lastMutationID === undefined) {
+        throw new Error(
+          "invalid state - lastMutationID not found for client: " + clientID
+        );
+      }
       const expectedMutationID = lastMutationID + 1;
 
       if (mutation.id < expectedMutationID) {
@@ -71,7 +71,14 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
         console.warn(`Mutation ${mutation.id} is from the future - aborting`);
         break;
       }
-
+      const tx = new ReplicacheTransaction(
+        executor,
+        spaceID,
+        clientID,
+        nextVersion,
+        mutation.id,
+        getSyncOrder
+      );
       console.log("Processing mutation:", JSON.stringify(mutation, null, ""));
 
       const t1 = Date.now();
@@ -89,16 +96,20 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
           e
         );
       }
-
-      lastMutationID = expectedMutationID;
+      lastMutationIDs[clientID] = expectedMutationID;
       console.log("Processed mutation in", Date.now() - t1);
+      await Promise.all([
+        setLastMutationIDs(
+          executor,
+          push.clientGroupID,
+          lastMutationIDs,
+          nextVersion
+        ),
+        setVersion(executor, spaceID, nextVersion),
+        tx.flush(),
+      ]);
     }
-
-    return await Promise.all([
-      setLastMutationID(executor, push.clientID, lastMutationID),
-      setVersion(executor, spaceID, nextVersion),
-      tx.flush(),
-    ]);
+    return true;
   });
 
   if (!result) {

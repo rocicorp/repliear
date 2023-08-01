@@ -52,16 +52,18 @@ export async function createSchemaVersion1(executor: Executor) {
       )`);
 
   await executor(`create table client (
-      id text primary key not null,
-      lastmutationid integer not null,
-      lastmodified timestamp(6) not null
+    id text primary key not null,
+    lastmutationid integer not null,
+    version integer not null,
+    lastmodified timestamp(6) not null,
+    clientgroupid text not null
       )`);
 
   await executor(`create table entry (
       spaceid text not null,
       key text not null,
       value text not null,
-      syncorder text not null,
+      syncOrder text not null,
       deleted boolean not null,
       version integer not null,
       lastmodified timestamp(6) not null
@@ -80,9 +82,11 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (spaceid)`);
   await executor(`create index on entry (deleted)`);
   await executor(`create index on entry (version)`);
+  await executor(`create index on client (clientgroupid,version)`);
 }
 
 const INITIAL_SPACE_VERSION = 1;
+const INITIAL_SPACE_MUTATION_ID = 0;
 export async function initSpace(
   executor: Executor,
   getSampleData: () => Promise<SampleData>
@@ -111,6 +115,7 @@ export async function initSpace(
         executor,
         BASE_SPACE_ID,
         "fake-client-id-for-server-init",
+        INITIAL_SPACE_MUTATION_ID,
         INITIAL_SPACE_VERSION,
         getSyncOrder
       );
@@ -180,6 +185,7 @@ export async function putEntries(
     (_, i) =>
       `($1, $${i * 3 + 3}, $${i * 3 + 4}, $${i * 3 + 5}, false, $2, now())`
   ).join();
+
   await executor(
     `
     insert into entry (
@@ -347,17 +353,62 @@ export async function getLastMutationID(
   return z.number().parse(value);
 }
 
+export async function getLastMutationIDs(
+  executor: Executor,
+  clientIDs: string[]
+) {
+  return Object.fromEntries(
+    await Promise.all(
+      clientIDs.map(async (cid) => {
+        const lmid = await getLastMutationID(executor, cid);
+        return [cid, lmid ?? 0] as const;
+      })
+    )
+  );
+}
+
+export async function getLastMutationIDsSince(
+  executor: Executor,
+  clientGroupID: string,
+  sinceVersion: number
+) {
+  const {
+    rows,
+  } = await executor(
+    `select id, clientgroupid, lastmutationid from client where clientgroupid = $1 and version > $2`,
+    [clientGroupID, sinceVersion]
+  );
+  return Object.fromEntries(
+    rows.map((r) => [r.id as string, r.lastmutationid as number] as const)
+  );
+}
+
 export async function setLastMutationID(
   executor: Executor,
   clientID: string,
-  lastMutationID: number
+  clientGroupID: string,
+  lastMutationID: number,
+  version: number
 ): Promise<void> {
   await executor(
     `
-    insert into client (id, lastmutationid, lastmodified)
-    values ($1, $2, now())
-    on conflict (id) do update set lastmutationid = $2, lastmodified = now()
+    insert into client (id, clientgroupid, lastmutationid, version, lastmodified)
+    values ($1, $2, $3, $4, now())
+      on conflict (id) do update set lastmutationid = $3, version = $4, lastmodified = now()
     `,
-    [clientID, lastMutationID]
+    [clientID, clientGroupID, lastMutationID, version]
+  );
+}
+
+export async function setLastMutationIDs(
+  executor: Executor,
+  clientGroupID: string,
+  lmids: Record<string, number>,
+  version: number
+) {
+  return await Promise.all(
+    [...Object.entries(lmids)].map(([clientID, lmid]) =>
+      setLastMutationID(executor, clientID, clientGroupID, lmid, version)
+    )
   );
 }
