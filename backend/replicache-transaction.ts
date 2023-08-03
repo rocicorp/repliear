@@ -4,6 +4,8 @@ import type {
   ReadTransaction,
   ScanOptions,
   ScanResult,
+  TransactionEnvironment,
+  TransactionReason,
   WriteTransaction,
 } from "replicache";
 import { delEntries, getEntry, putEntries } from "./data";
@@ -22,6 +24,7 @@ export class ReplicacheTransaction implements WriteTransaction {
   private readonly _spaceID: string;
   private readonly _clientID: string;
   private readonly _version: number;
+  private readonly _mutationID: number;
   private readonly _executor: Executor;
   private readonly _getSyncOrder: SyncOrderFn;
   private readonly _cache: Map<
@@ -34,13 +37,27 @@ export class ReplicacheTransaction implements WriteTransaction {
     spaceID: string,
     clientID: string,
     version: number,
+    mutationId: number,
     getSyncOrder: SyncOrderFn
   ) {
     this._spaceID = spaceID;
     this._clientID = clientID;
     this._version = version;
+    this._mutationID = mutationId;
     this._executor = executor;
     this._getSyncOrder = getSyncOrder;
+  }
+
+  get reason(): TransactionReason {
+    return "authoritative";
+  }
+
+  get environment(): TransactionEnvironment {
+    return "server";
+  }
+
+  get mutationID(): number {
+    return this._mutationID;
   }
 
   get clientID(): string {

@@ -23,7 +23,6 @@ export const mutators = {
       description: Description;
     }
   ): Promise<void> => {
-    console.log("mutators.putIssue", issue);
     await putIssue(tx, issue);
     await putIssueDescription(tx, issue.id, description);
   },
