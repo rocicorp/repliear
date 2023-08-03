@@ -55,7 +55,7 @@ export async function createSchemaVersion1(executor: Executor) {
     id text primary key not null,
     lastmutationid integer not null,
     version integer not null,
-    clientgroupid text not null
+    clientgroupid text not null,
     lastmodified timestamp(6) not null
     )`);
 
