@@ -16,7 +16,6 @@ import {
 } from "frontend/control";
 
 const cookieSchema = z.union([
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   z.object({
     version: z.number(),
     partialSync: partialSyncStateSchema,

@@ -55,15 +55,15 @@ export async function createSchemaVersion1(executor: Executor) {
     id text primary key not null,
     lastmutationid integer not null,
     version integer not null,
-    lastmodified timestamp(6) not null,
     clientgroupid text not null
-      )`);
+    lastmodified timestamp(6) not null
+    )`);
 
   await executor(`create table entry (
       spaceid text not null,
       key text not null,
       value text not null,
-      syncOrder text not null,
+      syncorder text not null,
       deleted boolean not null,
       version integer not null,
       lastmodified timestamp(6) not null
@@ -82,7 +82,7 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(`create index on entry (spaceid)`);
   await executor(`create index on entry (deleted)`);
   await executor(`create index on entry (version)`);
-  await executor(`create index on client (clientgroupid,version)`);
+  await executor(`create index on client (clientgroupid, version)`);
 }
 
 const INITIAL_SPACE_VERSION = 1;
