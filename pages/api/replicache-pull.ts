@@ -26,13 +26,19 @@ const cookieSchema = z.union([
 
 type Cookie = z.TypeOf<typeof cookieSchema>;
 
-const pullRequestSchema = z.object({
-  profileID: z.string(),
-  clientGroupID: z.optional(z.string()),
-  pullVersion: z.number(),
-  schemaVersion: z.string(),
-  cookie: cookieSchema,
+const pullRequestV0 = z.object({
+  pullVersion: z.literal(0),
 });
+
+const pullRequestV1 = z.object({
+  pullVersion: z.literal(1),
+  profileID: z.string(),
+  clientGroupID: z.string(),
+  cookie: cookieSchema,
+  schemaVersion: z.string(),
+});
+
+const pullRequestSchema = z.union([pullRequestV0, pullRequestV1]);
 
 const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   const startPull = Date.now();
@@ -40,17 +46,12 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
   const spaceID = req.query["spaceID"].toString();
   const startRequestParse = Date.now();
   const pull = pullRequestSchema.parse(req.body);
-  console.log("Request parse took", Date.now() - startRequestParse);
-  const requestCookie: Cookie = pull.cookie;
-
-  console.log("spaceID", spaceID);
-  console.log("clientGroupID", pull.clientGroupID);
-  const { clientGroupID } = pull;
+  const { pullVersion } = pull;
 
   // NOTE:
-  // If clientGroupID is not sent, it is a user that is using an old client pre Replicache 13
+  // If pullVersion ===0 it is a user that is using an old client pre Replicache 13
   // return an error response that will cause the app to reload and get new Replicache 13 client code
-  if (clientGroupID === undefined) {
+  if (pullVersion === 0) {
     res.status(200);
     res.json({
       error: "ClientStateNotFound",
@@ -58,6 +59,14 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
     res.end();
     return;
   }
+
+  console.log("Request parse took", Date.now() - startRequestParse);
+  const requestCookie: Cookie = pull.cookie;
+
+  console.log("spaceID", spaceID);
+  console.log("clientGroupID", pull.clientGroupID);
+  const { clientGroupID } = pull;
+
   const startTransact = Date.now();
   const result = await transact(async (executor) => {
     await createDatabase(executor);
