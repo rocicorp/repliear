@@ -25,7 +25,7 @@ const mutationSchema = z.object({
 
 const pushRequestSchema = z.object({
   profileID: z.string(),
-  clientGroupID: z.string(),
+  clientGroupID: z.optional(z.string()),
   mutations: z.array(mutationSchema),
 });
 
@@ -34,6 +34,19 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const spaceID = req.query["spaceID"].toString();
   const push = pushRequestSchema.parse(req.body);
+  const { clientGroupID } = push;
+
+  // NOTE:
+  // If clientGroupID is not sent, it is a user that is using an old client pre Replicache 13
+  // return an error response that will cause the app to reload and get new Replicache 13 client code
+  if (clientGroupID === undefined) {
+    res.status(200);
+    res.json({
+      error: "ClientStateNotFound",
+    });
+    res.end();
+    return;
+  }
 
   const t0 = Date.now();
   const result = await transact(async (executor) => {
@@ -101,7 +114,7 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
       await Promise.all([
         setLastMutationIDs(
           executor,
-          push.clientGroupID,
+          clientGroupID,
           lastMutationIDs,
           nextVersion
         ),

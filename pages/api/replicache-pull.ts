@@ -28,7 +28,7 @@ type Cookie = z.TypeOf<typeof cookieSchema>;
 
 const pullRequestSchema = z.object({
   profileID: z.string(),
-  clientGroupID: z.string(),
+  clientGroupID: z.optional(z.string()),
   pullVersion: z.number(),
   schemaVersion: z.string(),
   cookie: cookieSchema,
@@ -45,7 +45,19 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
 
   console.log("spaceID", spaceID);
   console.log("clientGroupID", pull.clientGroupID);
+  const { clientGroupID } = pull;
 
+  // NOTE:
+  // If clientGroupID is not sent, it is a user that is using an old client pre Replicache 13
+  // return an error response that will cause the app to reload and get new Replicache 13 client code
+  if (clientGroupID === undefined) {
+    res.status(200);
+    res.json({
+      error: "ClientStateNotFound",
+    });
+    res.end();
+    return;
+  }
   const startTransact = Date.now();
   const result = await transact(async (executor) => {
     await createDatabase(executor);
@@ -56,7 +68,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
     if (!requestCookie) {
       const lastMutationIDPromise = await getLastMutationIDsSince(
         executor,
-        pull.clientGroupID,
+        clientGroupID,
         0
       );
       const entries = await getIssueEntries(executor, spaceID);
@@ -71,7 +83,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
     } else {
       const lastMutationIDPromise = getLastMutationIDsSince(
         executor,
-        pull.clientGroupID,
+        clientGroupID,
         requestCookie.version
       );
       console.log("requestCookie", requestCookie);
