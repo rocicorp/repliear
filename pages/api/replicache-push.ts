@@ -23,23 +23,30 @@ const mutationSchema = z.object({
   args: z.any(),
 });
 
-const pushRequestSchema = z.object({
+const pushRequestV0Schema = z.object({
+  pushVersion: z.literal(0),
+});
+
+const pushRequestV1Schema = z.object({
+  pushVersion: z.literal(1),
   profileID: z.string(),
-  clientGroupID: z.optional(z.string()),
+  clientGroupID: z.string(),
   mutations: z.array(mutationSchema),
 });
+
+const pushRequestSchema = z.union([pushRequestV0Schema, pushRequestV1Schema]);
 
 const push = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log("Processing push", JSON.stringify(req.body, null, ""));
 
   const spaceID = req.query["spaceID"].toString();
   const push = pushRequestSchema.parse(req.body);
-  const { clientGroupID } = push;
+  const { pushVersion } = push;
 
   // NOTE:
-  // If clientGroupID is not sent, it is a user that is using an old client pre Replicache 13
+  // If pushVersion === 0, it is a user that is using an old client pre Replicache 13
   // return an error response that will cause the app to reload and get new Replicache 13 client code
-  if (clientGroupID === undefined) {
+  if (pushVersion === 0) {
     res.status(200);
     res.json({
       error: "ClientStateNotFound",
@@ -47,6 +54,7 @@ const push = async (req: NextApiRequest, res: NextApiResponse) => {
     res.end();
     return;
   }
+  const { clientGroupID } = push;
 
   const t0 = Date.now();
   const result = await transact(async (executor) => {
