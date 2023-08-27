@@ -51,6 +51,12 @@ export async function createSchemaVersion1(executor: Executor) {
       lastmodified timestamp(6) not null
       )`);
 
+  // lastpullid is null until the client has pulled for the first time.
+  await executor(`create table clientgroup (
+      id text primary key not null,
+      lastpullid integer null
+  )`);
+
   await executor(`create table client (
     id text primary key not null,
     lastmutationid integer not null,
@@ -383,6 +389,28 @@ export async function getLastMutationIDsSince(
   );
 }
 
+export async function incrementPullID(
+  executor: Executor,
+  clientGroupID: string
+) {
+  const {
+    rows,
+  } = await executor(`select lastpullid from clientgroup where id = $1`, [
+    clientGroupID,
+  ]);
+  if (rows.length === 0) {
+    await executor(`insert into clientgroup (id, lastpullid) values ($1, 1)`, [
+      clientGroupID,
+    ]);
+    return 1;
+  }
+  const [prev] = rows;
+  const { lastpullid } = prev;
+  const nextPullID = lastpullid + 1;
+  await executor(`update clientgroup set lastpullid = $1`, [nextPullID]);
+  return nextPullID;
+}
+
 export async function setLastMutationID(
   executor: Executor,
   clientID: string,
@@ -390,6 +418,13 @@ export async function setLastMutationID(
   lastMutationID: number,
   version: number
 ): Promise<void> {
+  await executor(
+    `
+    insert into clientgroup (id, lastpullid) values ($1, null)
+      on conflict (id) do nothing
+    `,
+    [clientGroupID]
+  );
   await executor(
     `
     insert into client (id, clientgroupid, lastmutationid, version, lastmodified)

@@ -7,6 +7,7 @@ import {
   getLastMutationIDsSince,
   getNonIssueEntriesInSyncOrder,
   getVersion,
+  incrementPullID,
 } from "../../backend/data";
 import { z } from "zod";
 import {
@@ -74,6 +75,9 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
     if (version === undefined) {
       return undefined;
     }
+
+    const nextPullID = await incrementPullID(executor, clientGroupID);
+
     if (!requestCookie) {
       const lastMutationIDPromise = await getLastMutationIDsSince(
         executor,
@@ -84,7 +88,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       const responseCookie: Cookie = {
         version,
         partialSync: "ISSUES_SYNCED",
-        order: version,
+        order: nextPullID,
       };
       const partialSyncState: PartialSyncState = "ISSUES_SYNCED";
       entries.push([PARTIAL_SYNC_STATE_KEY, JSON.stringify(partialSyncState)]);
@@ -135,7 +139,7 @@ const pull = async (req: NextApiRequest, res: NextApiResponse) => {
       const responseCookie: Cookie = {
         version,
         partialSync: responsePartialSyncState,
-        order: version,
+        order: nextPullID,
       };
       return Promise.all([entries, lastMutationIDPromise, responseCookie]);
     }
