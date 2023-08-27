@@ -46,7 +46,27 @@ export async function getReactSampleData(): Promise<SampleData> {
       issue.comments.push(comment);
     }
   }
-  return issues;
+  issues;
+
+  // Can use this to generate artifically larger datasets for stress testing.
+  const multiplied: SampleData = [];
+  for (let i = 0; i < 1; i++) {
+    multiplied.push(
+      ...issues.map((issue) => ({
+        ...issue,
+        issue: {
+          ...issue.issue,
+          id: issue.issue.id + "-" + i,
+        },
+        comments: issue.comments.map((comment) => ({
+          ...comment,
+          issueID: comment.issueID + "-" + i,
+        })),
+      }))
+    );
+  }
+
+  return multiplied;
 }
 
 function getStatus({
