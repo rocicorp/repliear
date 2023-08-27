@@ -16,13 +16,21 @@ export type SampleData = {
 
 export async function createDatabase(executor: Executor) {
   const schemaVersion = await getSchemaVersion(executor);
-  if (schemaVersion < 0 || schemaVersion > 1) {
+  if (schemaVersion < 0 || schemaVersion > 2) {
     throw new Error("Unexpected schema version: " + schemaVersion);
   }
-  if (schemaVersion === 0) {
-    await createSchemaVersion1(executor);
+
+  if (schemaVersion === 2) {
+    console.log("schemaVersion is 2 - nothing to do");
+    return;
   }
-  console.log("schemaVersion is 1 - nothing to do");
+
+  console.log("creating schema");
+  await executor("drop schema if exists public cascade");
+  await executor("create schema public");
+  await executor("grant all on schema public to postgres");
+  await executor("grant all on schema public to public");
+  await createSchema(executor);
 }
 
 async function getSchemaVersion(executor: Executor) {
@@ -41,9 +49,9 @@ async function getSchemaVersion(executor: Executor) {
 // nanoid's don't include $, so cannot collide with other space ids.
 export const BASE_SPACE_ID = "$base-space-id";
 
-export async function createSchemaVersion1(executor: Executor) {
+export async function createSchema(executor: Executor) {
   await executor(`create table meta (key text primary key, value json)`);
-  await executor(`insert into meta (key, value) values ('schemaVersion', '1')`);
+  await executor(`insert into meta (key, value) values ('schemaVersion', '2')`);
 
   await executor(`create table space (
       id text primary key not null,
