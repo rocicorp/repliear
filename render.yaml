@@ -1,0 +1,23 @@
+previewsEnabled: true
+services:
+  - type: web
+    name: replicache-todo-row-versioning
+    env: node
+    region: oregon # optional (defaults to oregon)
+    plan: starter # optional (defaults to starter)
+    buildCommand: 'npm install && npm run build' # optional (defaults to Dockerfile command)
+    startCommand: 'npm run prod --ws'
+    numInstances: 1 # optional (defaults to 1)
+    envVars:
+      - key: VITE_REPLICACHE_LICENSE_KEY
+        value: <license_key> # change e.g. (VITE_REPLICACHE_LICENSE_KEY: 1234567890)
+      - key: NODE_VERSION
+        value: 16.15.1
+      - key: DATABASE_URL
+        fromDatabase:
+          name: replicache-todo
+          property: connectionString
+
+databases:
+  - name: replicache-todo
+    databaseName: db
