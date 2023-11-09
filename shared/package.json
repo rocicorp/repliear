@@ -1,0 +1,22 @@
+{
+  "name": "shared",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "@rocicorp/eslint-config": "^0.1.2",
+    "@rocicorp/prettier-config": "^0.1.1",
+    "typescript": "4.7.4"
+  },
+  "scripts": {
+    "format": "prettier --write './src/**/*.{js,jsx,json,ts,tsx,html,css,md}' '*.{cjs,js,jsx,json,ts,tsx,html,css,md}'",
+    "check-format": "prettier --check './src/**/*.{js,jsx,json,ts,tsx,html,css,md}' '*.{cjs,js,jsx,json,ts,tsx,html,css,md}'",
+    "lint": "eslint --ext .ts,.tsx,.js,.jsx .",
+    "check-types": "tsc --noEmit"
+  },
+  "type": "module",
+  "eslintConfig": {
+    "extends": "@rocicorp/eslint-config"
+  },
+  "prettier": "@rocicorp/prettier-config",
+  "main": "src/index.ts"
+}
