@@ -65,7 +65,8 @@ export function findUnsentItems(
   limit: number,
 ) {
   let sql: string;
-  // comments are immutable so just pull via cursor.
+  // comments are immutable so we should just pull via a cursor.
+  // this way below is horribly inefficient.
   if (table === 'comment') {
     sql = /*sql*/ `SELECT * FROM "${table}" t WHERE NOT EXISTS (
         SELECT 1 FROM "cvr_entry" WHERE "cvr_entry"."row_id" = t."id" AND
@@ -75,9 +76,7 @@ export function findUnsentItems(
         "cvr_entry"."tbl" = $3
       ) LIMIT $4`;
   } else {
-    // The below query runs in ~40ms for issues vs the above takes 16 seconds.
-    // We should figure out delete culling. Seems possible to remove deleted items from CVRs
-    // with some tricks.
+    // The below query runs in ~40ms for issues vs the above takes 16 seconds for issues.
     sql = /*sql*/ `SELECT *
       FROM "${table}" t
       WHERE (t."id", t."rowversion") NOT IN (
@@ -109,7 +108,7 @@ export function findDeletions(
 ) {
   // Find rows that are in the CVR table but not in the actual table.
   // Exclude rows that have a delete entry already.
-  // Maybe we can remove the second `NOT EXISTS` if we prune the CVR table.
+  // TODO: Maybe we can remove the second `NOT EXISTS` if we prune the CVR table.
   // This pruning would mean that we need to record the delete against the
   // current CVR rather than next CVR. If a request comes in for that prior CVR,
   // we return the stored delete records and do not compute deletes.
