@@ -213,7 +213,7 @@ export async function pull(
   for (const comment of nextPage.comments) {
     patch.push({
       op: 'put',
-      key: `comment/${comment.issueID}/${comment.id}`,
+      key: `comment/${comment.id}`,
       value: comment,
     });
   }
@@ -229,8 +229,7 @@ export async function pull(
   // del_range, key: 'comment/issue_id/*`
   // encode issue id into comment id for now?
   for (const id of nextPage.commentDeletes) {
-    const [issueID] = id.split('_');
-    patch.push({op: 'del', key: `comment/${issueID}/${id}`});
+    patch.push({op: 'del', key: `comment/${id}`});
   }
 
   // If we have less than page size records

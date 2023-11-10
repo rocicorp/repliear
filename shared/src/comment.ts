@@ -11,7 +11,6 @@ export const commentSchema = entitySchema.extend({
 export type Comment = z.infer<typeof commentSchema>;
 export type CommentUpdate = Update<Comment>;
 
-// Well.. we can't actually use any of these because we need a dynamic prefix
 export const {
   init: createComment,
   get: getComment,

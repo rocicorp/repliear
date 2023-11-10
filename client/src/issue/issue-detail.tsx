@@ -161,7 +161,7 @@ export default function IssueDetail({
   const handleAddComment = useCallback(() => {
     if (commentText !== '') {
       onAddComment({
-        id: `${issue?.id as string}_${nanoid()}`,
+        id: `${issue?.id as string}/${nanoid()}`,
         issueID: issue?.id as string,
         created: Date.now(),
         creator: 'Me',

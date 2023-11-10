@@ -79,9 +79,8 @@ export async function getReactSampleData(): Promise<SampleData[]> {
 
   // Can use this to generate artifically larger datasets for stress testing.
   const factor = 1;
-  const multiply = factor >= 1;
   let commentId = 1;
-  if (multiply) {
+  if (factor >= 1) {
     const multiplied: SampleData[] = [];
     for (let i = 0; i < factor; i++) {
       multiplied.push(
@@ -98,7 +97,7 @@ export async function getReactSampleData(): Promise<SampleData[]> {
           comments: issue.comments.map(comment => ({
             ...comment,
             issueID: comment.issueID + '-' + i,
-            id: `${comment.issueID}_${commentId++}`,
+            id: `${comment.issueID}-${i}/${commentId++}`,
           })),
         })),
       );
@@ -111,8 +110,7 @@ export async function getReactSampleData(): Promise<SampleData[]> {
     decimated.push(issues[i]);
     decimated[i].comments = decimated[i].comments.map(comment => ({
       ...comment,
-      issueID: comment.issueID + '-' + i,
-      id: `${comment.issueID}_${commentId++}`,
+      id: `${comment.issueID}/${commentId++}`,
     }));
   }
 

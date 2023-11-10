@@ -1,13 +1,14 @@
 import type {WriteTransaction} from 'replicache';
 import {
   Comment,
+  createComment,
+  deleteComment,
   getIssue,
   IssueUpdateWithID,
   IssueWithDescription,
   putDescription,
   putIssue,
 } from 'shared';
-import {putIssueComment, commentKey} from '../issue/issue';
 
 export type M = typeof mutators;
 export const mutators = {
@@ -54,12 +55,12 @@ export const mutators = {
       const changed = {...issue, modified: Date.now()};
       await putIssue(tx, changed);
     }
-    await putIssueComment(tx, comment);
+    await createComment(tx, comment);
   },
   deleteIssueComment: async (
     tx: WriteTransaction,
     comment: Comment,
   ): Promise<void> => {
-    await tx.del(commentKey(comment.issueID, comment.id));
+    await deleteComment(tx, comment.id);
   },
 };

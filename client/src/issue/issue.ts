@@ -1,8 +1,4 @@
-import type {
-  ReadonlyJSONValue,
-  ReadTransaction,
-  WriteTransaction,
-} from 'replicache';
+import type {ReadonlyJSONValue, ReadTransaction} from 'replicache';
 import {
   Comment,
   commentSchema,
@@ -58,19 +54,18 @@ export function issueFromKeyAndValue(
 }
 
 export const COMMENT_KEY_PREFIX = `comment/`;
-export const commentKey = (issueID: string, commentID: string) =>
-  `${COMMENT_KEY_PREFIX}${issueID}/${commentID}`;
 export const commentIDs = (key: string) => {
   if (!key.startsWith(COMMENT_KEY_PREFIX)) {
     throw new Error(`Invalid comment key: ${key}`);
   }
-  const ids = key.substring(COMMENT_KEY_PREFIX.length).split('/');
+  const unprefixed = key.substring(COMMENT_KEY_PREFIX.length);
+  const ids = unprefixed.split('/');
   if (ids.length !== 2) {
     throw new Error(`Invalid comment key: ${key}`);
   }
   return {
     issueID: ids[0],
-    commentID: ids[1],
+    commentID: unprefixed,
   };
 };
 
@@ -96,13 +91,6 @@ export async function getIssueComments(
       issueID: ids.issueID,
     };
   });
-}
-
-export async function putIssueComment(
-  tx: WriteTransaction,
-  comment: Comment,
-): Promise<void> {
-  await tx.put(commentKey(comment.issueID, comment.id), comment);
 }
 
 const REVERSE_TIMESTAMP_LENGTH = Number.MAX_SAFE_INTEGER.toString().length;
