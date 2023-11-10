@@ -29,6 +29,9 @@ export function useQueryState<T>(
   // Update URL when state changes
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
+    const oldRelativePathQuery = `${
+      window.location.pathname
+    }?${searchParams.toString()}`;
     if (value === null) {
       searchParams.delete(key);
     } else {
@@ -37,6 +40,9 @@ export function useQueryState<T>(
     const newRelativePathQuery = `${
       window.location.pathname
     }?${searchParams.toString()}`;
+    if (oldRelativePathQuery === newRelativePathQuery) {
+      return;
+    }
     history.pushState(null, '', newRelativePathQuery);
     for (const listener of queryStateListenres) {
       listener();
