@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type {ReadonlyJSONValue, ReadTransaction} from 'replicache';
 import {
   Comment,
@@ -8,31 +9,20 @@ import {
   Status,
 } from 'shared';
 import {z} from 'zod';
-import type {Immutable} from '../util/immutable';
 
 export const priorityOrderValues: Record<Priority, string> = {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   URGENT: '1',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   HIGH: '2',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   MEDIUM: '3',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   LOW: '4',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   NONE: '5',
 };
 
 export const statusOrderValues: Record<Status, string> = {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   BACKLOG: '1',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   TODO: '2',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   IN_PROGRESS: '3',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   DONE: '4',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   CANCELED: '5',
 };
 
@@ -48,48 +38,20 @@ export function issueFromKeyAndValue(
   _key: string,
   value: ReadonlyJSONValue,
 ): Issue {
-  return {
-    ...issueSchema.parse(value),
-  };
+  return issueSchema.parse(value);
 }
 
 export const COMMENT_KEY_PREFIX = `comment/`;
-export const commentIDs = (key: string) => {
-  if (!key.startsWith(COMMENT_KEY_PREFIX)) {
-    throw new Error(`Invalid comment key: ${key}`);
-  }
-  const unprefixed = key.substring(COMMENT_KEY_PREFIX.length);
-  const ids = unprefixed.split('/');
-  if (ids.length !== 2) {
-    throw new Error(`Invalid comment key: ${key}`);
-  }
-  return {
-    issueID: ids[0],
-    commentID: unprefixed,
-  };
-};
-
-export type CommentValue = Immutable<z.TypeOf<typeof commentValueSchema>>;
-export const commentValueSchema = commentSchema.omit({
-  id: true,
-  issueID: true,
-});
-
 export async function getIssueComments(
   tx: ReadTransaction,
   issueID: string,
 ): Promise<Comment[]> {
-  const entries = await tx
+  const values = await tx
     .scan({prefix: COMMENT_KEY_PREFIX + issueID})
-    .entries()
+    .values()
     .toArray();
-  return entries.map(([key, val]) => {
-    const ids = commentIDs(key);
-    return {
-      ...commentValueSchema.parse(val),
-      id: ids.commentID,
-      issueID: ids.issueID,
-    };
+  return values.map(val => {
+    return commentSchema.parse(val);
   });
 }
 
