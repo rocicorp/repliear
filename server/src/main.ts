@@ -18,6 +18,7 @@ const host = process.env.HOST ?? '0.0.0.0';
 const default_dist = path.join(__dirname, '../dist/dist');
 
 // Wait for the DB to actually be stood up.
+console.log('Seeding the database');
 await pool;
 
 const app = express();

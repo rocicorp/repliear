@@ -24,10 +24,10 @@ import {
   ISSUE_KEY_PREFIX,
   PartialSyncState,
 } from 'shared';
-import {acquire} from './util/sync-lock';
 import {getFilters, getIssueOrder} from './filters';
 import {Layout} from './layout/layout';
 import {timedReducer} from './reducer';
+import {useExclusiveEffect} from './util/useLock';
 
 type AppProps = {
   rep: Replicache<M>;
@@ -60,19 +60,16 @@ const App = ({rep, undoManager}: AppProps) => {
     'NOT_RECEIVED_FROM_SERVER',
   );
   const partialSyncComplete = partialSync === 'COMPLETE';
-  const [syncLockHeld, setSyncLockHeld] = useState(false);
-  useEffect(() => {
-    console.log('partialSync', partialSync);
-    const lock = acquire('sync-lock');
-    setSyncLockHeld(lock.held);
-    lock.onAcquired = () => {
-      setSyncLockHeld(true);
-    };
-    if (!partialSyncComplete && syncLockHeld) {
-      console.log('pulling');
-      rep.pull();
-    }
-  }, [rep, partialSync, partialSyncComplete, syncLockHeld]);
+  useExclusiveEffect(
+    'sync-lock',
+    () => {
+      console.log('partialSync', partialSync);
+      if (!partialSyncComplete) {
+        rep.pull();
+      }
+    },
+    [rep, partialSync, partialSyncComplete],
+  );
 
   useEffect(() => {
     const ev = new EventSource(`/api/replicache/poke?channel=poke`);

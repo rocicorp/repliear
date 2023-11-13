@@ -11,11 +11,6 @@ import {
   putIssue,
   updateDescription,
   updateIssue,
-  // putIssue,
-  // deleteIssue,
-  // putDescription,
-  // createComment,
-  // deleteComment,
 } from './data';
 import type {ReadonlyJSONValue} from 'replicache';
 import {getPokeBackend} from './poke';
@@ -50,7 +45,6 @@ export async function push(requestBody: ReadonlyJSONValue) {
   for (const mutation of push.mutations) {
     const result = await processMutation(push.clientGroupID, mutation, null);
     if (result && 'error' in result) {
-      // TODO: we could gather affected ids for fine grained refresh of the impacted items.
       await processMutation(push.clientGroupID, mutation, result.error);
     }
   }
@@ -148,8 +142,13 @@ async function mutate(executor: Executor, mutation: Mutation): Promise<void> {
       updates.map(async update => {
         // issue needs to exist first so the description can reference it
         await updateIssue(executor, update.id, update.issueChanges);
-        if (update.descriptionChange === undefined) return;
-        await updateDescription(executor, update.id, update.descriptionChange);
+        if (update.descriptionChange !== undefined) {
+          await updateDescription(
+            executor,
+            update.id,
+            update.descriptionChange,
+          );
+        }
       });
       break;
     }

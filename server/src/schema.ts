@@ -43,7 +43,7 @@ export async function createSchemaVersion1(executor: Executor) {
     /*sql*/ `CREATE TYPE status AS ENUM ('BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED')`,
   );
 
-  await executor(/*sql*/ `CREATE TABLE issue (
+  await executor(/*sql*/ `CREATE TABLE "issue" (
     "id" VARCHAR(36) PRIMARY KEY NOT NULL,
     "title" text NOT NULL,
     "priority" priority,
@@ -55,7 +55,7 @@ export async function createSchemaVersion1(executor: Executor) {
     "rowversion" INTEGER NOT NULL
   )`);
 
-  await executor(/*sql*/ `CREATE TABLE comment (
+  await executor(/*sql*/ `CREATE TABLE "comment" (
     "id" VARCHAR(36) PRIMARY KEY NOT NULL,
     "issueid" VARCHAR(36) NOT NULL REFERENCES issue("id") ON DELETE CASCADE,
     "created" BIGINT NOT NULL,
@@ -64,7 +64,7 @@ export async function createSchemaVersion1(executor: Executor) {
     "rowversion" INTEGER NOT NULL
   )`);
 
-  await executor(/*sql*/ `CREATE TABLE description (
+  await executor(/*sql*/ `CREATE TABLE "description" (
     "id" VARCHAR(36) PRIMARY KEY NOT NULL REFERENCES issue("id") ON DELETE CASCADE,
     "body" text NOT NULL,
     "rowversion" INTEGER NOT NULL
@@ -89,13 +89,6 @@ export async function createSchemaVersion1(executor: Executor) {
     PRIMARY KEY ("client_group_id", "tbl", "row_id")
   )`);
 
-  // Index for `EXIST` queries when sending new changes to the client
-  // from the pull endpoint.
-  // We can use the primary key index to fulfill the exists query.
-  // await executor(/*sql*/ `CREATE INDEX "cvr_entry_id_version" ON "cvr_entry" (
-  //   "row_id", "row_version"
-  // )`);
-
   await executor(/*sql*/ `CREATE TABLE "cvr_delete_entry" (
     "client_group_id" VARCHAR(36) NOT NULL,
     "order" INTEGER NOT NULL,
@@ -104,9 +97,3 @@ export async function createSchemaVersion1(executor: Executor) {
     PRIMARY KEY ("client_group_id", "order", "tbl", "row_id")
   )`);
 }
-// TODO: we only need to keeo `row_id`, `version`, `table_name` uniquely per client group
-// since if a new row version is written if effectively evicts the old one.
-// Deletes... this is a problem.
-
-// TODO: later CVRs can use prior CVRs to build their data. Right?
-// If the client has the next order then we can assume they received the prior order.

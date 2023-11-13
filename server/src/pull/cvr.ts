@@ -64,10 +64,6 @@ export function findUnsentItems(
   order: number,
   limit: number,
 ) {
-  // let sql: string;
-  // comments are immutable so we should just pull via a cursor.
-  // this way below is horribly inefficient.
-  // if (table === 'comment') {
   //   sql = /*sql*/ `SELECT * FROM "${table}" t WHERE NOT EXISTS (
   //       SELECT 1 FROM "cvr_entry" WHERE "cvr_entry"."row_id" = t."id" AND
   //       "cvr_entry"."row_version" = t."rowversion" AND
@@ -75,7 +71,6 @@ export function findUnsentItems(
   //       "cvr_entry"."order" <= $2 AND
   //       "cvr_entry"."tbl" = $3
   //     ) LIMIT $4`;
-  // } else {
   // The below query runs in ~40ms for issues vs the above takes 16 seconds for issues.
   const sql = /*sql*/ `SELECT *
       FROM "${table}" t
@@ -87,7 +82,6 @@ export function findUnsentItems(
           AND "tbl" = $3
       )
       LIMIT $4;`;
-  // }
 
   const params = [clientGroupID, order, TableOrdinal[table], limit];
   return executor(sql, params);

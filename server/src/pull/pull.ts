@@ -55,14 +55,14 @@ export async function pull(
       // Getting an old order from the client means that the client is possibly missing the data
       // from future orders.
       //
-      // The other possbility is that multiple tabs are syncing (this seems odd to me... why are tabs not coordinating who does sync?)
-      // Given that, could tabs starve eachother if they interleave syncs? Deleting one another's CVRs?
-      // An alternative would be to merge the old CVR into the new CVR so the new CVR which has all required state.
-      // Then we don't have to ever delete. Another alternative is for each CVR to refer to its parent CVR and
-      // use a recursive query to build the full picture of a CVR.
+      // The other possbility is that multiple tabs are syncing (why are tabs not coordinating who does sync?)
+      // Given that, dropping entries can cause to tabs could starve one another!! I've updated the frontend
+      // so pulls can only be issued from one tab (see `useExclusiveEffect`). The other solution here is to not
+      // drop CVR entries and instead have CVRs refer to their parent and construct
+      // the full CVR state via recursive query.
       //
       // Why do we delete later CVRs?
-      // Since we are sharing CVR data across orders and the CVR id is auto-increment.
+      // Since we are sharing CVR data across orders (CVR_n = CVR_n-1 + current_pull).
       // To keep greater CVRs around, which may have never been received, means that the next CVR would
       // indicate that the data was received when it was not.
       await dropCVREntries(executor, clientGroupID, baseCVR.order);
@@ -224,10 +224,6 @@ export async function pull(
   for (const id of nextPage.descriptionDeletes) {
     patch.push({op: 'del', key: `description/${id}`});
   }
-  // TODO: Comment delete records must record the issue that it is linked to...
-  // Can we push a range delete?
-  // del_range, key: 'comment/issue_id/*`
-  // encode issue id into comment id for now?
   for (const id of nextPage.commentDeletes) {
     patch.push({op: 'del', key: `comment/${id}`});
   }
