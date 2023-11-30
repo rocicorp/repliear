@@ -161,9 +161,6 @@ export async function readNextPage(
     findDeletions(executor, 'comment', clientGroupID, order, remaining),
   ]);
 
-  // Record deletes against the _current_ CVR
-  // If someone asks for the current CVR again we send the recorded
-  // deletes since we can't compute deletes anymore.
   for (const r of issueDeleteRows) {
     issueDeletes.push(r.entity_id);
   }
