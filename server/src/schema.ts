@@ -70,14 +70,14 @@ export async function createSchemaVersion1(executor: Executor) {
     "version" INTEGER NOT NULL
   )`);
 
-  await executor(/*sql*/ `CREATE TABLE "cvr" (
+  await executor(/*sql*/ `CREATE TABLE "client_view" (
     "client_group_id" VARCHAR(36) NOT NULL,
     "order" INTEGER NOT NULL,
     "client_version" INTEGER NOT NULL,
     PRIMARY KEY ("client_group_id", "order")
   )`);
 
-  await executor(/*sql*/ `CREATE TABLE "cvr_entry" (
+  await executor(/*sql*/ `CREATE TABLE "client_view_entry" (
     "client_group_id" VARCHAR(36) NOT NULL,
     "order" INTEGER NOT NULL,
     "tbl" INTEGER NOT NULL,
@@ -89,7 +89,7 @@ export async function createSchemaVersion1(executor: Executor) {
     PRIMARY KEY ("client_group_id", "tbl", "row_id")
   )`);
 
-  await executor(/*sql*/ `CREATE TABLE "cvr_delete_entry" (
+  await executor(/*sql*/ `CREATE TABLE "client_view_delete_entry" (
     "client_group_id" VARCHAR(36) NOT NULL,
     "order" INTEGER NOT NULL,
     "tbl" INTEGER NOT NULL,

@@ -1,6 +1,6 @@
-import pg from "pg";
-import type { Executor } from "../pg.js";
-import type { PGConfig } from "./pgconfig.js";
+import pg from 'pg';
+import type {Executor} from '../pg.js';
+import type {PGConfig} from './pgconfig.js';
 
 /**
  * Implements PGConfig over a basic Postgres connection.
@@ -9,13 +9,13 @@ export class PostgresDBConfig implements PGConfig {
   private _url: string;
 
   constructor(url: string) {
-    console.log("Creating PostgresDBConfig with url", url);
+    console.log('Creating PostgresDBConfig with url', url);
     this._url = url;
   }
 
   initPool(): pg.Pool {
     const ssl =
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === 'production'
         ? {
             rejectUnauthorized: false,
           }
@@ -33,7 +33,7 @@ export class PostgresDBConfig implements PGConfig {
       return 0;
     }
     const qr = await executor(
-      `select value from replicache_meta where key = 'schemaVersion'`
+      `select value from replicache_meta where key = 'schemaversion'`,
     );
     return qr.rows[0].value;
   }
