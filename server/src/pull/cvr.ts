@@ -13,7 +13,7 @@ export async function getCVR(
   order: number,
 ): Promise<CVR | undefined> {
   const result = await executor(
-    /*sql*/ `SELECT "client_version" FROM "client_view" WHERE "client_group_id" = $1 AND "order" = $2`,
+    /*sql*/ `SELECT "client_version" FROM "client_view" WHERE "client_group_id" = $1 AND "version" = $2`,
     [clientGroupID, order],
   );
   if (result.rowCount === 0) {
@@ -31,8 +31,8 @@ export function putCVR(executor: Executor, cvr: CVR) {
     /*sql*/ `INSERT INTO client_view (
       "client_group_id",
       "client_version",
-      "order"
-    ) VALUES ($1, $2, $3) ON CONFLICT ("client_group_id", "order") DO UPDATE SET
+      "version"
+    ) VALUES ($1, $2, $3) ON CONFLICT ("client_group_id", "version") DO UPDATE SET
       client_version = excluded.client_version
     `,
     [cvr.clientGroupID, cvr.clientVersion, cvr.order],
@@ -79,7 +79,7 @@ export function findUnsentItems(
         SELECT "row_id", "row_version"
         FROM "client_view_entry"
         WHERE "client_group_id" = $1
-          AND "order" <= $2
+          AND "client_view_version" <= $2
           AND "tbl" = $3
       )
       LIMIT $4;`;
@@ -113,10 +113,10 @@ export function findDeletions(
       SELECT 1 FROM "${table}" WHERE id = "client_view_entry"."row_id"
     ) AND
     "client_view_entry"."client_group_id" = $2 AND
-    "client_view_entry"."order" <= $3 
+    "client_view_entry"."client_view_version" <= $3 
     AND NOT EXISTS (
       SELECT 1 FROM "client_view_delete_entry" WHERE "client_view_delete_entry"."tbl" = $1 AND "client_view_delete_entry"."row_id" = "client_view_entry"."row_id"
-      AND "client_view_delete_entry"."client_group_id" = $2 AND "client_view_delete_entry"."order" <= $3
+      AND "client_view_delete_entry"."client_group_id" = $2 AND "client_view_delete_entry"."client_view_version" <= $3
     ) LIMIT $4`,
     [TableOrdinal[table], clientGroupID, order, limit],
   );
@@ -129,11 +129,11 @@ export async function dropCVREntries(
 ) {
   await Promise.all([
     executor(
-      /*sql*/ `DELETE FROM "client_view_entry" WHERE "client_group_id" = $1 AND "order" > $2`,
+      /*sql*/ `DELETE FROM "client_view_entry" WHERE "client_group_id" = $1 AND "client_view_version" > $2`,
       [clientGroupID, order],
     ),
     executor(
-      /*sql*/ `DELETE FROM "client_view_delete_entry" WHERE "client_group_id" = $1 AND "order" > $2`,
+      /*sql*/ `DELETE FROM "client_view_delete_entry" WHERE "client_group_id" = $1 AND "client_view_version" > $2`,
       [clientGroupID, order],
     ),
   ]);
@@ -171,7 +171,7 @@ export async function recordUpdates(
   await executor(
     /*sql*/ `INSERT INTO client_view_entry (
     "client_group_id",
-    "order",
+    "client_view_version",
     "tbl",
     "row_id",
     "row_version"
@@ -179,7 +179,7 @@ export async function recordUpdates(
     ', ',
   )} ON CONFLICT ("client_group_id", "tbl", "row_id") DO UPDATE SET
     "row_version" = excluded."row_version",
-    "order" = excluded."order"
+    "client_view_version" = excluded."client_view_version"
   `,
     values,
   );
@@ -221,7 +221,7 @@ export async function recordDeletes(
   await executor(
     /*sql*/ `INSERT INTO client_view_delete_entry (
     "client_group_id",
-    "order",
+    "client_view_version",
     "tbl",
     "row_id"
   ) VALUES ${placeholders.join(', ')}`,
