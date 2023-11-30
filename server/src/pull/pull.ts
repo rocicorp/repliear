@@ -55,12 +55,6 @@ export async function pull(
       // Getting an old order from the client means that the client is possibly missing the data
       // from future orders.
       //
-      // The other possbility is that multiple tabs are syncing (why are tabs not coordinating who does sync?)
-      // Given that, dropping entries can cause to tabs could starve one another!! I've updated the frontend
-      // so pulls can only be issued from one tab (see `useExclusiveEffect`). The other solution here is to not
-      // drop CVR entries and instead have CVRs refer to their parent and construct
-      // the full CVR state via recursive query.
-      //
       // Why do we delete later CVRs?
       // Since we are sharing CVR data across orders (CVR_n = CVR_n-1 + current_pull).
       // To keep greater CVRs around, which may have never been received, means that the next CVR would
