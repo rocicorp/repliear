@@ -65,22 +65,22 @@ export function findUnsentItems(
   limit: number,
 ) {
   //   sql = /*sql*/ `SELECT * FROM "${table}" t WHERE NOT EXISTS (
-  //       SELECT 1 FROM "client_view_entry" WHERE "cvr_entry"."row_id" = t."id" AND
-  //       "cvr_entry"."row_version" = t."version" AND
+  //       SELECT 1 FROM "client_view_entry" WHERE "cvr_entry"."entity_id" = t."id" AND
+  //       "cvr_entry"."entity_version" = t."version" AND
   //       "cvr_entry"."client_group_id" = $1 AND
   //       "cvr_entry"."order" <= $2 AND
-  //       "cvr_entry"."tbl" = $3
+  //       "cvr_entry"."entity" = $3
   //     ) LIMIT $4`;
   // The below query runs in ~40ms for issues vs the above takes 16 seconds for issues.
   // TODO: test EXCEPT
   const sql = /*sql*/ `SELECT *
       FROM "${table}" t
       WHERE (t."id", t."version") NOT IN (
-        SELECT "row_id", "row_version"
+        SELECT "entity_id", "entity_version"
         FROM "client_view_entry"
         WHERE "client_group_id" = $1
           AND "client_view_version" <= $2
-          AND "tbl" = $3
+          AND "entity" = $3
       )
       LIMIT $4;`;
 
@@ -108,14 +108,14 @@ export function findDeletions(
   // current CVR rather than next CVR. If a request comes in for that prior CVR,
   // we return the stored delete records and do not compute deletes.
   return executor(
-    /*sql*/ `SELECT "row_id" FROM "client_view_entry"
-    WHERE "client_view_entry"."tbl" = $1 AND NOT EXISTS (
-      SELECT 1 FROM "${table}" WHERE id = "client_view_entry"."row_id"
+    /*sql*/ `SELECT "entity_id" FROM "client_view_entry"
+    WHERE "client_view_entry"."entity" = $1 AND NOT EXISTS (
+      SELECT 1 FROM "${table}" WHERE id = "client_view_entry"."entity_id"
     ) AND
     "client_view_entry"."client_group_id" = $2 AND
     "client_view_entry"."client_view_version" <= $3 
     AND NOT EXISTS (
-      SELECT 1 FROM "client_view_delete_entry" WHERE "client_view_delete_entry"."tbl" = $1 AND "client_view_delete_entry"."row_id" = "client_view_entry"."row_id"
+      SELECT 1 FROM "client_view_delete_entry" WHERE "client_view_delete_entry"."entity" = $1 AND "client_view_delete_entry"."entity_id" = "client_view_entry"."entity_id"
       AND "client_view_delete_entry"."client_group_id" = $2 AND "client_view_delete_entry"."client_view_version" <= $3
     ) LIMIT $4`,
     [TableOrdinal[table], clientGroupID, order, limit],
@@ -172,13 +172,13 @@ export async function recordUpdates(
     /*sql*/ `INSERT INTO client_view_entry (
     "client_group_id",
     "client_view_version",
-    "tbl",
-    "row_id",
-    "row_version"
+    "entity",
+    "entity_id",
+    "entity_version"
   ) VALUES ${placeholders.join(
     ', ',
-  )} ON CONFLICT ("client_group_id", "tbl", "row_id") DO UPDATE SET
-    "row_version" = excluded."row_version",
+  )} ON CONFLICT ("client_group_id", "entity", "entity_id") DO UPDATE SET
+    "entity_version" = excluded."entity_version",
     "client_view_version" = excluded."client_view_version"
   `,
     values,
@@ -222,8 +222,8 @@ export async function recordDeletes(
     /*sql*/ `INSERT INTO client_view_delete_entry (
     "client_group_id",
     "client_view_version",
-    "tbl",
-    "row_id"
+    "entity",
+    "entity_id"
   ) VALUES ${placeholders.join(', ')}`,
     values,
   );

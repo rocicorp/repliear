@@ -80,20 +80,20 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(/*sql*/ `CREATE TABLE "client_view_entry" (
     "client_group_id" VARCHAR(36) NOT NULL,
     "client_view_version" INTEGER NOT NULL,
-    "tbl" INTEGER NOT NULL,
-    "row_id" VARCHAR(36) NOT NULL,
-    "row_version" INTEGER NOT NULL,
-    -- unique by client_group_id, tbl, row_id
+    "entity" INTEGER NOT NULL,
+    "entity_id" VARCHAR(36) NOT NULL,
+    "entity_version" INTEGER NOT NULL,
+    -- unique by client_group_id, entity, entity_id
     -- 1. A missing row version is semantically the same as a behind row version
     -- 2. Our CVR is recursive. CVR_n = CVR_n-1 + (changes since CVR_n-1)
-    PRIMARY KEY ("client_group_id", "tbl", "row_id")
+    PRIMARY KEY ("client_group_id", "entity", "entity_id")
   )`);
 
   await executor(/*sql*/ `CREATE TABLE "client_view_delete_entry" (
     "client_group_id" VARCHAR(36) NOT NULL,
     "client_view_version" INTEGER NOT NULL,
-    "tbl" INTEGER NOT NULL,
-    "row_id" VARCHAR(36) NOT NULL,
-    PRIMARY KEY ("client_group_id", "client_view_version", "tbl", "row_id")
+    "entity" INTEGER NOT NULL,
+    "entity_id" VARCHAR(36) NOT NULL,
+    PRIMARY KEY ("client_group_id", "client_view_version", "entity", "entity_id")
   )`);
 }

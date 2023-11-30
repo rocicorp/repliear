@@ -165,7 +165,7 @@ export async function readNextPage(
   // If someone asks for the current CVR again we send the recorded
   // deletes since we can't compute deletes anymore.
   for (const r of issueDeleteRows) {
-    issueDeletes.push(r.row_id);
+    issueDeletes.push(r.entity_id);
   }
   remaining -= issueDeleteRows.length;
   if (remaining <= 0) {
@@ -173,7 +173,7 @@ export async function readNextPage(
   }
 
   for (const r of descriptionDeleteRows) {
-    descriptionDeletes.push(r.row_id);
+    descriptionDeletes.push(r.entity_id);
   }
   remaining -= descriptionDeleteRows.length;
   if (remaining <= 0) {
@@ -181,7 +181,7 @@ export async function readNextPage(
   }
 
   for (const r of commentDeleteRows) {
-    commentDeletes.push(r.row_id);
+    commentDeletes.push(r.entity_id);
   }
   remaining -= commentDeleteRows.length;
 
