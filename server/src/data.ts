@@ -4,7 +4,7 @@ import type {TableOrdinal} from './pull/cvr.js';
 
 export type SearchResult = {
   id: string;
-  rowversion: number;
+  version: number;
 };
 
 export type ClientGroupRecord = {
@@ -40,7 +40,7 @@ export async function putIssue(
       created,
       creator,
       kanbanorder,
-      rowversion
+      version
     ) VALUES (
       $1,
       $2,
@@ -58,7 +58,7 @@ export async function putIssue(
       modified = EXTRACT(EPOCH FROM NOW()) * 1000,
       creator = $5,
       kanbanorder = $6,
-      rowversion = issue.rowversion + 1`,
+      version = issue.version + 1`,
     [
       issue.id,
       issue.title,
@@ -100,7 +100,7 @@ export async function updateDescription(
   description: string,
 ): Promise<Affected> {
   await executor(
-    /*sql*/ `UPDATE description SET body = $1, rowversion = rowversion + 1 WHERE id = $2`,
+    /*sql*/ `UPDATE description SET body = $1, version = version + 1 WHERE id = $2`,
     [description, id],
   );
   return {
@@ -135,7 +135,7 @@ function updateFromObject<T extends object>(
     return `"${key}" = $${i + 2}`;
   }).join(', ');
   return {
-    sql: /*sql*/ `UPDATE "${table}" SET ${placeholders}, modified = EXTRACT(EPOCH FROM NOW()) * 1000, rowversion = rowversion + 1 WHERE id = $1`,
+    sql: /*sql*/ `UPDATE "${table}" SET ${placeholders}, modified = EXTRACT(EPOCH FROM NOW()) * 1000, version = version + 1 WHERE id = $1`,
     values: [id, ...values],
   };
 }
@@ -160,14 +160,14 @@ export async function putDescription(
     /*sql*/ `INSERT INTO description (
       id,
       body,
-      rowversion
+      version
     ) VALUES (
       $1,
       $2,
       1
     ) ON CONFLICT (id) DO UPDATE SET
       body = $2,
-      rowversion = description.rowversion + 1`,
+      version = description.version + 1`,
     [description.id, description.body],
   );
   return {
@@ -188,7 +188,7 @@ export async function createComment(
       created,
       body,
       creator,
-      rowversion
+      version
     ) VALUES (
       $1,
       $2,

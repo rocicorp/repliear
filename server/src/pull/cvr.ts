@@ -42,10 +42,10 @@ export function putCVR(executor: Executor, cvr: CVR) {
 /**
  * Find all rows in a table that are not in our CVR table.
  * - either the id is not present
- * - or the rowversion is different
+ * - or the version is different
  *
  * We could do cursoring to speed this along.
- * I.e., For a given pull sequence, we can keep track of the last id and rowversion.
+ * I.e., For a given pull sequence, we can keep track of the last id and version.
  * A "reset pull" brings cursor back to 0 to deal with privacy or query changes.
  *
  * But also, if the frontend drives the queries then we'll never actually be fetching
@@ -66,7 +66,7 @@ export function findUnsentItems(
 ) {
   //   sql = /*sql*/ `SELECT * FROM "${table}" t WHERE NOT EXISTS (
   //       SELECT 1 FROM "cvr_entry" WHERE "cvr_entry"."row_id" = t."id" AND
-  //       "cvr_entry"."row_version" = t."rowversion" AND
+  //       "cvr_entry"."row_version" = t."version" AND
   //       "cvr_entry"."client_group_id" = $1 AND
   //       "cvr_entry"."order" <= $2 AND
   //       "cvr_entry"."tbl" = $3
@@ -74,7 +74,7 @@ export function findUnsentItems(
   // The below query runs in ~40ms for issues vs the above takes 16 seconds for issues.
   const sql = /*sql*/ `SELECT *
       FROM "${table}" t
-      WHERE (t."id", t."rowversion") NOT IN (
+      WHERE (t."id", t."version") NOT IN (
         SELECT "row_id", "row_version"
         FROM "cvr_entry"
         WHERE "client_group_id" = $1
@@ -163,7 +163,7 @@ export async function recordUpdates(
       order,
       TableOrdinal[table],
       updates[i].id,
-      updates[i].rowversion,
+      updates[i].version,
     );
   }
 

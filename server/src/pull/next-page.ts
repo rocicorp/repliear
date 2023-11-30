@@ -83,7 +83,7 @@ export async function readNextPage(
   for (const r of issueRows) {
     issueMeta.push({
       id: r.id,
-      rowversion: r.rowversion,
+      version: r.version,
     });
     issues.push({
       id: r.id,
@@ -112,7 +112,7 @@ export async function readNextPage(
   for (const r of descriptionRows) {
     descriptionMeta.push({
       id: r.id,
-      rowversion: r.rowversion,
+      version: r.version,
     });
     descriptions.push({
       id: r.id,
@@ -135,7 +135,7 @@ export async function readNextPage(
   for (const r of commentRows) {
     commentMeta.push({
       id: r.id,
-      rowversion: r.rowversion,
+      version: r.version,
     });
     comments.push({
       id: r.id,

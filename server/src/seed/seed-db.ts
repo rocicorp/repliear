@@ -88,7 +88,7 @@ async function saveIssueBatch(executor: Executor, batch: Issue[]) {
       created,
       creator,
       kanbanorder,
-      rowversion
+      version
     ) VALUES ${placeholders.join(', ')}`,
     values,
   );
@@ -113,7 +113,7 @@ async function saveDescriptionBatch(executor: Executor, batch: Description[]) {
     /*sql*/ `INSERT INTO description (
     id,
     body,
-    rowversion
+    version
   ) VALUES ${placeholders.join(', ')}`,
     values,
   );
@@ -150,7 +150,7 @@ async function saveCommentBatch(executor: Executor, batch: Comment[]) {
     created,
     body,
     creator,
-    rowversion
+    version
   ) VALUES ${placeholders.join(', ')}`,
     values,
   );

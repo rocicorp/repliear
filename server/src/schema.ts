@@ -52,7 +52,7 @@ export async function createSchemaVersion1(executor: Executor) {
     "created" BIGINT NOT NULL,
     "creator" VARCHAR(36) NOT NULL,
     "kanbanorder" VARCHAR(36),
-    "rowversion" INTEGER NOT NULL
+    "version" INTEGER NOT NULL
   )`);
 
   await executor(/*sql*/ `CREATE TABLE "comment" (
@@ -61,13 +61,13 @@ export async function createSchemaVersion1(executor: Executor) {
     "created" BIGINT NOT NULL,
     "body" text NOT NULL,
     "creator" VARCHAR(36) NOT NULL,
-    "rowversion" INTEGER NOT NULL
+    "version" INTEGER NOT NULL
   )`);
 
   await executor(/*sql*/ `CREATE TABLE "description" (
     "id" VARCHAR(36) PRIMARY KEY NOT NULL REFERENCES issue("id") ON DELETE CASCADE,
     "body" text NOT NULL,
-    "rowversion" INTEGER NOT NULL
+    "version" INTEGER NOT NULL
   )`);
 
   await executor(/*sql*/ `CREATE TABLE "cvr" (
