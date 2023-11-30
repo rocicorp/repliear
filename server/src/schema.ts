@@ -17,7 +17,7 @@ export async function createSchemaVersion1(executor: Executor) {
     'CREATE TABLE replicache_meta (key text PRIMARY KEY, value json)',
   );
   await executor(
-    "insert into replicache_meta (key, value) values ('schemaVersion', '1')",
+    "insert into replicache_meta (key, value) values ('schemaversion', '1')",
   );
 
   // cvrversion is null until first pull initializes it.
