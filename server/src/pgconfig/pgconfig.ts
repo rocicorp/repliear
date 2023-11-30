@@ -1,6 +1,5 @@
 import type {Pool} from 'pg';
 import type {Executor} from '../pg.js';
-// import {PGMemConfig} from './pgmem.js';
 import {PostgresDBConfig} from './postgres.js';
 
 export interface PGConfig {
@@ -16,5 +15,4 @@ export function getDBConfig(): PGConfig {
   throw new Error(
     "PG Mem doesn't support all the operations require by repliear.",
   );
-  // return new PGMemConfig();
 }
