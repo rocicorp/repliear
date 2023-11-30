@@ -64,15 +64,11 @@ export function findUnsentItems(
   order: number,
   limit: number,
 ) {
-  //   sql = /*sql*/ `SELECT * FROM "${table}" t WHERE NOT EXISTS (
-  //       SELECT 1 FROM "client_view_entry" WHERE "cvr_entry"."entity_id" = t."id" AND
-  //       "cvr_entry"."entity_version" = t."version" AND
-  //       "cvr_entry"."client_group_id" = $1 AND
-  //       "cvr_entry"."order" <= $2 AND
-  //       "cvr_entry"."entity" = $3
-  //     ) LIMIT $4`;
-  // The below query runs in ~40ms for issues vs the above takes 16 seconds for issues.
-  // TODO: test EXCEPT
+  // The query used below is the fastest.
+  // Other query forms that were tried:
+  // 1. 10x slower: SELECT * FROM table WHERE NOT EXISTS (SELECT 1 FROM client_view_entry ...)
+  // 2. 2x slower: SELECT id, version FROM table EXCEPT SELECT entity_id, entity_version FROM client_view_entry ...
+  // 3. SELECT * FROM table LEFT JOIN client_view_entry ...
   const sql = /*sql*/ `SELECT *
       FROM "${table}" t
       WHERE (t."id", t."version") NOT IN (
