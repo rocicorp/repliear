@@ -35,7 +35,7 @@ import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
 import classnames from "classnames";
-import { getPartialSyncState, PartialSyncState } from "./control";
+import { getPartialSyncState } from "./control";
 import type { UndoManager } from "@rocicorp/undo";
 import { HotKeys } from "react-hotkeys";
 
@@ -358,14 +358,12 @@ const App = ({ rep, undoManager }: AppProps) => {
     issueOrder: getIssueOrder(view, orderBy),
   });
 
-  const partialSync = useSubscribe<
-    PartialSyncState | "NOT_RECEIVED_FROM_SERVER"
-  >(
+  const partialSync = useSubscribe(
     rep,
     async (tx: ReadTransaction) => {
       return (await getPartialSyncState(tx)) || "NOT_RECEIVED_FROM_SERVER";
     },
-    "NOT_RECEIVED_FROM_SERVER"
+    { default: "NOT_RECEIVED_FROM_SERVER" as const }
   );
 
   const partialSyncComplete = partialSync === "PARTIAL_SYNC_COMPLETE";
@@ -434,8 +432,8 @@ const App = ({ rep, undoManager }: AppProps) => {
 
   const handleUpdateIssues = useCallback(
     async (issueUpdates: Array<IssueUpdate>) => {
-      const uChanges: Array<IssueUpdateWithID> = issueUpdates.map<IssueUpdateWithID>(
-        (issueUpdate) => {
+      const uChanges: Array<IssueUpdateWithID> =
+        issueUpdates.map<IssueUpdateWithID>((issueUpdate) => {
           const undoChanges = pickBy(
             issueUpdate.issue,
             (_, key) => key in issueUpdate.issueChanges
@@ -452,8 +450,7 @@ const App = ({ rep, undoManager }: AppProps) => {
             };
           }
           return rv;
-        }
-      );
+        });
       await undoManager.add({
         execute: () =>
           rep.mutate.updateIssues(
@@ -483,13 +480,14 @@ const App = ({ rep, undoManager }: AppProps) => {
     },
     [setDetailIssueID]
   );
-  const handleCloseMenu = useCallback(() => setMenuVisible(false), [
-    setMenuVisible,
-  ]);
-  const handleToggleMenu = useCallback(() => setMenuVisible(!menuVisible), [
-    setMenuVisible,
-    menuVisible,
-  ]);
+  const handleCloseMenu = useCallback(
+    () => setMenuVisible(false),
+    [setMenuVisible]
+  );
+  const handleToggleMenu = useCallback(
+    () => setMenuVisible(!menuVisible),
+    [setMenuVisible, menuVisible]
+  );
 
   const handlers = {
     undo: () => undoManager.undo(),

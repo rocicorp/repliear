@@ -1,7 +1,11 @@
 import type {
+  DeepReadonly,
+  IndexKey,
   JSONValue,
-  KeyTypeForScanOptions,
   ReadTransaction,
+  ReadonlyJSONValue,
+  ScanIndexOptions,
+  ScanNoIndexOptions,
   ScanOptions,
   ScanResult,
   TransactionEnvironment,
@@ -56,6 +60,10 @@ export class ReplicacheTransaction implements WriteTransaction {
     return "server";
   }
 
+  get location() {
+    return this.environment;
+  }
+
   get mutationID(): number {
     return this._mutationID;
   }
@@ -65,6 +73,9 @@ export class ReplicacheTransaction implements WriteTransaction {
   }
 
   async put(key: string, value: JSONValue): Promise<void> {
+    this.set(key, value);
+  }
+  async set(key: string, value: JSONValue): Promise<void> {
     this._cache.set(key, { value, dirty: true });
   }
   async del(key: string): Promise<boolean> {
@@ -90,10 +101,20 @@ export class ReplicacheTransaction implements WriteTransaction {
   async isEmpty(): Promise<boolean> {
     throw new Error("Method isEmpty not implemented");
   }
-  scan(): ScanResult<string>;
-  scan<Options extends ScanOptions>(
-    _options?: Options
-  ): ScanResult<KeyTypeForScanOptions<Options>> {
+
+  scan(options: ScanIndexOptions): ScanResult<IndexKey, ReadonlyJSONValue>;
+  scan(options?: ScanNoIndexOptions): ScanResult<string, ReadonlyJSONValue>;
+  scan(options?: ScanOptions): ScanResult<IndexKey | string, ReadonlyJSONValue>;
+  scan<V extends ReadonlyJSONValue>(
+    options: ScanIndexOptions
+  ): ScanResult<IndexKey, DeepReadonly<V>>;
+  scan<V extends ReadonlyJSONValue>(
+    options?: ScanNoIndexOptions
+  ): ScanResult<string, DeepReadonly<V>>;
+  scan<V extends ReadonlyJSONValue>(
+    options?: ScanOptions
+  ): ScanResult<IndexKey | string, DeepReadonly<V>>;
+  scan(): ScanResult<IndexKey | string, ReadonlyJSONValue> {
     throw new Error("Method scan not implemented.");
   }
 

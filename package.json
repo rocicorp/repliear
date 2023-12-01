@@ -38,8 +38,8 @@
     "react-remark": "^2.1.0",
     "react-virtualized-auto-sizer": "^1.0.6",
     "react-window": "^1.8.6",
-    "replicache": ">=13.0.0",
-    "replicache-react": "3.0.0",
+    "replicache": ">=14.0.2",
+    "replicache-react": "5.0.0",
     "zod": "^3.13.4"
   },
   "devDependencies": {
