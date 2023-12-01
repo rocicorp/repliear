@@ -4,7 +4,14 @@ import {transact} from '../pg';
 import {getClientGroupForUpdate, putClientGroup, searchClients} from '../data';
 import type Express from 'express';
 import {hasNextPage, isPageEmpty, readNextPage} from './next-page';
-import {CVR, getCVR, putCVR, recordDeletes, recordUpdates} from './cvr';
+import {
+  CVR,
+  dropCVREntries,
+  getCVR,
+  putCVR,
+  recordDeletes,
+  recordUpdates,
+} from './cvr';
 import {PartialSyncState, PARTIAL_SYNC_STATE_KEY} from 'shared';
 
 const cookieSchema = z.object({
@@ -43,6 +50,16 @@ export async function pull(
         clientVersion: 0,
         order: 0,
       };
+
+      // Drop any cvr entries greater than the order we received.
+      // Getting an old order from the client means that the client is possibly missing the data
+      // from future orders.
+      //
+      // Why do we delete later CVRs?
+      // Since we are sharing CVR data across orders (CVR_n = CVR_n-1 + current_pull).
+      // To keep greater CVRs around, which may have never been received, means that the next CVR would
+      // indicate that the data was received when it was not.
+      await dropCVREntries(executor, clientGroupID, baseCVR.order);
 
       const [clientChanges, nextPage] = await Promise.all([
         searchClients(executor, {
@@ -115,7 +132,7 @@ export async function pull(
 
       await Promise.all([
         putClientGroup(executor, nextClientGroupRecord),
-        putCVR(executor, nextCVR, baseCVR.order),
+        putCVR(executor, nextCVR),
       ]);
 
       await Promise.all([

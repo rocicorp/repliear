@@ -7,29 +7,6 @@ export type CVR = {
   order: number;
 };
 
-const VERSION_TREE_SQL = /*sql*/ `WITH RECURSIVE "version_tree" AS (
-  SELECT
-    "client_group_id",
-    "version",
-    "parent_version"
-  FROM
-    "client_view"
-  WHERE
-    "client_group_id" = $1 AND
-    "version" = $2
-
-  UNION ALL
-
-  SELECT
-    cv."client_group_id",
-    cv."version",
-    cv."parent_version"
-  FROM
-    "client_view" cv
-    JOIN "version_tree" vt ON vt."parent_version" = cv."version"
-    WHERE cv."client_group_id" = vt."client_group_id"
-)`;
-
 export async function getCVR(
   executor: Executor,
   clientGroupID: string,
@@ -49,47 +26,42 @@ export async function getCVR(
   };
 }
 
-export function putCVR(executor: Executor, cvr: CVR, parentVersion: number) {
+export function putCVR(executor: Executor, cvr: CVR) {
   return executor(
     /*sql*/ `INSERT INTO client_view (
       "client_group_id",
       "client_version",
-      "version",
-      "parent_version"
-    ) VALUES ($1, $2, $3, $4) ON CONFLICT ("client_group_id", "version") DO UPDATE SET
+      "version"
+    ) VALUES ($1, $2, $3) ON CONFLICT ("client_group_id", "version") DO UPDATE SET
       client_version = excluded.client_version
     `,
-    [cvr.clientGroupID, cvr.clientVersion, cvr.order, parentVersion],
+    [cvr.clientGroupID, cvr.clientVersion, cvr.order],
   );
 }
 
 /**
  * Find all rows in a table that are not in our CVR table.
+ * - either the id is not present
+ * - or the version is different
  *
- * Multiple tabs could be trying to sync at the same time with different CVRs.
- * We path back through our CVR tree to ensure we send the correct data to each tab.
+ * We could do cursoring to speed this along.
+ * I.e., For a given pull sequence, we can keep track of the last id and version.
+ * A "reset pull" brings cursor back to 0 to deal with privacy or query changes.
  *
- * We can prune branches of the client view tree that are no longer needed.
+ * But also, if the frontend drives the queries then we'll never actually be fetching
+ * so much as the frontend queries will be reasonably sized. The frontend queries would also
+ * be cursored.
  *
- * If we receive a request for a pruned branch we'd track back to find the
- * greatest common ancestor.
+ * E.g., `SELECT * FROM issue WHERE modified > x OR (modified = y AND id > z) ORDER BY modified, id LIMIT 100`
+ * Cursored on modified and id.
  *
- * We could & should also compact:
- * 1. Deletion entries in the client_view_entry table
- * 2. Old entity_versions in the client_view_entry table
- *
- * Compared to the old approach, the client_view_entry table now grows
- * without bound (and requires compaction) since we store a record for each
- * entity_version.
- *
- * We wouldn't have to introduce all of this machinery if
- * tabs coordinated sync.
+ * This means our compare against the CVR would not be a full table scan of `issue`.
  */
 export function findUnsentItems(
   executor: Executor,
   table: keyof typeof TableOrdinal,
   clientGroupID: string,
-  version: number,
+  order: number,
   limit: number,
 ) {
   // The query used below is the fastest.
@@ -97,20 +69,18 @@ export function findUnsentItems(
   // 1. 10x slower: SELECT * FROM table WHERE NOT EXISTS (SELECT 1 FROM client_view_entry ...)
   // 2. 2x slower: SELECT id, version FROM table EXCEPT SELECT entity_id, entity_version FROM client_view_entry ...
   // 3. SELECT * FROM table LEFT JOIN client_view_entry ...
-  const sql = /*sql*/ `
-  ${VERSION_TREE_SQL}
-  SELECT *
-  FROM "${table}" t
-  WHERE (t."id", t."version") NOT IN (
-    SELECT "entity_id", "entity_version"
-    FROM "client_view_entry"
-    WHERE "client_view_version" IN (SELECT "version" FROM "version_tree") AND
-    "client_group_id" = $1 AND
-    "entity" = $3
-  )
-  LIMIT $4;`;
+  const sql = /*sql*/ `SELECT *
+      FROM "${table}" t
+      WHERE (t."id", t."version") NOT IN (
+        SELECT "entity_id", "entity_version"
+        FROM "client_view_entry"
+        WHERE "client_group_id" = $1
+          AND "client_view_version" <= $2
+          AND "entity" = $3
+      )
+      LIMIT $4;`;
 
-  const params = [clientGroupID, version, TableOrdinal[table], limit];
+  const params = [clientGroupID, order, TableOrdinal[table], limit];
   return executor(sql, params);
 }
 
@@ -124,40 +94,45 @@ export function findDeletions(
   executor: Executor,
   table: keyof typeof TableOrdinal,
   clientGroupID: string,
-  version: number,
+  order: number,
   limit: number,
 ) {
-  const sql = /*sql*/ `${VERSION_TREE_SQL}
-  SELECT DISTINCT("entity_id") FROM "client_view_entry" as cve WHERE 
-    cve."client_group_id" = $1 AND
-    cve."entity" = $3 AND
-    cve."client_view_version" IN (SELECT "version" FROM "version_tree") AND
-    -- check that the entity is missing from the base table
-    NOT EXISTS (
-      SELECT 1 FROM "${table}" WHERE id = cve."entity_id"
+  // Find rows that are in the CVR table but not in the actual table.
+  // Exclude rows that have a delete entry already.
+  // TODO: Maybe we can remove the second `NOT EXISTS` if we prune the CVR table.
+  // This pruning would mean that we need to record the delete against the
+  // current CVR rather than next CVR. If a request comes in for that prior CVR,
+  // we return the stored delete records and do not compute deletes.
+  return executor(
+    /*sql*/ `SELECT "entity_id" FROM "client_view_entry"
+    WHERE "client_view_entry"."entity" = $1 AND NOT EXISTS (
+      SELECT 1 FROM "${table}" WHERE id = "client_view_entry"."entity_id"
     ) AND
-    -- check that we didn't already record this deletion
-    -- and that the row wasn't later resurrected and sent if we did record a deletion
-    NOT EXISTS (
-      SELECT 1
-      FROM client_view_entry as cve2 LEFT JOIN client_view_entry as cve3
-        ON (
-          cve2.entity_id = cve3.entity_id AND
-          cve2.client_view_version < cve3.client_view_version AND
-          cve2.client_group_id = cve3.client_group_id AND
-          cve2.entity = cve3.entity
-        )
-      WHERE
-        cve3.entity_id IS NULL AND
-        cve2.entity_id = cve.entity_id AND
-        cve2.entity_version IS NULL AND
-        cve2.client_group_id = $1 AND
-        cve2.entity = $3 AND
-        cve2.client_view_version IN (SELECT "version" FROM "version_tree")
-    )
-  LIMIT $4`;
-  const vars = [clientGroupID, version, TableOrdinal[table], limit];
-  return executor(sql, vars);
+    "client_view_entry"."client_group_id" = $2 AND
+    "client_view_entry"."client_view_version" <= $3 
+    AND NOT EXISTS (
+      SELECT 1 FROM "client_view_delete_entry" WHERE "client_view_delete_entry"."entity" = $1 AND "client_view_delete_entry"."entity_id" = "client_view_entry"."entity_id"
+      AND "client_view_delete_entry"."client_group_id" = $2 AND "client_view_delete_entry"."client_view_version" <= $3
+    ) LIMIT $4`,
+    [TableOrdinal[table], clientGroupID, order, limit],
+  );
+}
+
+export async function dropCVREntries(
+  executor: Executor,
+  clientGroupID: string,
+  order: number,
+) {
+  await Promise.all([
+    executor(
+      /*sql*/ `DELETE FROM "client_view_entry" WHERE "client_group_id" = $1 AND "client_view_version" > $2`,
+      [clientGroupID, order],
+    ),
+    executor(
+      /*sql*/ `DELETE FROM "client_view_delete_entry" WHERE "client_group_id" = $1 AND "client_view_version" > $2`,
+      [clientGroupID, order],
+    ),
+  ]);
 }
 
 export async function recordUpdates(
@@ -196,7 +171,12 @@ export async function recordUpdates(
     "entity",
     "entity_id",
     "entity_version"
-  ) VALUES ${placeholders.join(', ')}`,
+  ) VALUES ${placeholders.join(
+    ', ',
+  )} ON CONFLICT ("client_group_id", "entity", "entity_id") DO UPDATE SET
+    "entity_version" = excluded."entity_version",
+    "client_view_version" = excluded."client_view_version"
+  `,
     values,
   );
 }
@@ -225,22 +205,21 @@ export async function recordDeletes(
   }
   const placeholders = [];
   const values = [];
-  const stride = 5;
+  const stride = 4;
   for (let i = 0; i < ids.length; i++) {
     placeholders.push(
       `($${i * stride + 1}, $${i * stride + 2}, $${i * stride + 3}, $${
         i * stride + 4
-      }, $${i * stride + 5})`,
+      })`,
     );
-    values.push(clientGroupID, order, TableOrdinal[table], ids[i], null);
+    values.push(clientGroupID, order, TableOrdinal[table], ids[i]);
   }
   await executor(
-    /*sql*/ `INSERT INTO client_view_entry (
+    /*sql*/ `INSERT INTO client_view_delete_entry (
     "client_group_id",
     "client_view_version",
     "entity",
-    "entity_id",
-    "entity_version"
+    "entity_id"
   ) VALUES ${placeholders.join(', ')}`,
     values,
   );

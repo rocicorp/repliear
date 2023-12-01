@@ -73,30 +73,21 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(/*sql*/ `CREATE TABLE "client_view" (
     "client_group_id" VARCHAR(36) NOT NULL,
     "version" INTEGER NOT NULL,
-    "parent_version" INTEGER NOT NULL,
     "client_version" INTEGER NOT NULL,
     PRIMARY KEY ("client_group_id", "version")
   )`);
-
-  await executor(
-    /*sql*/ `CREATE INDEX client_view_parent ON client_view (client_group_id, parent_version)`,
-  );
 
   await executor(/*sql*/ `CREATE TABLE "client_view_entry" (
     "client_group_id" VARCHAR(36) NOT NULL,
     "client_view_version" INTEGER NOT NULL,
     "entity" INTEGER NOT NULL,
     "entity_id" VARCHAR(36) NOT NULL,
-    "entity_version" INTEGER
+    "entity_version" INTEGER NOT NULL,
+    -- unique by client_group_id, entity, entity_id
+    -- 1. A missing row version is semantically the same as a behind row version
+    -- 2. Our CVR is recursive. CVR_n = CVR_n-1 + (changes since CVR_n-1)
+    PRIMARY KEY ("client_group_id", "entity", "entity_id")
   )`);
-
-  // This index is for quick lookup of everything in a client view.
-  // - get entries for the specific client
-  // - for the specific table
-  // - at the specific client_view version
-  await executor(
-    /*sql*/ `CREATE INDEX client_view_entry_lookup ON client_view_entry (client_group_id, entity, client_view_version)`,
-  );
 
   await executor(/*sql*/ `CREATE TABLE "client_view_delete_entry" (
     "client_group_id" VARCHAR(36) NOT NULL,

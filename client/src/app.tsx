@@ -59,12 +59,17 @@ const App = ({rep, undoManager}: AppProps) => {
     'NOT_RECEIVED_FROM_SERVER',
   );
   const partialSyncComplete = partialSync === 'COMPLETE';
-  useEffect(() => {
+  function pull() {
     console.log('partialSync', partialSync);
     if (!partialSyncComplete) {
-      rep.pull();
+      if (document.hidden) {
+        setTimeout(pull, 1000);
+      } else {
+        rep.pull();
+      }
     }
-  }, [rep, partialSync, partialSyncComplete]);
+  }
+  useEffect(pull, [rep, partialSync, partialSyncComplete]);
 
   useEffect(() => {
     const ev = new EventSource(`/api/replicache/poke?channel=poke`);
