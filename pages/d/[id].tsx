@@ -39,7 +39,7 @@ export default function Home() {
 
         const channel = pusher.subscribe("default");
         channel.bind("poke", () => {
-          r.pull();
+          void r.pull();
         });
       }
 

@@ -73,7 +73,7 @@ export class ReplicacheTransaction implements WriteTransaction {
   }
 
   async put(key: string, value: JSONValue): Promise<void> {
-    this.set(key, value);
+    await this.set(key, value);
   }
   async set(key: string, value: JSONValue): Promise<void> {
     this._cache.set(key, { value, dirty: true });
