@@ -134,7 +134,7 @@ export async function putIssue(
   tx: WriteTransaction,
   issue: Issue
 ): Promise<void> {
-  await tx.put(issueKey(issue.id), issue);
+  await tx.set(issueKey(issue.id), issue);
 }
 
 export function issueFromKeyAndValue(
@@ -175,7 +175,7 @@ export async function putIssueDescription(
   issueID: string,
   description: Description
 ): Promise<void> {
-  await tx.put(descriptionKey(issueID), description);
+  await tx.set(descriptionKey(issueID), description);
 }
 
 export const COMMENT_KEY_PREFIX = `comment/`;
@@ -232,7 +232,7 @@ export async function putIssueComment(
   tx: WriteTransaction,
   comment: Comment
 ): Promise<void> {
-  await tx.put(commentKey(comment.issueID, comment.id), comment);
+  await tx.set(commentKey(comment.issueID, comment.id), comment);
 }
 
 const REVERSE_TIMESTAMP_LENGTH = Number.MAX_SAFE_INTEGER.toString().length;

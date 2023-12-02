@@ -35,7 +35,7 @@ import IssueDetail from "./issue-detail";
 import { generateKeyBetween } from "fractional-indexing";
 import { useSubscribe } from "replicache-react";
 import classnames from "classnames";
-import { getPartialSyncState, PartialSyncState } from "./control";
+import { getPartialSyncState } from "./control";
 import type { UndoManager } from "@rocicorp/undo";
 import { HotKeys } from "react-hotkeys";
 
@@ -358,21 +358,19 @@ const App = ({ rep, undoManager }: AppProps) => {
     issueOrder: getIssueOrder(view, orderBy),
   });
 
-  const partialSync = useSubscribe<
-    PartialSyncState | "NOT_RECEIVED_FROM_SERVER"
-  >(
+  const partialSync = useSubscribe(
     rep,
     async (tx: ReadTransaction) => {
       return (await getPartialSyncState(tx)) || "NOT_RECEIVED_FROM_SERVER";
     },
-    "NOT_RECEIVED_FROM_SERVER"
+    { default: "NOT_RECEIVED_FROM_SERVER" as const }
   );
 
   const partialSyncComplete = partialSync === "PARTIAL_SYNC_COMPLETE";
   useEffect(() => {
     console.log("partialSync", partialSync);
     if (!partialSyncComplete) {
-      rep.pull();
+      void rep.pull();
     }
   }, [rep, partialSync, partialSyncComplete]);
 
