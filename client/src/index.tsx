@@ -5,7 +5,6 @@ import {Replicache} from 'replicache';
 import {UndoManager} from '@rocicorp/undo';
 import App from './app';
 
-// TODO: see `id.tsx`
 async function init() {
   // See https://doc.replicache.dev/licensing for how to get a license key.
   const licenseKey = import.meta.env.VITE_REPLICACHE_LICENSE_KEY;

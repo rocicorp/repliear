@@ -32,7 +32,7 @@
     "react-remark": "^2.1.0",
     "react-virtualized-auto-sizer": "^1.0.20",
     "react-window": "^1.8.9",
-    "replicache-react": "3.0.0",
+    "replicache-react": "5.0.1",
     "shared": "^0.1.0",
     "todomvc-app-css": "^2.4.2"
   },

@@ -22,7 +22,6 @@ import {
   IssueUpdate,
   IssueUpdateWithID,
   ISSUE_KEY_PREFIX,
-  PartialSyncState,
 } from 'shared';
 import {getFilters, getIssueOrder} from './filters';
 import {Layout} from './layout/layout';
@@ -49,27 +48,20 @@ const App = ({rep, undoManager}: AppProps) => {
     issueOrder: getIssueOrder(view, orderBy),
   });
 
-  const partialSync = useSubscribe<
-    PartialSyncState | 'NOT_RECEIVED_FROM_SERVER'
-  >(
+  const partialSync = useSubscribe(
     rep,
     async (tx: ReadTransaction) => {
       return (await getPartialSyncState(tx)) || 'NOT_RECEIVED_FROM_SERVER';
     },
-    'NOT_RECEIVED_FROM_SERVER',
+    {default: 'NOT_RECEIVED_FROM_SERVER'},
   );
   const partialSyncComplete = partialSync === 'COMPLETE';
-  function pull() {
+  useEffect(() => {
     console.log('partialSync', partialSync);
     if (!partialSyncComplete) {
-      if (document.hidden) {
-        setTimeout(pull, 1000);
-      } else {
-        rep.pull();
-      }
+      void rep.pull();
     }
-  }
-  useEffect(pull, [rep, partialSync, partialSyncComplete]);
+  }, [rep, partialSync, partialSyncComplete]);
 
   useEffect(() => {
     const ev = new EventSource(`/api/replicache/poke?channel=poke`);

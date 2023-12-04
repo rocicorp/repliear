@@ -19,14 +19,8 @@ import {sortBy} from 'lodash';
 import {useIssueDetailState} from '../hooks/query-state-hooks';
 import {
   Comment,
-<<<<<<< HEAD:frontend/issue-detail.tsx
-  getIssueComments,
-  getIssueDescription,
-=======
-  Description,
   getDescription,
   getIssue,
->>>>>>> f8d3a33 (re-write to use the row versioning strategy and rails.):client/src/issue/issue-detail.tsx
   Issue,
   IssueUpdate,
   Priority,
@@ -101,12 +95,7 @@ export default function IssueDetail({
       }
       return null;
     },
-<<<<<<< HEAD:frontend/issue-detail.tsx
-    { default: null, dependencies: [detailIssueID] }
-=======
-    null,
-    [detailIssueID],
->>>>>>> f8d3a33 (re-write to use the row versioning strategy and rails.):client/src/issue/issue-detail.tsx
+    {default: null, dependencies: [detailIssueID]},
   );
   const description = useSubscribe(
     rep,
@@ -116,12 +105,10 @@ export default function IssueDetail({
       }
       return null;
     },
-<<<<<<< HEAD:frontend/issue-detail.tsx
-    { default: null, dependencies: [detailIssueID] }
-=======
-    null,
-    [detailIssueID],
->>>>>>> f8d3a33 (re-write to use the row versioning strategy and rails.):client/src/issue/issue-detail.tsx
+    {
+      default: null,
+      dependencies: [detailIssueID],
+    },
   );
 
   const comments = useSubscribe(
@@ -132,12 +119,10 @@ export default function IssueDetail({
       }
       return [];
     },
-<<<<<<< HEAD:frontend/issue-detail.tsx
-    { default: [], dependencies: [detailIssueID] }
-=======
-    [],
-    [detailIssueID],
->>>>>>> f8d3a33 (re-write to use the row versioning strategy and rails.):client/src/issue/issue-detail.tsx
+    {
+      default: [],
+      dependencies: [detailIssueID],
+    },
   );
 
   const handleClose = useCallback(async () => {
