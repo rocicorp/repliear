@@ -45,7 +45,14 @@ export async function push(requestBody: ReadonlyJSONValue) {
   for (const mutation of push.mutations) {
     const result = await processMutation(push.clientGroupID, mutation, null);
     if (result && 'error' in result) {
-      await processMutation(push.clientGroupID, mutation, result.error);
+      const result2 = await processMutation(
+        push.clientGroupID,
+        mutation,
+        result.error,
+      );
+      if (result2 && 'error' in result2) {
+        throw result2.error;
+      }
     }
   }
 
@@ -57,8 +64,8 @@ export async function push(requestBody: ReadonlyJSONValue) {
 async function processMutation(
   clientGroupID: string,
   mutation: Mutation,
-  error: string | null,
-): Promise<null | {error: string}> {
+  error: Error | null,
+): Promise<null | {error: Error}> {
   return await transact(async executor => {
     console.log(
       error === null ? 'Processing mutation' : 'Processing mutation error',
@@ -97,7 +104,7 @@ async function processMutation(
         console.error(
           `Error executing mutation: ${JSON.stringify(mutation)}: ${e}`,
         );
-        return {error: String(e)};
+        return {error: e as unknown as Error};
       }
     }
 
