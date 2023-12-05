@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import {PersistentTreeView} from '@vlcn.io/materialite';
 import {generateNKeysBetween} from 'fractional-indexing';
 import {groupBy, indexOf} from 'lodash';
 import {memo, useCallback} from 'react';
@@ -14,8 +15,11 @@ export type IssuesByStatusType = {
   CANCELED: Issue[];
 };
 
-export const getIssueByType = (allIssues: Issue[]): IssuesByStatusType => {
-  const issuesBySType = groupBy(allIssues, 'status');
+// TODO (mlaw): Group kanban board via filtered queries against materialite rather than this thing here.
+export const getIssueByType = (
+  allIssues: PersistentTreeView<Issue>['value'],
+): IssuesByStatusType => {
+  const issuesBySType = groupBy([...allIssues], 'status');
   const defaultIssueByType = {
     BACKLOG: [],
     TODO: [],
@@ -30,7 +34,7 @@ export const getIssueByType = (allIssues: Issue[]): IssuesByStatusType => {
 export function getKanbanOrderIssueUpdates(
   issueToMove: Issue,
   issueToInsertBefore: Issue,
-  issues: Issue[],
+  issues: PersistentTreeView<Issue>['value'],
 ): IssueUpdate[] {
   const indexInKanbanOrder = indexOf(issues, issueToInsertBefore);
   let beforeKey: string | null = null;
@@ -43,11 +47,11 @@ export function getKanbanOrderIssueUpdates(
   // have identical kanbanOrder values, we need to fix up the
   // collision by re-keying the issues.
   for (let i = indexInKanbanOrder; i < issues.length; i++) {
-    if (issues[i].kanbanOrder !== beforeKey) {
-      afterKey = issues[i].kanbanOrder;
+    if (issues.at(i).kanbanOrder !== beforeKey) {
+      afterKey = issues.at(i).kanbanOrder;
       break;
     }
-    issuesToReKey.push(issues[i]);
+    issuesToReKey.push(issues.at(i));
   }
   const newKanbanOrderKeys = generateNKeysBetween(
     beforeKey,
@@ -71,7 +75,7 @@ export function getKanbanOrderIssueUpdates(
 }
 
 interface Props {
-  issues: Issue[];
+  issues: PersistentTreeView<Issue>['value'];
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onOpenDetail: (issue: Issue) => void;
 }

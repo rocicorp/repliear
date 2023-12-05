@@ -83,12 +83,18 @@ async function pullInner(pull: PullRequest) {
 
       // For everything the client already has,
       // find all deletes and updates to those items.
-      const [deletes, updates] = await Promise.all([
+      const [deletes, updates, creates] = await Promise.all([
         time(
           () => getAllDeletes(executor, clientGroupID, baseCVR.order),
           'getAllDeletes',
         ),
         time(() => getAllUpdates(executor, clientGroupID), 'getAllUpdates'),
+        time(async () => {
+          if (isFastForward) {
+            return null;
+          }
+          return await getPageOfCreates(executor, clientGroupID, baseCVR.order);
+        }, 'getPageOfCreates'),
       ]);
 
       const response = {
@@ -114,11 +120,7 @@ async function pullInner(pull: PullRequest) {
           'fastforward',
         );
         mergePuts(response.puts, fastForwardRows);
-      } else {
-        const creates = await time(
-          () => getPageOfCreates(executor, clientGroupID, baseCVR.order),
-          'getPageOfCreates',
-        );
+      } else if (creates !== null) {
         mergePuts(response.puts, creates);
         mergePuts(updatesForNextCVR.puts, creates);
       }

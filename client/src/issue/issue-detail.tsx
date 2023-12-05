@@ -26,11 +26,12 @@ import {
   Priority,
   Status,
 } from 'shared';
+import {PersistentTreeView} from '@vlcn.io/materialite';
 
 interface Props {
   onUpdateIssues: (issueUpdates: IssueUpdate[]) => void;
   onAddComment: (comment: Comment) => void;
-  issues: Issue[];
+  issues: PersistentTreeView<Issue>['value'];
   isLoading: boolean;
   rep: Replicache<M>;
 }
@@ -82,7 +83,9 @@ export default function IssueDetail({
 
   useEffect(() => {
     if (detailIssueID) {
-      const index = issues.findIndex(issue => issue.id === detailIssueID);
+      const index = issues.findIndex(
+        (issue: Issue) => issue.id === detailIssueID,
+      );
       setCurrentIssueIdx(index);
     }
   }, [issues, detailIssueID]);
@@ -166,12 +169,12 @@ export default function IssueDetail({
         if (currentIssueIdx === 0) {
           return;
         }
-        newIss = issues[currentIssueIdx - 1].id;
+        newIss = issues.at(currentIssueIdx - 1).id;
       } else {
-        if (currentIssueIdx === issues.length - 1) {
+        if (currentIssueIdx === issues.size - 1) {
           return;
         }
-        newIss = issues[currentIssueIdx + 1].id;
+        newIss = issues.at(currentIssueIdx + 1).id;
       }
 
       await setDetailIssueID(newIss);

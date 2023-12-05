@@ -1,12 +1,13 @@
+import {PersistentTreeView} from '@vlcn.io/materialite';
 import classNames from 'classnames';
 import {memo} from 'react';
 import {Replicache} from 'replicache';
 import {Comment, Description, Issue, IssueUpdate} from 'shared';
+import {Filters} from '../filters';
 import IssueBoard from '../issue/issue-board';
 import IssueDetail from '../issue/issue-detail';
 import IssueList from '../issue/issue-list';
 import {M} from '../model/mutators';
-import {State} from '../reducer';
 import LeftMenu from './left-menu';
 import TopFilter from './top-filter';
 
@@ -28,7 +29,9 @@ export interface LayoutProps {
   view: string | null;
   detailIssueID: string | null;
   isLoading: boolean;
-  state: State;
+  filters: Filters;
+  viewIssueCount: number;
+  filteredIssues: PersistentTreeView<Issue>['value'];
   rep: Replicache<M>;
   onCloseMenu: () => void;
   onToggleMenu: () => void;
@@ -46,7 +49,9 @@ const RawLayout = ({
   view,
   detailIssueID,
   isLoading,
-  state,
+  filters,
+  viewIssueCount,
+  filteredIssues,
   rep,
   onCloseMenu,
   onToggleMenu,
@@ -73,18 +78,16 @@ const RawLayout = ({
               onToggleMenu={onToggleMenu}
               title={getTitle(view)}
               filteredIssuesCount={
-                state.filters.hasNonViewFilters
-                  ? state.filteredIssues.length
-                  : undefined
+                filters.hasNonViewFilters ? filteredIssues.size : undefined
               }
-              issuesCount={state.viewIssueCount}
+              issuesCount={viewIssueCount}
               showSortOrderMenu={view !== 'board'}
             />
           </div>
           <div className="relative flex flex-1 min-h-0">
             {detailIssueID && (
               <IssueDetail
-                issues={state.filteredIssues}
+                issues={filteredIssues}
                 rep={rep}
                 onUpdateIssues={onUpdateIssues}
                 onAddComment={onCreateComment}
@@ -100,13 +103,13 @@ const RawLayout = ({
             >
               {view === 'board' ? (
                 <IssueBoard
-                  issues={state.filteredIssues}
+                  issues={filteredIssues}
                   onUpdateIssues={onUpdateIssues}
                   onOpenDetail={onOpenDetail}
                 />
               ) : (
                 <IssueList
-                  issues={state.filteredIssues}
+                  issues={filteredIssues}
                   onUpdateIssues={onUpdateIssues}
                   onOpenDetail={onOpenDetail}
                   view={view}
