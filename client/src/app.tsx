@@ -67,7 +67,7 @@ const App = ({rep, undoManager}: AppProps) => {
     const ev = new EventSource(`/api/replicache/poke?channel=poke`);
     ev.onmessage = async () => {
       console.log('Receive poke. Pulling');
-      return rep.pull();
+      void rep.pull();
     };
     return () => ev.close();
   }, []);

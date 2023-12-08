@@ -9,7 +9,7 @@ export type Description = z.infer<typeof descriptionSchema>;
 export type DescriptionUpdate = Update<Description>;
 
 export const {
-  put: putDescription,
+  set: putDescription,
   get: getDescription,
   delete: deleteDescription,
 } = generate('description', descriptionSchema.parse);

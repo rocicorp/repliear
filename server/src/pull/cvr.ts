@@ -1,3 +1,4 @@
+import type {Comment, Description, Issue} from 'shared';
 import type {SearchResult} from '../data.js';
 import type {Executor} from '../pg.js';
 
@@ -5,6 +6,29 @@ export type CVR = {
   clientGroupID: string;
   clientVersion: number;
   order: number;
+};
+
+// These two consts drive the tables to sync.
+// Adding a new const here that is the name of a table will cause
+// the table to be synced.
+export const TableOrdinal = {
+  issue: 1,
+  description: 2,
+  comment: 3,
+} as const;
+export type TableType = {
+  issue: Issue & {version: number};
+  description: Description & {version: number};
+  comment: Comment & {version: number};
+};
+
+export type SyncedTables = keyof typeof TableOrdinal;
+export const syncedTables = Object.keys(TableOrdinal) as SyncedTables[];
+export type Puts = {
+  [P in keyof TableType]: TableType[P][];
+};
+export type Deletes = {
+  [P in keyof TableType]: string[];
 };
 
 export async function getCVR(
@@ -26,6 +50,20 @@ export async function getCVR(
   };
 }
 
+export async function findMaxClientViewVersion(
+  executor: Executor,
+  clientGroupID: string,
+) {
+  const result = await executor(
+    /*sql*/ `SELECT MAX("version") AS max FROM "client_view" WHERE "client_group_id" = $1`,
+    [clientGroupID],
+  );
+  if (result.rowCount === 0) {
+    return 0;
+  }
+  return result.rows[0].max || 0;
+}
+
 export function putCVR(executor: Executor, cvr: CVR) {
   return executor(
     /*sql*/ `INSERT INTO client_view (
@@ -40,99 +78,136 @@ export function putCVR(executor: Executor, cvr: CVR) {
 }
 
 /**
- * Find all rows in a table that are not in our CVR table.
- * - either the id is not present
- * - or the version is different
+ * Here we handle when the client sent an old cookie.
  *
- * We could do cursoring to speed this along.
- * I.e., For a given pull sequence, we can keep track of the last id and version.
- * A "reset pull" brings cursor back to 0 to deal with privacy or query changes.
+ * What we do is to fast-forward them to current time by
+ * sending them all the changes that have happened since
+ * their cookie.
  *
- * But also, if the frontend drives the queries then we'll never actually be fetching
- * so much as the frontend queries will be reasonably sized. The frontend queries would also
- * be cursored.
+ * We use the client_view_entry table to do this
  *
- * E.g., `SELECT * FROM issue WHERE modified > x OR (modified = y AND id > z) ORDER BY modified, id LIMIT 100`
- * Cursored on modified and id.
- *
- * This means our compare against the CVR would not be a full table scan of `issue`.
+ * @param executor
+ * @param table
+ * @param clientGroupID
+ * @param order
+ * @param excludeIds - Pulls also gather together all mutations of data that the client already has.
+ * We can exclude these rows from the fast-forward since they've already been gathered.
  */
-export function findUnsentItems(
+export async function findRowsForFastforward<T extends keyof TableType>(
   executor: Executor,
-  table: keyof typeof TableOrdinal,
+  table: T,
   clientGroupID: string,
   order: number,
-  limit: number,
-) {
-  // The query used below is the fastest.
-  // Other query forms that were tried:
-  // 1. 10x slower: SELECT * FROM table WHERE NOT EXISTS (SELECT 1 FROM client_view_entry ...)
-  // 2. 2x slower: SELECT id, version FROM table EXCEPT SELECT entity_id, entity_version FROM client_view_entry ...
-  // 3. SELECT * FROM table LEFT JOIN client_view_entry ...
-  const sql = /*sql*/ `SELECT *
-      FROM "${table}" t
-      WHERE (t."id", t."version") NOT IN (
-        SELECT "entity_id", "entity_version"
-        FROM "client_view_entry"
-        WHERE "client_group_id" = $1
-          AND "client_view_version" <= $2
-          AND "entity" = $3
-      )
-      LIMIT $4;`;
-
-  const params = [clientGroupID, order, TableOrdinal[table], limit];
-  return executor(sql, params);
-}
-
-export const TableOrdinal = {
-  issue: 1,
-  description: 2,
-  comment: 3,
-} as const;
-
-export function findDeletions(
-  executor: Executor,
-  table: keyof typeof TableOrdinal,
-  clientGroupID: string,
-  order: number,
-  limit: number,
-) {
-  // Find rows that are in the CVR table but not in the actual table.
-  // Exclude rows that have a delete entry already.
-  // TODO: Maybe we can remove the second `NOT EXISTS` if we prune the CVR table.
-  // This pruning would mean that we need to record the delete against the
-  // current CVR rather than next CVR. If a request comes in for that prior CVR,
-  // we return the stored delete records and do not compute deletes.
-  return executor(
-    /*sql*/ `SELECT "entity_id" FROM "client_view_entry"
-    WHERE "client_view_entry"."entity" = $1 AND NOT EXISTS (
-      SELECT 1 FROM "${table}" WHERE id = "client_view_entry"."entity_id"
-    ) AND
-    "client_view_entry"."client_group_id" = $2 AND
-    "client_view_entry"."client_view_version" <= $3 
-    AND NOT EXISTS (
-      SELECT 1 FROM "client_view_delete_entry" WHERE "client_view_delete_entry"."entity" = $1 AND "client_view_delete_entry"."entity_id" = "client_view_entry"."entity_id"
-      AND "client_view_delete_entry"."client_group_id" = $2 AND "client_view_delete_entry"."client_view_version" <= $3
-    ) LIMIT $4`,
-    [TableOrdinal[table], clientGroupID, order, limit],
+  excludeIds: readonly string[],
+): Promise<TableType[T][]> {
+  const ret = await executor(
+    /*sql*/ `SELECT t.* FROM client_view_entry AS cve
+    JOIN "${table}" AS t ON cve.entity_id = t.id WHERE 
+      cve.entity = $1 AND
+      cve.client_group_id = $2 AND
+      cve.client_view_version > $3 ${
+        excludeIds.length > 0
+          ? `AND t.id NOT IN (${excludeIds
+              .map((_, i) => '$' + (i + 4))
+              .join(', ')})`
+          : ''
+      }`,
+    [TableOrdinal[table], clientGroupID, order, ...excludeIds],
   );
+  return ret.rows;
 }
 
-export async function dropCVREntries(
+export async function findCreates<T extends keyof TableType>(
   executor: Executor,
+  table: T,
   clientGroupID: string,
-  order: number,
-) {
-  await Promise.all([
-    executor(
-      /*sql*/ `DELETE FROM "client_view_entry" WHERE "client_group_id" = $1 AND "client_view_version" > $2`,
-      [clientGroupID, order],
-    ),
-    executor(
-      /*sql*/ `DELETE FROM "client_view_delete_entry" WHERE "client_group_id" = $1 AND "client_view_version" > $2`,
-      [clientGroupID, order],
-    ),
-  ]);
+  cookieClientViewVersion: number,
+  limit: number,
+): Promise<TableType[T][]> {
+  // Find all rows that exist in the base table but not in the CVR table.
+  // We do not look for rows that are in the CVR table but have a different version
+  // since those are handled by findUpdates.
+  const sql = /*sql*/ `SELECT *
+      FROM "${table}" WHERE id IN (
+        SELECT t.id FROM "${table}" t EXCEPT SELECT cve.entity_id FROM client_view_entry cve WHERE 
+        cve.entity = $1 AND
+        cve.client_group_id = $2 AND
+        cve.client_view_version <= $3
+      LIMIT $4
+    )`;
+
+  const params = [
+    TableOrdinal[table],
+    clientGroupID,
+    cookieClientViewVersion,
+    limit,
+  ];
+  return (await executor(sql, params)).rows;
+}
+
+/**
+ * Looks for rows that the client has that have been changed on the server.
+ *
+ * The basic idea here is to:
+ * Find all CVE entries that exist and have a different row_version in the base table.
+ *
+ * We don't want to find missing rows (that is done in findDeletions) so we use a natural join.
+ */
+export async function findUpdates<T extends keyof TableType>(
+  executor: Executor,
+  table: T,
+  clientGroupID: string,
+): Promise<TableType[T][]> {
+  // `cve."entity_version" != t."version"` rather than `IS DISTINCT FROM` is intentional here.
+  // We do not want to return `updates` for items that were deleted and then re-created
+  // FindCreates will do that for us.
+  return (
+    await executor(
+      /*sql*/ `SELECT t.* FROM "client_view_entry" AS cve
+      JOIN "${table}" AS t ON cve."entity_id" = t."id" WHERE 
+        cve."entity" = $1 AND
+        cve."entity_version" != t."version" AND
+        cve."client_group_id" = $2`,
+      [TableOrdinal[table], clientGroupID],
+    )
+  ).rows;
+}
+
+/**
+ * No limit as all modifications to data the client holds need to be returned.
+ *
+ * This:
+ * 1. Scans all CVR entries for the client group (past, present and future wrt order)
+ * 2. Sees if rows for those entries no longer exists in the base table
+ * 3. Sends these as deletes to the client
+ *
+ * There is one additional optimization:
+ * If we already sent a delete before, we don't send it again.
+ * We do this by not pulling CVR entries which are marked as "deleted" and came before the current order.
+ *
+ * `entity_version IS NULL` is a special case for deletes.
+ *
+ * @param executor
+ * @param table
+ * @param clientGroupID
+ * @param order
+ * @returns
+ */
+export async function findDeletes(
+  executor: Executor,
+  table: keyof typeof TableOrdinal,
+  clientGroupID: string,
+  cookieClientViewVersion: number,
+): Promise<string[]> {
+  return (
+    await executor(
+      /*sql*/ `SELECT cve.entity_id as id FROM client_view_entry as cve
+    WHERE cve.client_group_id = $1 AND
+    ((cve.client_view_version <= $2 AND cve.entity_version IS NOT NULL) OR cve.client_view_version > $2) AND
+    cve.entity = $3 EXCEPT SELECT t.id FROM "${table}" as t`,
+      [clientGroupID, cookieClientViewVersion, TableOrdinal[table]],
+    )
+  ).rows.map(r => r.id);
 }
 
 export async function recordUpdates(
@@ -210,16 +285,17 @@ export async function recordDeletes(
     placeholders.push(
       `($${i * stride + 1}, $${i * stride + 2}, $${i * stride + 3}, $${
         i * stride + 4
-      })`,
+      }, NULL)`,
     );
     values.push(clientGroupID, order, TableOrdinal[table], ids[i]);
   }
   await executor(
-    /*sql*/ `INSERT INTO client_view_delete_entry (
+    /*sql*/ `INSERT INTO client_view_entry (
     "client_group_id",
     "client_view_version",
     "entity",
-    "entity_id"
+    "entity_id",
+    "entity_version"
   ) VALUES ${placeholders.join(', ')}`,
     values,
   );

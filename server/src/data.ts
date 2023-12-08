@@ -46,24 +46,26 @@ export async function putIssue(
       $2,
       $3,
       $4,
-      EXTRACT(EPOCH FROM NOW()) * 1000,
-      EXTRACT(EPOCH FROM NOW()) * 1000,
       $5,
       $6,
+      $7,
+      $8,
       1
     ) ON CONFLICT (id) DO UPDATE SET
       title = $2,
       priority = $3,
       status = $4,
-      modified = EXTRACT(EPOCH FROM NOW()) * 1000,
-      creator = $5,
-      kanbanorder = $6,
+      modified = $5,
+      creator = $7,
+      kanbanorder = $8,
       version = issue.version + 1`,
     [
       issue.id,
       issue.title,
       issue.priority,
       issue.status,
+      Date.now(),
+      Date.now(),
       issue.creator,
       issue.kanbanOrder,
     ],
@@ -192,12 +194,12 @@ export async function createComment(
     ) VALUES (
       $1,
       $2,
-      EXTRACT(EPOCH FROM NOW()) * 1000,
       $3,
       $4,
+      $5,
       1
     )`,
-    [comment.id, comment.issueID, comment.body, comment.creator],
+    [comment.id, comment.issueID, Date.now(), comment.body, comment.creator],
   );
   return {
     issueIDs: [comment.issueID],

@@ -73,7 +73,7 @@ export type IssueUpdateWithID = z.infer<typeof issueUpdateWithIDSchema>;
 export type Issue = z.infer<typeof issueSchema>;
 
 export const {
-  put: putIssue,
+  set: putIssue,
   list: listIssues,
   get: getIssue,
   delete: deleteIssue,

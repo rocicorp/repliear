@@ -130,8 +130,6 @@ export function reducer(
       };
     }
   }
-
-  return state;
 }
 
 function diffReducer(state: State, diff: Diff): State {
@@ -150,11 +148,8 @@ function diffReducer(state: State, diff: Diff): State {
       newViewIssueCount++;
     }
     if (state.filters.issuesFilter(newIssue)) {
-      newFilteredIssues.splice(
-        sortedIndexBy(newFilteredIssues, newIssue, orderIteratee),
-        0,
-        newIssue,
-      );
+      const idx = sortedIndexBy(newFilteredIssues, newIssue, orderIteratee);
+      newFilteredIssues.splice(idx, 0, newIssue);
     }
   }
   function del(key: string, oldValue: ReadonlyJSONValue) {

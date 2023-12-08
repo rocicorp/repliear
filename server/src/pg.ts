@@ -79,8 +79,10 @@ async function withExecutorAndPool<R>(
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Executor = (sql: string, params?: any[]) => Promise<QueryResult>;
+export type Executor = (
+  sql: string,
+  params?: unknown[],
+) => Promise<QueryResult>;
 export type TransactionBodyFn<R> = (executor: Executor) => Promise<R>;
 
 /**
