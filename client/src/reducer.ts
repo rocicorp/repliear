@@ -152,8 +152,11 @@ function diffReducer(state: State, diff: Diff): State {
       newFilteredIssues.splice(idx, 0, newIssue);
     }
   }
-  function del(key: string, oldValue: ReadonlyJSONValue) {
-    const oldIssue = issueFromKeyAndValue(key, oldValue);
+  function del(key: string) {
+    const oldIssue = newAllIssuesMap.get(key);
+    if (oldIssue === undefined) {
+      throw new Error('Issue not found in allIssuesMap. This is a bug.');
+    }
     const index = sortedIndexBy(newFilteredIssues, oldIssue, orderIteratee);
     newAllIssuesMap.delete(key);
     if (state.filters.viewFilter(oldIssue)) {
@@ -170,11 +173,11 @@ function diffReducer(state: State, diff: Diff): State {
         break;
       }
       case 'del': {
-        del(diffOp.key as string, diffOp.oldValue);
+        del(diffOp.key as string);
         break;
       }
       case 'change': {
-        del(diffOp.key as string, diffOp.oldValue);
+        del(diffOp.key as string);
         add(diffOp.key as string, diffOp.newValue);
         break;
       }
