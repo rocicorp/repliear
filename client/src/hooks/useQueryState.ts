@@ -18,7 +18,8 @@ export function useQueryState<T>(
 ) {
   function getQueryValue() {
     const searchParams = new URLSearchParams(window.location.search);
-    return searchParams.get(key);
+    const param = searchParams.get(key);
+    return param === null ? null : decodeURIComponent(param);
   }
   function processQueryValue(queryValue: string | null) {
     return queryValue === null ? null : processor.fromString(queryValue);
