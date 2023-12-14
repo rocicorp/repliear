@@ -8,7 +8,7 @@ export function hasNonViewFilters(
   statuses: Set<Status>,
 ) {
   for (const s of statuses) {
-    if (!viewStatuses.has(s)) {
+    if (viewStatuses.has(s)) {
       return true;
     }
   }
@@ -50,11 +50,11 @@ export function getStatusFilter(
   viewStatuses: Set<Status>,
   statuses: Set<Status>,
 ): null | ((issue: Issue) => boolean) {
-  const allStatuses = new Set<Status>([...viewStatuses, ...statuses]);
-  if (allStatuses.size === 0) {
+  const filterStatuses = statuses.size === 0 ? viewStatuses : statuses;
+  if (filterStatuses.size === 0) {
     return null;
   }
-  return issue => allStatuses.has(issue.status);
+  return issue => filterStatuses.has(issue.status);
 }
 
 export function getCreatorFilter(
@@ -75,13 +75,19 @@ export function getViewFilter(
 
 export function getModifiedFilter(
   args: DateQueryArg[] | null,
-): (issue: Issue) => boolean {
+): ((issue: Issue) => boolean) | null {
+  if (args === null) {
+    return null;
+  }
   return createTimeFilter('modified', args);
 }
 
 export function getCreatedFilter(
   args: DateQueryArg[] | null,
-): (issue: Issue) => boolean {
+): null | ((issue: Issue) => boolean) {
+  if (args === null) {
+    return null;
+  }
   return createTimeFilter('created', args);
 }
 

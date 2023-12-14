@@ -4,12 +4,14 @@ import {Filter} from '../issue/issue';
 import {useClickOutside} from '../hooks/useClickOutside';
 import SignalStrongIcon from '../assets/icons/signal-strong.svg?react';
 import TodoIcon from '../assets/icons/circle.svg?react';
+import UserIcon from '../assets/icons/avatar.svg?react';
+import DateIcon from '../assets/icons/due-date.svg?react';
 import {statusOpts} from './priority-menu';
 import {statuses} from './status-menu';
 import {Priority, Status} from 'shared';
-import UserIcon from './assets/icons/avatar.svg';
-import DateIcon from './assets/icons/due-date.svg';
 import useId from '@mui/utils/useId';
+import {useViewState} from '../hooks/query-state-hooks';
+import {getViewStatuses} from '../filters';
 
 type DateCallback = (date: Date) => void;
 interface Props {
@@ -35,6 +37,7 @@ const FilterMenu = ({
   const [popperRef, setPopperRef] = useState<HTMLDivElement | null>(null);
   const [filter, setFilter] = useState<Filter | null>(null);
   const [filterDropDownVisible, setFilterDropDownVisible] = useState(false);
+  const [view] = useViewState();
 
   const {styles, attributes, update} = usePopper(filterRef, popperRef, {
     placement: 'bottom-start',
@@ -83,23 +86,27 @@ const FilterMenu = ({
           );
         });
 
-      case Filter.STATUS:
-        return statuses.map(([Icon, status, label], idx) => {
-          return (
-            <div
-              key={idx}
-              className="flex items-center h-8 px-3 text-gray focus:outline-none hover:text-gray-800 hover:bg-gray-300"
-              onMouseDown={() => {
-                onSelectStatus(status as Status);
-                setFilter(null);
-                setFilterDropDownVisible(false);
-              }}
-            >
-              <Icon className="mr-4" />
-              {label}
-            </div>
-          );
-        });
+      case Filter.STATUS: {
+        const viewStatuses = getViewStatuses(view);
+        return statuses
+          .filter(s => viewStatuses.size === 0 || viewStatuses.has(s[1]))
+          .map(([Icon, status, label], idx) => {
+            return (
+              <div
+                key={idx}
+                className="flex items-center h-8 px-3 text-gray focus:outline-none hover:text-gray-800 hover:bg-gray-300"
+                onMouseDown={() => {
+                  onSelectStatus(status as Status);
+                  setFilter(null);
+                  setFilterDropDownVisible(false);
+                }}
+              >
+                <Icon className="mr-4" />
+                {label}
+              </div>
+            );
+          });
+      }
       case Filter.CREATOR:
         return [
           <CreatorInput
