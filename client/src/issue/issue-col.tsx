@@ -11,11 +11,12 @@ import IssueItem from './issue-item';
 import {FixedSizeList} from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import {Issue, Priority, Status} from 'shared';
+import {PersistentTreeView} from '@vlcn.io/materialite';
 
 interface Props {
   status: Status;
   title: string;
-  issues: Array<Issue>;
+  issues: PersistentTreeView<Issue>['value'];
   onChangePriority: (issue: Issue, priority: Priority) => void;
   onOpenDetail: (issue: Issue) => void;
 }
@@ -23,7 +24,7 @@ interface Props {
 interface RowProps {
   index: number;
   data: {
-    issues: Array<Issue>;
+    issues: PersistentTreeView<Issue>['value'];
     onChangePriority: (issue: Issue, priority: Priority) => void;
     onOpenDetail: (issue: Issue) => void;
   };
@@ -31,7 +32,7 @@ interface RowProps {
 }
 
 const RowPreMemo = ({data, index, style}: RowProps) => {
-  const issue = data.issues[index];
+  const issue = data.issues.at(index);
   // We are rendering an extra item for the placeholder.
   // To do this we increased our data set size to include one 'fake' item.
   if (!issue) {
@@ -88,7 +89,7 @@ function IssueCol({
         {statusIcon}
         <div className="ml-3 mr-3 font-medium">{title}</div>
         <div className="mr-3 font-normal text-gray-400">
-          {issues?.length || 0}
+          {issues?.size || 0}
         </div>
       </div>
 
@@ -100,7 +101,7 @@ function IssueCol({
           type="category"
           mode="virtual"
           renderClone={(provided, _snapshot, rubric) => {
-            const issue = issues[rubric.source.index];
+            const issue = issues.at(rubric.source.index);
             return (
               <div
                 ref={provided.innerRef}
@@ -117,8 +118,8 @@ function IssueCol({
             // Usually the DroppableProvided.placeholder does this, but that won't
             // work in a virtual list
             const itemCount = snapshot.isUsingPlaceholder
-              ? issues.length + 1
-              : issues.length;
+              ? issues.size + 1
+              : issues.size;
             return (
               <AutoSizer>
                 {({height, width}: {width: number; height: number}) => {

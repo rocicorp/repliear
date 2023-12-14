@@ -102,7 +102,6 @@ const RawLayout = ({
             >
               {view === 'board' ? (
                 <IssueBoard
-                  issues={filteredIssues}
                   onUpdateIssues={onUpdateIssues}
                   onOpenDetail={onOpenDetail}
                 />
