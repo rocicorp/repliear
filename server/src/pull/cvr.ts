@@ -125,16 +125,13 @@ export async function findCreates<T extends keyof TableType>(
   limit: number,
 ): Promise<TableType[T][]> {
   // Find all rows that exist in the base table but not in the CVR table.
-  // We do not look for rows that are in the CVR table but have a different version
-  // since those are handled by findUpdates.
   const sql = /*sql*/ `SELECT *
-      FROM "${table}" WHERE id IN (
-        SELECT t.id FROM "${table}" t EXCEPT SELECT cve.entity_id FROM client_view_entry cve WHERE 
+      FROM "${table}" WHERE id NOT IN (
+        SELECT cve.entity_id FROM client_view_entry cve WHERE 
         cve.entity = $1 AND
         cve.client_group_id = $2 AND
         cve.client_view_version <= $3
-      LIMIT $4
-    )`;
+    ) LIMIT $4`;
 
   const params = [
     TableOrdinal[table],

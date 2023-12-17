@@ -392,6 +392,7 @@ export async function getPageOfCreates(
 
   // TODO: issue all queries in parallel?
   for (const t of syncedTables) {
+    const t0 = performance.now();
     const result = await findCreates<typeof t>(
       executor,
       t,
@@ -399,6 +400,8 @@ export async function getPageOfCreates(
       order,
       remaining,
     );
+    const t1 = performance.now();
+    console.log(`findCreates ${t} ${result.length} rows in ${t1 - t0}ms`);
     ret[t] = result as unknown as [];
     remaining -= result.length;
     if (remaining <= 0) {
