@@ -19,7 +19,6 @@ import {
   Deletes,
 } from './cvr';
 import {PartialSyncState, PARTIAL_SYNC_STATE_KEY} from 'shared';
-import {lock} from '../clientGroupLock';
 
 const cookieSchema = z.object({
   order: z.number(),
@@ -41,12 +40,8 @@ export async function pull(
   console.log(`Processing pull`, JSON.stringify(requestBody, null, ''));
   const pull = pullRequest.parse(requestBody);
 
-  // Serialize access to the same client group here to prevent
-  // postgres from throwing as we serialize access to the same client group
-  // there too.
-  const ret = await lock.acquire(pull.clientGroupID, async () => {
-    return await pullInner(pull);
-  });
+  const ret = await pullInner(pull);
+
   const end = performance.now();
   console.log(`Processed pull in ${end - start}ms`);
   return ret;

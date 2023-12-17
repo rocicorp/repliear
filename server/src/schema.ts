@@ -99,6 +99,7 @@ export async function createSchemaVersion1(executor: Executor) {
     -- Entity ID the entry is for.
     "entity_id" VARCHAR(36) NOT NULL,
     -- Version the entity was at when the entry was last updated.
+    -- TODO(aa): Use a deleted column.
     "entity_version" INTEGER,
     -- unique by client_group_id, entity, entity_id
     PRIMARY KEY ("client_group_id", "entity", "entity_id")

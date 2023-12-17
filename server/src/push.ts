@@ -20,7 +20,6 @@ import {
   issueUpdateWithIDSchema,
   commentSchema,
 } from 'shared';
-import {lock} from './clientGroupLock';
 
 const mutationSchema = z.object({
   id: z.number(),
@@ -41,26 +40,23 @@ export async function push(requestBody: ReadonlyJSONValue) {
   const t0 = performance.now();
   const push = pushRequestSchema.parse(requestBody);
 
-  const ret = await lock.acquire(push.clientGroupID, async () => {
-    for (const mutation of push.mutations) {
-      const result = await processMutation(push.clientGroupID, mutation, null);
-      if (result && 'error' in result) {
-        const result2 = await processMutation(
-          push.clientGroupID,
-          mutation,
-          result.error,
-        );
-        if (result2 && 'error' in result2) {
-          throw result2.error;
-        }
+  for (const mutation of push.mutations) {
+    const result = await processMutation(push.clientGroupID, mutation, null);
+    if (result && 'error' in result) {
+      const result2 = await processMutation(
+        push.clientGroupID,
+        mutation,
+        result.error,
+      );
+      if (result2 && 'error' in result2) {
+        throw result2.error;
       }
     }
+  }
 
-    getPokeBackend().poke('poke'); // ouch
-  });
+  getPokeBackend().poke('poke');
 
   console.log('Processed all mutations in', performance.now() - t0);
-  return ret;
 }
 
 async function processMutation(
