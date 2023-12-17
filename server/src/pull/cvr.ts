@@ -124,7 +124,7 @@ export async function findCreates<T extends keyof TableType>(
   cookieClientViewVersion: number,
   limit: number,
 ): Promise<TableType[T][]> {
-  // Find all rows that exist in the base table but not in the CVR table.
+  // Find all rows that exist in the base table but not in the specified CVR.
   const sql = /*sql*/ `SELECT *
       FROM "${table}" WHERE id NOT IN (
         SELECT cve.entity_id FROM client_view_entry cve WHERE 

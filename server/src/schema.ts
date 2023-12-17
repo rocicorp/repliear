@@ -22,16 +22,25 @@ export async function createSchemaVersion1(executor: Executor) {
 
   // cvrversion is null until first pull initializes it.
   await executor(/*sql*/ `CREATE TABLE replicache_client_group (
+    -- ID of the Client Group (provided by Replicache)
     id VARCHAR(36) PRIMARY KEY NOT NULL,
+    -- Last CVR version generated for this Client Group
+    -- TODO(aa): Need to standardize on either "cvr" or "cv".
+    -- Both are used in this codebase.
     cvrversion INTEGER null,
+    -- Last client version used by this Client Group
     clientversion INTEGER NOT NULL,
     lastmodified TIMESTAMP(6) NOT NULL
     )`);
 
   await executor(/*sql*/ `CREATE TABLE replicache_client (
+    -- ID of the Client (provided by Replicache)
     id VARCHAR(36) PRIMARY KEY NOT NULL,
+    -- ID of the Client Group this Client belongs to
     clientgroupid VARCHAR(36) NOT NULL,
+    -- Last mutation processed from this client.
     lastmutationid INTEGER NOT NULL,
+    -- Value of replicache_client_group.clientversion last time this client's last_mutation_id changed.
     clientversion INTEGER NOT NULL,
     lastmodified TIMESTAMP(6) NOT NULL
     )`);
@@ -71,21 +80,27 @@ export async function createSchemaVersion1(executor: Executor) {
   )`);
 
   await executor(/*sql*/ `CREATE TABLE "client_view" (
+    -- Client Group this Client View was generated for
     "client_group_id" VARCHAR(36) NOT NULL,
+    -- Version of this Client View
+    -- Note that CV's are recursive: CV_n = CV_n-1 + (changes since CV_n-1)
     "version" INTEGER NOT NULL,
     "client_version" INTEGER NOT NULL,
     PRIMARY KEY ("client_group_id", "version")
   )`);
 
   await executor(/*sql*/ `CREATE TABLE "client_view_entry" (
+    -- Client Group the CV was generated for.
     "client_group_id" VARCHAR(36) NOT NULL,
+    -- Client View Version the entry was last updated at.
     "client_view_version" INTEGER NOT NULL,
+    -- Entity the entry is for.
     "entity" INTEGER NOT NULL,
+    -- Entity ID the entry is for.
     "entity_id" VARCHAR(36) NOT NULL,
+    -- Version the entity was at when the entry was last updated.
     "entity_version" INTEGER,
     -- unique by client_group_id, entity, entity_id
-    -- 1. A missing row version is semantically the same as a behind row version
-    -- 2. Our CVR is recursive. CVR_n = CVR_n-1 + (changes since CVR_n-1)
     PRIMARY KEY ("client_group_id", "entity", "entity_id")
   )`);
 
