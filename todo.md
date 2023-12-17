@@ -1,4 +1,8 @@
+- don't bump client version when no changes
 - deleted column in client_view
 - decide on client_view_record vs client_view
 - make sure all files are snake_case
 - make sure all tables and columns are snake_case
+- add lease to pull
+- put paging back (by way of expanding a window incrementally that controls what we are syncing)
+- move client diffing into cvr (get rid of client_view table entirely)

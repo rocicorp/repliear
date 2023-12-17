@@ -104,9 +104,4 @@ export async function createSchemaVersion1(executor: Executor) {
     -- unique by client_group_id, entity, entity_id
     PRIMARY KEY ("client_group_id", "entity", "entity_id")
   )`);
-
-  // TODO (mlaw): see if we can remove this.
-  await executor(/*sql*/ `CREATE UNIQUE INDEX "client_view_entry_covering" ON "client_view_entry" (
-    "client_group_id", "client_view_version", "entity", "entity_id", "entity_version"
-  )`);
 }

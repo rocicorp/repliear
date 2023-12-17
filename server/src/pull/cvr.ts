@@ -1,5 +1,4 @@
 import type {Comment, Description, Issue} from 'shared';
-import type {SearchResult} from '../data.js';
 import type {Executor} from '../pg.js';
 
 export type CVR = {
@@ -50,20 +49,6 @@ export async function getCVR(
   };
 }
 
-export async function findMaxClientViewVersion(
-  executor: Executor,
-  clientGroupID: string,
-) {
-  const result = await executor(
-    /*sql*/ `SELECT MAX("version") AS max FROM "client_view" WHERE "client_group_id" = $1`,
-    [clientGroupID],
-  );
-  if (result.rowCount === 0) {
-    return 0;
-  }
-  return result.rows[0].max || 0;
-}
-
 export function putCVR(executor: Executor, cvr: CVR) {
   return executor(
     /*sql*/ `INSERT INTO client_view (
@@ -77,223 +62,136 @@ export function putCVR(executor: Executor, cvr: CVR) {
   );
 }
 
-/**
- * Here we handle when the client sent an old cookie.
- *
- * What we do is to fast-forward them to current time by
- * sending them all the changes that have happened since
- * their cookie.
- *
- * We use the client_view_entry table to do this
- *
- * @param executor
- * @param table
- * @param clientGroupID
- * @param order
- * @param excludeIds - Pulls also gather together all mutations of data that the client already has.
- * We can exclude these rows from the fast-forward since they've already been gathered.
- */
-export async function findRowsForFastforward<T extends keyof TableType>(
+export async function recordCreates<T extends keyof TableType>(
   executor: Executor,
   table: T,
   clientGroupID: string,
-  order: number,
-  excludeIds: readonly string[],
+  clientViewVersion: number,
+) {
+  console.log('recordCreates', table, clientGroupID, clientViewVersion);
+  const sql = `INSERT INTO client_view_entry as cve (
+      SELECT
+        cast($1 as varchar(36)) as client_group_id,
+        $2 as client_view_version,
+        $3 as entity,
+        t.id as entity_id,
+        t.version as entity_version
+      FROM ${table} AS t
+      WHERE t.id NOT IN (
+        SELECT cve2.entity_id FROM client_view_entry cve2 WHERE
+        cve2.entity = $3 AND
+        cve2.client_group_id = $1 AND
+        cve2.entity_version IS NOT NULL
+      )
+    )
+    ON CONFLICT (entity, entity_id, client_group_id) DO UPDATE SET
+      entity_version = EXCLUDED.entity_version,
+      client_view_version = $2
+    `;
+
+  const params = [clientGroupID, clientViewVersion, TableOrdinal[table]];
+  await executor(sql, params);
+}
+
+export async function recordUpdates<T extends keyof TableType>(
+  executor: Executor,
+  table: T,
+  clientGroupID: string,
+  clientViewVersion: number,
+) {
+  // The conflict on the INSERT will *always* fire. Using this as a hacky way
+  // to do a mass-update. Using UPDATE FROM was super slow because it treated
+  // the subselect as a nested loop whereas the subquery here is treated as an
+  // index scan.
+  const sql = `INSERT INTO client_view_entry as cve (
+    SELECT
+      cve2.client_group_id,
+      $3 as client_view_version,
+      cve2.entity,
+      cve2.entity_id,
+      t.version as entity_version
+    FROM client_view_entry AS cve2
+    JOIN ${table} AS t ON cve2.entity_id = t.id
+    WHERE 
+      cve2.client_group_id = $2 AND
+      cve2.entity = $1 AND
+      cve2.entity_version IS NOT NULL AND
+      cve2.entity_version != t.version
+  )
+  ON CONFLICT (client_group_id, entity, entity_id)
+  DO UPDATE SET
+    client_view_version = EXCLUDED.client_view_version,
+    entity_version = EXCLUDED.entity_version;
+`;
+
+  const params = [TableOrdinal[table], clientGroupID, clientViewVersion];
+  const ret = await executor(sql, params);
+  return ret.rowCount ?? 0;
+}
+
+export async function recordDeletes<T extends keyof TableType>(
+  executor: Executor,
+  table: T,
+  clientGroupID: string,
+  clientViewVersion: number,
+) {
+  // The conflict on the INSERT will *always* fire. Using this as a hacky way
+  // to do a mass-update. Using UPDATE FROM was super slow because it treated
+  // the subselect as a nested loop whereas the subquery here is treated as an
+  // index scan.
+  const sql = `INSERT INTO client_view_entry as cve (
+    SELECT *
+    FROM client_view_entry as cve2
+    WHERE 
+      cve2.entity = $1 AND
+      cve2.client_group_id = $2 AND
+      cve2.client_view_version IS NOT NULL AND
+      cve2.entity_id NOT IN (
+        SELECT id FROM ${table}
+      )
+    )
+  ON CONFLICT (client_group_id, entity, entity_id)
+  DO UPDATE SET
+    entity_version = NULL,
+    client_view_version = $3;`;
+
+  const params = [TableOrdinal[table], clientGroupID, clientViewVersion];
+  await executor(sql, params);
+}
+
+export async function getPutsSince<T extends keyof TableType>(
+  executor: Executor,
+  table: T,
+  clientGroupID: string,
+  fromClientViewVersion: number,
 ): Promise<TableType[T][]> {
   const ret = await executor(
     /*sql*/ `SELECT t.* FROM client_view_entry AS cve
     JOIN "${table}" AS t ON cve.entity_id = t.id WHERE 
       cve.entity = $1 AND
+      cve.entity_version IS NOT NULL AND
       cve.client_group_id = $2 AND
-      cve.client_view_version > $3 ${
-        excludeIds.length > 0
-          ? `AND t.id NOT IN (${excludeIds
-              .map((_, i) => '$' + (i + 4))
-              .join(', ')})`
-          : ''
-      }`,
-    [TableOrdinal[table], clientGroupID, order, ...excludeIds],
+      cve.client_view_version > $3`,
+    [TableOrdinal[table], clientGroupID, fromClientViewVersion],
   );
   return ret.rows;
 }
 
-export async function findCreates<T extends keyof TableType>(
+export async function getDelsSince<T extends keyof TableType>(
   executor: Executor,
   table: T,
   clientGroupID: string,
-  cookieClientViewVersion: number,
-  limit: number,
-): Promise<TableType[T][]> {
-  // Find all rows that exist in the base table but not in the specified CVR.
-  const sql = /*sql*/ `SELECT *
-      FROM "${table}" WHERE id NOT IN (
-        SELECT cve.entity_id FROM client_view_entry cve WHERE 
-        cve.entity = $1 AND
-        cve.client_group_id = $2 AND
-        cve.client_view_version <= $3
-    ) LIMIT $4`;
-
-  const params = [
-    TableOrdinal[table],
-    clientGroupID,
-    cookieClientViewVersion,
-    limit,
-  ];
-  return (await executor(sql, params)).rows;
-}
-
-/**
- * Looks for rows that the client has that have been changed on the server.
- *
- * The basic idea here is to:
- * Find all CVE entries that exist and have a different row_version in the base table.
- *
- * We don't want to find missing rows (that is done in findDeletions) so we use a natural join.
- */
-export async function findUpdates<T extends keyof TableType>(
-  executor: Executor,
-  table: T,
-  clientGroupID: string,
-): Promise<TableType[T][]> {
-  // `cve."entity_version" != t."version"` rather than `IS DISTINCT FROM` is intentional here.
-  // We do not want to return `updates` for items that were deleted and then re-created
-  // FindCreates will do that for us.
-  return (
-    await executor(
-      /*sql*/ `SELECT t.* FROM "client_view_entry" AS cve
-      JOIN "${table}" AS t ON cve."entity_id" = t."id" WHERE 
-        cve."entity" = $1 AND
-        cve."entity_version" != t."version" AND
-        cve."client_group_id" = $2`,
-      [TableOrdinal[table], clientGroupID],
-    )
-  ).rows;
-}
-
-/**
- * No limit as all modifications to data the client holds need to be returned.
- *
- * This:
- * 1. Scans all CVR entries for the client group (past, present and future wrt order)
- * 2. Sees if rows for those entries no longer exists in the base table
- * 3. Sends these as deletes to the client
- *
- * There is one additional optimization:
- * If we already sent a delete before, we don't send it again.
- * We do this by not pulling CVR entries which are marked as "deleted" and came before the current order.
- *
- * `entity_version IS NULL` is a special case for deletes.
- *
- * @param executor
- * @param table
- * @param clientGroupID
- * @param order
- * @returns
- */
-export async function findDeletes(
-  executor: Executor,
-  table: keyof typeof TableOrdinal,
-  clientGroupID: string,
-  cookieClientViewVersion: number,
+  fromClientViewVersion: number,
 ): Promise<string[]> {
-  return (
-    await executor(
-      /*sql*/ `SELECT cve.entity_id as id FROM client_view_entry as cve
-    WHERE cve.client_group_id = $1 AND
-    ((cve.client_view_version <= $2 AND cve.entity_version IS NOT NULL) OR cve.client_view_version > $2) AND
-    cve.entity = $3 EXCEPT SELECT t.id FROM "${table}" as t`,
-      [clientGroupID, cookieClientViewVersion, TableOrdinal[table]],
-    )
-  ).rows.map(r => r.id);
-}
-
-export async function recordUpdates(
-  executor: Executor,
-  table: keyof typeof TableOrdinal,
-  clientGroupID: string,
-  order: number,
-  updates: SearchResult[],
-) {
-  if (updates.length === 0) {
-    return;
-  }
-
-  const placeholders = [];
-  const values = [];
-  const stride = 5;
-  for (let i = 0; i < updates.length; i++) {
-    placeholders.push(
-      `($${i * stride + 1}, $${i * stride + 2}, $${i * stride + 3}, $${
-        i * stride + 4
-      }, $${i * stride + 5})`,
-    );
-    values.push(
-      clientGroupID,
-      order,
-      TableOrdinal[table],
-      updates[i].id,
-      updates[i].version,
-    );
-  }
-
-  await executor(
-    /*sql*/ `INSERT INTO client_view_entry (
-    "client_group_id",
-    "client_view_version",
-    "entity",
-    "entity_id",
-    "entity_version"
-  ) VALUES ${placeholders.join(
-    ', ',
-  )} ON CONFLICT ("client_group_id", "entity", "entity_id") DO UPDATE SET
-    "entity_version" = excluded."entity_version",
-    "client_view_version" = excluded."client_view_version"
-  `,
-    values,
+  const ret = await executor(
+    /*sql*/ `SELECT entity_id
+    FROM client_view_entry AS cve
+    WHERE
+      cve.entity = $1 AND
+      cve.entity_version IS NULL AND
+      cve.client_group_id = $2 AND
+      cve.client_view_version > $3`,
+    [TableOrdinal[table], clientGroupID, fromClientViewVersion],
   );
-}
-
-/**
- * Records a CVR entry for the deletes.
- *
- * Note: we could update this to cull CRV entries that are no longer needed.
- * We'd have to tag delete entries against the current cvr to do that rather then
- * the next cvr. If a cvr was already previously requested, the next request for the same CVR
- * returns the previously recorded deletes rather than computing deletes.
- * @param executor
- * @param table
- * @param ids
- * @returns
- */
-export async function recordDeletes(
-  executor: Executor,
-  table: keyof typeof TableOrdinal,
-  clientGroupID: string,
-  order: number,
-  ids: string[],
-) {
-  if (ids.length === 0) {
-    return;
-  }
-  const placeholders = [];
-  const values = [];
-  const stride = 4;
-  for (let i = 0; i < ids.length; i++) {
-    placeholders.push(
-      `($${i * stride + 1}, $${i * stride + 2}, $${i * stride + 3}, $${
-        i * stride + 4
-      }, NULL)`,
-    );
-    values.push(clientGroupID, order, TableOrdinal[table], ids[i]);
-  }
-  await executor(
-    /*sql*/ `INSERT INTO client_view_entry (
-    "client_group_id",
-    "client_view_version",
-    "entity",
-    "entity_id",
-    "entity_version"
-  ) VALUES ${placeholders.join(', ')}`,
-    values,
-  );
+  return ret.rows.map(r => r.entity_id);
 }

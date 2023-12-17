@@ -61,7 +61,7 @@ async function withExecutorAndPool<R>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const executor = async (sql: string, params?: any[]) => {
     try {
-      // console.log('Running query', sql, params);
+      console.log('Running query', sql, params);
       return await client.query(sql, params);
     } catch (e) {
       // console.error('Error on query', sql, params);

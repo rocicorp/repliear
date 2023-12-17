@@ -6,19 +6,17 @@ import type Express from 'express';
 import {
   CVR,
   getCVR,
-  findMaxClientViewVersion,
   putCVR,
-  recordDeletes,
-  recordUpdates,
   syncedTables,
   Puts,
-  findCreates,
-  findRowsForFastforward,
-  findDeletes,
-  findUpdates,
   Deletes,
+  recordCreates,
+  recordUpdates,
+  recordDeletes,
+  getDelsSince,
+  getPutsSince,
 } from './cvr';
-import {PartialSyncState, PARTIAL_SYNC_STATE_KEY} from 'shared';
+import {PARTIAL_SYNC_STATE_KEY} from 'shared';
 
 const cookieSchema = z.object({
   order: z.number(),
@@ -67,57 +65,6 @@ async function pullInner(pull: PullRequest) {
         order: 0,
       };
 
-      const [clientChanges, maxClientViewVersion] = await Promise.all([
-        searchClients(executor, {
-          clientGroupID,
-          sinceClientVersion: baseCVR.clientVersion,
-        }),
-        findMaxClientViewVersion(executor, clientGroupID),
-      ]);
-      const isFastForward = baseCVR.order < maxClientViewVersion;
-
-      // For everything the client already has,
-      // find all deletes and updates to those items.
-      const [deletes, updates] = await Promise.all([
-        time(
-          () => getAllDeletes(executor, clientGroupID, baseCVR.order),
-          'getAllDeletes',
-        ),
-        time(() => getAllUpdates(executor, clientGroupID), 'getAllUpdates'),
-      ]);
-
-      const response = {
-        puts: updates,
-        deletes,
-      };
-      // We don't want to include the fast-forward entries in the next CVR.
-      const updatesForNextCVR = copyResponse(response);
-
-      // Now find things that the client does not have.
-      // Either a fast-forward through CVRs, excluding the updates and deleted we pulled
-      // Or newly created items that the client has never seen.
-      if (isFastForward) {
-        const fastForwardRows = await time(
-          () =>
-            fastforward(
-              executor,
-              clientGroupID,
-              baseCVR.order,
-              deletes,
-              updates,
-            ),
-          'fastforward',
-        );
-        mergePuts(response.puts, fastForwardRows);
-      } else {
-        const creates = await time(
-          () => getPageOfCreates(executor, clientGroupID, baseCVR.order),
-          'getPageOfCreates',
-        );
-        mergePuts(response.puts, creates);
-        mergePuts(updatesForNextCVR.puts, creates);
-      }
-
       // From: https://github.com/rocicorp/todo-row-versioning/blob/d8f351d040db9feae02b4847ea613fbc40aacd17/server/src/pull.ts#L103
       // If there is no clientGroupRecord this means one of two things:
       // 1. The client group is actually new
@@ -139,20 +86,6 @@ async function pullInner(pull: PullRequest) {
         );
       }
 
-      // If we have no data we do not need to bump `order` as nothing was returned.
-      if (isResponseEmpty(response)) {
-        return {
-          clientChanges,
-          response,
-          prevCVR,
-          nextCVR: {
-            clientGroupID,
-            clientVersion: baseClientGroupRecord.clientVersion,
-            order: prevCVRVersion,
-          },
-        };
-      }
-
       const nextClientGroupRecord = {
         ...baseClientGroupRecord,
         cvrVersion: prevCVRVersion + 1,
@@ -164,27 +97,40 @@ async function pullInner(pull: PullRequest) {
         order: nextClientGroupRecord.cvrVersion,
       };
 
+      const clientChanges = await searchClients(executor, {
+        clientGroupID,
+        sinceClientVersion: baseCVR.clientVersion,
+      });
+      console.log('Got client changes', clientChanges);
+
+      await updateClientView(executor, clientGroupID, nextCVR.order);
+
+      // For everything the client already has,
+      // find all deletes and updates to those items.
+      const [puts, deletes] = await Promise.all([
+        time(
+          () => getAllPuts(executor, clientGroupID, baseCVR.order),
+          'getAllPuts',
+        ),
+        time(
+          () => getAllDels(executor, clientGroupID, baseCVR.order),
+          'getAllDeletes',
+        ),
+      ]);
+
+      console.log('puts', [...Object.values(puts)].length);
+
+      const response = {
+        puts,
+        deletes,
+      };
+
+      // TODO: Consider optimizing the case where there are no changes.
+
       await Promise.all([
         putClientGroup(executor, nextClientGroupRecord),
         putCVR(executor, nextCVR),
       ]);
-
-      await syncedTables.map(async t => {
-        const puts = updatesForNextCVR.puts[t];
-        const deletes = updatesForNextCVR.deletes[t];
-        await Promise.all([
-          time(
-            () =>
-              recordUpdates(executor, t, clientGroupID, nextCVR.order, puts),
-            'recordUpdates',
-          ),
-          time(
-            () =>
-              recordDeletes(executor, t, clientGroupID, nextCVR.order, deletes),
-            'recordDeletes',
-          ),
-        ]);
-      });
 
       return {
         clientChanges,
@@ -211,10 +157,9 @@ async function pullInner(pull: PullRequest) {
   if (prevCVR === undefined) {
     patch.push({op: 'clear'});
   }
-  const seen = new Set<string>();
+
   for (const t of syncedTables) {
     for (const put of response.puts[t]) {
-      seen.add(put.id);
       // Postgres rightly returns bigint as string given 64 bit ints are > js ints.
       // JS ints are 53 bits so we can safely convert to number for dates here.
       if ('created' in put) {
@@ -247,17 +192,11 @@ async function pullInner(pull: PullRequest) {
     }
   }
 
-  // If we have less than page size records
-  // then there's nothing left to pull.
-  // If we have >= page size records then
-  // the client should pull again because there's more to sync
-  const complete: PartialSyncState = !hasNextPage(response)
-    ? 'COMPLETE'
-    : `INCOMPLETE_${nextCVR.order}`;
+  // TODO: Reimplement partial sync.
   patch.push({
     op: 'put',
     key: PARTIAL_SYNC_STATE_KEY,
-    value: complete,
+    value: 'COMPLETE',
   });
 
   const respCookie: Cookie = {
@@ -274,67 +213,29 @@ async function pullInner(pull: PullRequest) {
   return resp;
 }
 
-export function mergePuts(target: Puts, source: Puts) {
+async function updateClientView(
+  executor: Executor,
+  clientGroupID: string,
+  nextClientViewVersion: number,
+) {
+  // TODO: Attempt parallelizing. Not sure if Postgres will be smart enough
+  // with locking since they are all writing to (different records) of the
+  // same table.
   for (const t of syncedTables) {
-    target[t].push(...(source[t] as []));
+    await recordCreates(executor, t, clientGroupID, nextClientViewVersion);
+    await recordUpdates(executor, t, clientGroupID, nextClientViewVersion);
+    await recordDeletes(executor, t, clientGroupID, nextClientViewVersion);
   }
 }
 
-export const LIMIT = 3000;
-
-type PullRecords = {
-  puts: Puts;
-  deletes: Deletes;
-};
-
-export function isResponseEmpty(r: PullRecords) {
-  return (
-    Object.values(r.puts).every(v => v.length === 0) &&
-    Object.values(r.deletes).every(v => v.length === 0)
-  );
-}
-
-export function hasNextPage(page: PullRecords) {
-  return (
-    Object.values(page.puts).reduce((acc, v) => acc + v.length, 0) +
-      Object.values(page.deletes).reduce((acc, v) => acc + v.length, 0) >=
-    LIMIT
-  );
-}
-
-/**
- * Fast forwards against all tables that are being synced.
- */
-export async function fastforward(
+export async function getAllDels(
   executor: Executor,
   clientGroupID: string,
-  cookieClientViewVersion: number,
-  deletes: Deletes,
-  updates: Puts,
-): Promise<Puts> {
-  const ret = await Promise.all(
-    syncedTables.map(async t =>
-      findRowsForFastforward(
-        executor,
-        t,
-        clientGroupID,
-        cookieClientViewVersion,
-        deletes[t].concat(updates[t].map(i => i.id)),
-      ),
-    ),
-  );
-
-  return Object.fromEntries(ret.map((r, i) => [syncedTables[i], r])) as Puts;
-}
-
-export async function getAllDeletes(
-  executor: Executor,
-  clientGroupID: string,
-  cookieClientViewVersion: number,
+  fromClientViewVersion: number,
 ): Promise<Deletes> {
   const rows = await Promise.all(
     syncedTables.map(async t =>
-      findDeletes(executor, t, clientGroupID, cookieClientViewVersion),
+      getDelsSince(executor, t, clientGroupID, fromClientViewVersion),
     ),
   );
 
@@ -354,57 +255,18 @@ export async function getAllDeletes(
  * @param clientGroupID
  * @returns
  */
-export async function getAllUpdates(executor: Executor, clientGroupID: string) {
+export async function getAllPuts(
+  executor: Executor,
+  clientGroupID: string,
+  fromClientViewVersion: number,
+) {
   const ret = await Promise.all(
-    syncedTables.map(async t => findUpdates(executor, t, clientGroupID)),
+    syncedTables.map(async t =>
+      getPutsSince(executor, t, clientGroupID, fromClientViewVersion),
+    ),
   );
 
   return Object.fromEntries(ret.map((r, i) => [syncedTables[i], r])) as Puts;
-}
-
-/**
- * Returns a page worth of rows that were never sent to the client.
- *
- * @param executor
- * @param clientGroupID
- * @param order
- * @param deletes
- * @param updates
- * @returns
- */
-export async function getPageOfCreates(
-  executor: Executor,
-  clientGroupID: string,
-  order: number,
-) {
-  let remaining = LIMIT;
-  const ret: Puts = Object.fromEntries(
-    syncedTables.map(t => [t, []]),
-  ) as unknown as Puts;
-  if (remaining <= 0) {
-    return ret;
-  }
-
-  // TODO: issue all queries in parallel?
-  for (const t of syncedTables) {
-    const t0 = performance.now();
-    const result = await findCreates<typeof t>(
-      executor,
-      t,
-      clientGroupID,
-      order,
-      remaining,
-    );
-    const t1 = performance.now();
-    console.log(`findCreates ${t} ${result.length} rows in ${t1 - t0}ms`);
-    ret[t] = result as unknown as [];
-    remaining -= result.length;
-    if (remaining <= 0) {
-      return ret;
-    }
-  }
-
-  return ret;
 }
 
 async function time<T>(cb: () => Promise<T>, msg: string) {
@@ -413,14 +275,4 @@ async function time<T>(cb: () => Promise<T>, msg: string) {
   const end = performance.now();
   console.log(`${msg} took ${end - start}ms`);
   return ret;
-}
-
-function copyResponse(response: PullRecords) {
-  const puts: Puts = Object.fromEntries(
-    syncedTables.map(t => [t, [...response.puts[t]]]),
-  ) as unknown as Puts;
-  const deletes: Deletes = Object.fromEntries(
-    syncedTables.map(t => [t, [...response.deletes[t]]]),
-  ) as unknown as Deletes;
-  return {puts, deletes};
 }
