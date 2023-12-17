@@ -1,10 +1,12 @@
 import type {Comment, Description, Issue} from 'shared';
 import type {Executor} from '../pg.js';
 
-export type CVR = {
-  clientGroupID: string;
-  clientVersion: number;
-  order: number;
+// This represents the same row as ClientRecord in data.ts, but with the same
+// casing as is used in the db rather than camelCase. This is needed because
+// this code in pull and cvr.ts assumes they match.
+export type Client = {
+  id: string;
+  lastmutationid: number;
 };
 
 // These two consts drive the tables to sync.
@@ -14,11 +16,15 @@ export const TableOrdinal = {
   issue: 1,
   description: 2,
   comment: 3,
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  replicache_client: 4,
 } as const;
 export type TableType = {
-  issue: Issue & {version: number};
-  description: Description & {version: number};
-  comment: Comment & {version: number};
+  issue: Issue;
+  description: Description;
+  comment: Comment;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  replicache_client: Client;
 };
 
 export type SyncedTables = keyof typeof TableOrdinal;
@@ -29,38 +35,6 @@ export type Puts = {
 export type Deletes = {
   [P in keyof TableType]: string[];
 };
-
-export async function getCVR(
-  executor: Executor,
-  clientGroupID: string,
-  order: number,
-): Promise<CVR | undefined> {
-  const result = await executor(
-    /*sql*/ `SELECT "client_version" FROM "client_view" WHERE "client_group_id" = $1 AND "version" = $2`,
-    [clientGroupID, order],
-  );
-  if (result.rowCount === 0) {
-    return undefined;
-  }
-  return {
-    clientGroupID,
-    order,
-    clientVersion: result.rows[0].client_version,
-  };
-}
-
-export function putCVR(executor: Executor, cvr: CVR) {
-  return executor(
-    /*sql*/ `INSERT INTO client_view (
-      "client_group_id",
-      "client_version",
-      "version"
-    ) VALUES ($1, $2, $3) ON CONFLICT ("client_group_id", "version") DO UPDATE SET
-      client_version = excluded.client_version
-    `,
-    [cvr.clientGroupID, cvr.clientVersion, cvr.order],
-  );
-}
 
 export async function recordCreates<T extends keyof TableType>(
   executor: Executor,

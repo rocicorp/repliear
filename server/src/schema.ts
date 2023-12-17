@@ -28,8 +28,6 @@ export async function createSchemaVersion1(executor: Executor) {
     -- TODO(aa): Need to standardize on either "cvr" or "cv".
     -- Both are used in this codebase.
     cvrversion INTEGER null,
-    -- Last client version used by this Client Group
-    clientversion INTEGER NOT NULL,
     lastmodified TIMESTAMP(6) NOT NULL
     )`);
 
@@ -40,8 +38,10 @@ export async function createSchemaVersion1(executor: Executor) {
     clientgroupid VARCHAR(36) NOT NULL,
     -- Last mutation processed from this client.
     lastmutationid INTEGER NOT NULL,
-    -- Value of replicache_client_group.clientversion last time this client's last_mutation_id changed.
-    clientversion INTEGER NOT NULL,
+    -- This column is generated for compatibility with the row-versioning related code.
+    -- This way we can treat this table as just another row-versioned table.
+    -- The only thing that changes about a client is its lmid, so we can use that.
+    version INTEGER NOT NULL GENERATED ALWAYS AS (lastmutationid) STORED,
     lastmodified TIMESTAMP(6) NOT NULL
     )`);
 
@@ -77,16 +77,6 @@ export async function createSchemaVersion1(executor: Executor) {
     "id" VARCHAR(36) PRIMARY KEY NOT NULL REFERENCES issue("id") ON DELETE CASCADE,
     "body" text NOT NULL,
     "version" INTEGER NOT NULL
-  )`);
-
-  await executor(/*sql*/ `CREATE TABLE "client_view" (
-    -- Client Group this Client View was generated for
-    "client_group_id" VARCHAR(36) NOT NULL,
-    -- Version of this Client View
-    -- Note that CV's are recursive: CV_n = CV_n-1 + (changes since CV_n-1)
-    "version" INTEGER NOT NULL,
-    "client_version" INTEGER NOT NULL,
-    PRIMARY KEY ("client_group_id", "version")
   )`);
 
   await executor(/*sql*/ `CREATE TABLE "client_view_entry" (

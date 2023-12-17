@@ -80,7 +80,6 @@ async function processMutation(
 
     console.log({baseClientGroup, baseClient});
 
-    const nextClientVersion = baseClientGroup.clientVersion + 1;
     const nextMutationID = baseClient.lastMutationID + 1;
 
     if (mutation.id < nextMutationID) {
@@ -109,14 +108,12 @@ async function processMutation(
     const nextClientGroup = {
       id: clientGroupID,
       cvrVersion: baseClientGroup.cvrVersion,
-      clientVersion: nextClientVersion,
     };
 
     const nextClient = {
       id: mutation.clientID,
       clientGroupID,
       lastMutationID: nextMutationID,
-      clientVersion: nextClientVersion,
     };
 
     await Promise.all([

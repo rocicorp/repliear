@@ -1,12 +1,9 @@
 import {z} from 'zod';
 import type {PatchOperation, PullResponse, PullResponseOKV1} from 'replicache';
 import {transact, Executor} from '../pg';
-import {getClientGroupForUpdate, putClientGroup, searchClients} from '../data';
+import {getClientGroupForUpdate, putClientGroup} from '../data';
 import type Express from 'express';
 import {
-  CVR,
-  getCVR,
-  putCVR,
   syncedTables,
   Puts,
   Deletes,
@@ -48,98 +45,66 @@ export async function pull(
 async function pullInner(pull: PullRequest) {
   const {clientGroupID} = pull;
 
-  const {clientChanges, response, prevCVR, nextCVR} = await transact(
-    async executor => {
-      // Get a write lock on the client group first to serialize with other
-      // requests from the CG and avoid deadlocks.
-      const baseClientGroupRecord = await getClientGroupForUpdate(
-        executor,
-        clientGroupID,
-      );
-      const prevCVR = pull.cookie
-        ? await getCVR(executor, pull.cookie.clientGroupID, pull.cookie.order)
-        : undefined;
-      const baseCVR: CVR = prevCVR ?? {
-        clientGroupID,
-        clientVersion: 0,
-        order: 0,
-      };
+  const {nextClientGroupRecord, response} = await transact(async executor => {
+    // Get a write lock on the client group first to serialize with other
+    // requests from the CG and avoid deadlocks.
+    const baseClientGroupRecord = await getClientGroupForUpdate(
+      executor,
+      clientGroupID,
+    );
 
-      // From: https://github.com/rocicorp/todo-row-versioning/blob/d8f351d040db9feae02b4847ea613fbc40aacd17/server/src/pull.ts#L103
-      // If there is no clientGroupRecord this means one of two things:
-      // 1. The client group is actually new
-      // 2. The client group was forked from an existing client group
-      //
-      // In the latter case the cookie will be filled in. This cookie identifies to us
-      // that while the client group is new it actually has data from the client group it was forked from.
-      //
-      // That data it has is represented by the cvr version taken out of the cookie.
-      let prevCVRVersion = baseClientGroupRecord.cvrVersion;
-      if (prevCVRVersion === null) {
-        if (pull.cookie !== null) {
-          prevCVRVersion = pull.cookie.order;
-        } else {
-          prevCVRVersion = 0;
-        }
-        console.log(
-          `ClientGroup ${clientGroupID} is new, initializing to ${prevCVRVersion}`,
-        );
-      }
+    // From: https://github.com/rocicorp/todo-row-versioning/blob/d8f351d040db9feae02b4847ea613fbc40aacd17/server/src/pull.ts#L103
+    // If there is no clientGroupRecord this means one of two things:
+    // 1. The client group is actually new
+    // 2. The client group was forked from an existing client group
+    //
+    // In the latter case the cookie will be filled in. This cookie identifies to us
+    // that while the client group is new it actually has data from the client group it was forked from.
+    //
+    // That data it has is represented by the cvr version taken out of the cookie.
+    const prevCVRVersion =
+      baseClientGroupRecord.cvrVersion ?? pull.cookie?.order ?? 0;
+    console.log(
+      `ClientGroup ${clientGroupID} is new, initializing to ${prevCVRVersion}`,
+    );
 
-      const nextClientGroupRecord = {
-        ...baseClientGroupRecord,
-        cvrVersion: prevCVRVersion + 1,
-      };
+    const nextClientGroupRecord = {
+      ...baseClientGroupRecord,
+      cvrVersion: prevCVRVersion + 1,
+    };
 
-      const nextCVR: CVR = {
-        clientGroupID,
-        clientVersion: baseClientGroupRecord.clientVersion,
-        order: nextClientGroupRecord.cvrVersion,
-      };
+    await updateClientView(
+      executor,
+      clientGroupID,
+      nextClientGroupRecord.cvrVersion,
+    );
 
-      const clientChanges = await searchClients(executor, {
-        clientGroupID,
-        sinceClientVersion: baseCVR.clientVersion,
-      });
-      console.log('Got client changes', clientChanges);
+    // For everything the client already has,
+    // find all deletes and updates to those items.
+    const [puts, deletes] = await Promise.all([
+      time(
+        () => getAllPuts(executor, clientGroupID, prevCVRVersion),
+        'getAllPuts',
+      ),
+      time(
+        () => getAllDels(executor, clientGroupID, prevCVRVersion),
+        'getAllDeletes',
+      ),
+    ]);
 
-      await updateClientView(executor, clientGroupID, nextCVR.order);
+    console.log('puts', [...Object.values(puts)].length);
 
-      // For everything the client already has,
-      // find all deletes and updates to those items.
-      const [puts, deletes] = await Promise.all([
-        time(
-          () => getAllPuts(executor, clientGroupID, baseCVR.order),
-          'getAllPuts',
-        ),
-        time(
-          () => getAllDels(executor, clientGroupID, baseCVR.order),
-          'getAllDeletes',
-        ),
-      ]);
+    const response = {
+      puts,
+      deletes,
+    };
 
-      console.log('puts', [...Object.values(puts)].length);
+    // TODO: Consider optimizing the case where there are no changes.
 
-      const response = {
-        puts,
-        deletes,
-      };
+    await putClientGroup(executor, nextClientGroupRecord);
 
-      // TODO: Consider optimizing the case where there are no changes.
-
-      await Promise.all([
-        putClientGroup(executor, nextClientGroupRecord),
-        putCVR(executor, nextCVR),
-      ]);
-
-      return {
-        clientChanges,
-        response,
-        prevCVR,
-        nextCVR,
-      };
-    },
-  );
+    return {nextClientGroupRecord, response};
+  });
 
   const patch: PatchOperation[] = [];
 
@@ -154,11 +119,11 @@ async function pullInner(pull: PullRequest) {
     );
   }
 
-  if (prevCVR === undefined) {
-    patch.push({op: 'clear'});
-  }
-
   for (const t of syncedTables) {
+    if (t === 'replicache_client') {
+      // Handled specially below.
+      continue;
+    }
     for (const put of response.puts[t]) {
       // Postgres rightly returns bigint as string given 64 bit ints are > js ints.
       // JS ints are 53 bits so we can safely convert to number for dates here.
@@ -192,6 +157,8 @@ async function pullInner(pull: PullRequest) {
     }
   }
 
+  console.log('all puts', JSON.stringify(response.puts, null, '  '));
+
   // TODO: Reimplement partial sync.
   patch.push({
     op: 'put',
@@ -201,12 +168,14 @@ async function pullInner(pull: PullRequest) {
 
   const respCookie: Cookie = {
     clientGroupID,
-    order: nextCVR.order,
+    order: nextClientGroupRecord.cvrVersion,
   };
   const resp: PullResponseOKV1 = {
     cookie: respCookie,
     lastMutationIDChanges: Object.fromEntries(
-      clientChanges.map(e => [e.id, e.lastMutationID] as const),
+      response.puts['replicache_client'].map(
+        ({id, lastmutationid}) => [id, lastmutationid] as const,
+      ),
     ),
     patch,
   };

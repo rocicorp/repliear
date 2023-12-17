@@ -10,14 +10,12 @@ export type SearchResult = {
 export type ClientGroupRecord = {
   id: string;
   cvrVersion: number | null;
-  clientVersion: number;
 };
 
 export type ClientRecord = {
   id: string;
   clientGroupID: string;
   lastMutationID: number;
-  clientVersion: number;
 };
 
 export type Affected = {
@@ -224,15 +222,15 @@ export async function putClientGroup(
   executor: Executor,
   clientGroup: ClientGroupRecord,
 ) {
-  const {id, cvrVersion, clientVersion} = clientGroup;
+  const {id, cvrVersion} = clientGroup;
   await executor(
     /*sql*/ `insert into replicache_client_group
-      (id, cvrversion, clientversion, lastmodified)
+      (id, cvrversion, lastmodified)
     values
-      ($1, $2, $3, now())
+      ($1, $2, now())
     on conflict (id) do update set
-      cvrversion = $2, clientversion = $3, lastmodified = now()`,
-    [id, cvrVersion, clientVersion],
+      cvrversion = $2, lastmodified = now()`,
+    [id, cvrVersion],
   );
 }
 
@@ -247,7 +245,6 @@ export async function getClientGroupForUpdate(
     prevClientGroup ?? {
       id: clientGroupID,
       cvrVersion: null,
-      clientVersion: 0,
     }
   );
 }
@@ -258,7 +255,7 @@ export async function getClientGroup(
   {forUpdate}: {forUpdate?: boolean} = {},
 ) {
   const {rows} = await executor(
-    /*sql*/ `select cvrversion, clientversion from replicache_client_group where id = $1 ${
+    /*sql*/ `select cvrversion from replicache_client_group where id = $1 ${
       forUpdate ? 'for update' : ''
     }`,
     [clientGroupID],
@@ -268,31 +265,8 @@ export async function getClientGroup(
   const res: ClientGroupRecord = {
     id: clientGroupID,
     cvrVersion: r.cvrversion,
-    clientVersion: r.clientversion,
   };
   return res;
-}
-
-export async function searchClients(
-  executor: Executor,
-  {
-    clientGroupID,
-    sinceClientVersion,
-  }: {clientGroupID: string; sinceClientVersion: number},
-) {
-  const {rows} = await executor(
-    /*sql*/ `select id, lastmutationid, clientversion from replicache_client where clientGroupID = $1 and clientversion > $2`,
-    [clientGroupID, sinceClientVersion],
-  );
-  return rows.map(r => {
-    const client: ClientRecord = {
-      id: r.id,
-      clientGroupID,
-      lastMutationID: r.lastmutationid,
-      clientVersion: r.clientversion,
-    };
-    return client;
-  });
 }
 
 export async function getClientForUpdate(executor: Executor, clientID: string) {
@@ -302,7 +276,6 @@ export async function getClientForUpdate(executor: Executor, clientID: string) {
       id: clientID,
       clientGroupID: '',
       lastMutationID: 0,
-      clientVersion: 0,
     }
   );
 }
@@ -313,7 +286,7 @@ export async function getClient(
   {forUpdate}: {forUpdate?: boolean} = {},
 ) {
   const {rows} = await executor(
-    /*sql*/ `select clientgroupid, lastmutationid, clientversion from replicache_client where id = $1 ${
+    /*sql*/ `select clientgroupid, lastmutationid from replicache_client where id = $1 ${
       forUpdate ? 'for update' : ''
     }`,
     [clientID],
@@ -324,23 +297,22 @@ export async function getClient(
     id: r.id,
     clientGroupID: r.clientgroupid,
     lastMutationID: r.lastmutationid,
-    clientVersion: r.lastclientversion,
   };
   return res;
 }
 
 export async function putClient(executor: Executor, client: ClientRecord) {
-  const {id, clientGroupID, lastMutationID, clientVersion} = client;
+  const {id, clientGroupID, lastMutationID} = client;
   await executor(
     /*sql*/ `
       insert into replicache_client
-        (id, clientgroupid, lastmutationid, clientversion, lastmodified)
+        (id, clientgroupid, lastmutationid, lastmodified)
       values
-        ($1, $2, $3, $4, now())
+        ($1, $2, $3, now())
       on conflict (id) do update set
-        lastmutationid = $3, clientversion = $4, lastmodified = now()
+        lastmutationid = $3, lastmodified = now()
       `,
-    [id, clientGroupID, lastMutationID, clientVersion],
+    [id, clientGroupID, lastMutationID],
   );
 }
 
