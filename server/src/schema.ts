@@ -92,15 +92,16 @@ export async function createSchemaVersion1(executor: Executor) {
   await executor(/*sql*/ `CREATE TABLE "client_view_entry" (
     -- Client Group the CV was generated for.
     "client_group_id" VARCHAR(36) NOT NULL,
-    -- Client View Version the entry was last updated at.
-    "client_view_version" INTEGER NOT NULL,
     -- Entity the entry is for.
     "entity" INTEGER NOT NULL,
     -- Entity ID the entry is for.
     "entity_id" VARCHAR(36) NOT NULL,
     -- Version the entity was at when the entry was last updated.
-    -- TODO(aa): Use a deleted column.
-    "entity_version" INTEGER,
+    "entity_version" INTEGER NOT NULL,
+    -- Whether the entry has been deleted.
+    "deleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- Client View Version the entry was last updated at.
+    "client_view_version" INTEGER NOT NULL,
     -- unique by client_group_id, entity, entity_id
     PRIMARY KEY ("client_group_id", "entity", "entity_id")
   )`);

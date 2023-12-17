@@ -1,5 +1,4 @@
 - don't bump client version when no changes
-- deleted column in client_view
 - decide on client_view_record vs client_view
 - make sure all files are snake_case
 - make sure all tables and columns are snake_case
