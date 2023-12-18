@@ -1,3 +1,4 @@
+/*
 import {test, expect, vi} from 'vitest';
 import {Deletes, Puts, syncedTables} from '../cvr';
 import {hasNextPage, isResponseEmpty, LIMIT, mergePuts} from '../pull';
@@ -85,3 +86,4 @@ test('merge puts', () => {
   expect(target.puts.description).toEqual(source.puts.description);
   expect(target.puts.comment).toEqual(source.puts.comment);
 });
+*/

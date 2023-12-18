@@ -3,16 +3,7 @@ import type {PatchOperation, PullResponse, PullResponseOKV1} from 'replicache';
 import {transact, Executor} from '../pg';
 import {getClientGroupForUpdate, putClientGroup} from '../data';
 import type Express from 'express';
-import {
-  syncedTables,
-  Puts,
-  Deletes,
-  recordCreates,
-  recordUpdates,
-  recordDeletes,
-  getDelsSince,
-  getPutsSince,
-} from './cvr';
+import {syncedTables, Puts, Deletes, getDelsSince, getPutsSince} from './cvr';
 import {PARTIAL_SYNC_STATE_KEY} from 'shared';
 
 const cookieSchema = z.object({
@@ -190,11 +181,22 @@ async function updateClientView(
   // TODO: Attempt parallelizing. Not sure if Postgres will be smart enough
   // with locking since they are all writing to (different records) of the
   // same table.
-  for (const t of syncedTables) {
-    await recordCreates(executor, t, clientGroupID, nextClientViewVersion);
-    await recordUpdates(executor, t, clientGroupID, nextClientViewVersion);
-    await recordDeletes(executor, t, clientGroupID, nextClientViewVersion);
-  }
+  await executor(/*sql*/ `select update_client_view(1, 'pull_issue', $1, $2)`, [
+    clientGroupID,
+    nextClientViewVersion,
+  ]);
+  await executor(
+    /*sql*/ `select update_client_view(2, 'pull_description', $1, $2)`,
+    [clientGroupID, nextClientViewVersion],
+  );
+  await executor(
+    /*sql*/ `select update_client_view(3, 'pull_comment', $1, $2)`,
+    [clientGroupID, nextClientViewVersion],
+  );
+  await executor(
+    /*sql*/ `select update_client_view(4, 'pull_client', $1, $2)`,
+    [clientGroupID, nextClientViewVersion],
+  );
 }
 
 export async function getAllDels(

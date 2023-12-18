@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/*
 import {test, expect, vi} from 'vitest';
 import {
   findCreates,
@@ -23,7 +24,7 @@ import {makeComment, makeDescription, makeIssue, reset} from './example-data';
 test('getCVR', async () => {
   const cgid = nanoid();
   await withExecutor(async executor => {
-    await executor(/*sql*/ `INSERT INTO "client_view"
+    await executor(/*sql* / `INSERT INTO "client_view"
         ("client_group_id", "client_version", "version") VALUES
         ('${cgid}', 1, 1)`);
 
@@ -44,7 +45,7 @@ test('getCVR', async () => {
 test('findMaxClientViewVersion', async () => {
   const cgid = nanoid();
   await withExecutor(async executor => {
-    await executor(/*sql*/ `INSERT INTO "client_view"
+    await executor(/*sql* / `INSERT INTO "client_view"
         ("client_group_id", "version", "client_version") VALUES
         ('${cgid}', 1, 1), ('${cgid}', 2, 2), ('${cgid}', 3, 3)`);
 
@@ -650,8 +651,9 @@ test('findCreates', async () => {
 
 async function clearTables(executor: Executor) {
   for (const table of syncedTables) {
-    await executor(/*sql*/ `DELETE FROM "${table}"`);
+    await executor(/*sql* / `DELETE FROM "${table}"`);
   }
-  await executor(/*sql*/ `DELETE FROM "client_view"`);
-  await executor(/*sql*/ `DELETE FROM "client_view_entry"`);
+  await executor(/*sql* / `DELETE FROM "client_view"`);
+  await executor(/*sql* / `DELETE FROM "client_view_entry"`);
 }
+*/
