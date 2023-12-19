@@ -10,20 +10,20 @@ import {
 } from 'shared';
 import {z} from 'zod';
 
-export const priorityOrderValues: Record<Priority, string> = {
-  URGENT: '1',
-  HIGH: '2',
-  MEDIUM: '3',
-  LOW: '4',
-  NONE: '5',
+export const priorityOrderValues: Record<Priority, number> = {
+  URGENT: 1,
+  HIGH: 2,
+  MEDIUM: 3,
+  LOW: 4,
+  NONE: 5,
 };
 
-export const statusOrderValues: Record<Status, string> = {
-  BACKLOG: '1',
-  TODO: '2',
-  IN_PROGRESS: '3',
-  DONE: '4',
-  CANCELED: '5',
+export const statusOrderValues: Record<Status, number> = {
+  BACKLOG: 1,
+  TODO: 2,
+  IN_PROGRESS: 3,
+  DONE: 4,
+  CANCELED: 5,
 };
 
 export enum Filter {
@@ -53,16 +53,4 @@ export async function getIssueComments(
   return values.map(val => {
     return commentSchema.parse(val);
   });
-}
-
-const REVERSE_TIMESTAMP_LENGTH = Number.MAX_SAFE_INTEGER.toString().length;
-
-export function reverseTimestampSortKey(timestamp: number, id: string): string {
-  return (
-    Math.floor(Number.MAX_SAFE_INTEGER - timestamp)
-      .toString()
-      .padStart(REVERSE_TIMESTAMP_LENGTH, '0') +
-    '-' +
-    id
-  );
 }

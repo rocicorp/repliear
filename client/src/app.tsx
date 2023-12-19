@@ -1,8 +1,12 @@
-import {useCallback, useEffect, useReducer} from 'react';
-import type {ReadTransaction, Replicache} from 'replicache';
+import {useCallback, useEffect} from 'react';
+import type {
+  ReadTransaction,
+  Replicache,
+  ExperimentalDiff as Diff,
+} from 'replicache';
 import type {M} from './model/mutators';
 import {useState} from 'react';
-import {minBy, pickBy} from 'lodash';
+import {pickBy} from 'lodash';
 import {generateKeyBetween} from 'fractional-indexing';
 import type {UndoManager} from '@rocicorp/undo';
 import {HotKeys} from 'react-hotkeys';
@@ -25,12 +29,46 @@ import {
 } from 'shared';
 import {getFilters, getIssueOrder} from './filters';
 import {Layout} from './layout/layout';
-import {timedReducer} from './reducer';
+import {db} from './materialite/db';
+import {useQuery} from '@vlcn.io/materialite-react';
+import {issueFromKeyAndValue} from './issue/issue';
 
 type AppProps = {
   rep: Replicache<M>;
   undoManager: UndoManager;
 };
+
+function onNewDiff(diff: Diff) {
+  if (diff.length === 0) {
+    return;
+  }
+
+  const start = performance.now();
+  db.tx(() => {
+    for (const diffOp of diff) {
+      if ('oldValue' in diffOp) {
+        const issueFromEvent = issueFromKeyAndValue(
+          diffOp.key as string,
+          diffOp.oldValue,
+        );
+        const oldIssue = db.issues.get(issueFromEvent.id);
+        if (oldIssue) {
+          db.issues.delete(oldIssue);
+        } else {
+          console.log('NO OLD ISSUE?!', diffOp.key);
+        }
+      }
+      if ('newValue' in diffOp) {
+        db.issues.add(
+          issueFromKeyAndValue(diffOp.key as string, diffOp.newValue),
+        );
+      }
+    }
+  });
+
+  const duration = performance.now() - start;
+  console.log(`Diff duration: ${duration}ms`);
+}
 
 const App = ({rep, undoManager}: AppProps) => {
   const [view] = useViewState();
@@ -40,13 +78,28 @@ const App = ({rep, undoManager}: AppProps) => {
   const [detailIssueID, setDetailIssueID] = useIssueDetailState();
   const [menuVisible, setMenuVisible] = useState(false);
 
-  const [state, dispatch] = useReducer(timedReducer, {
-    allIssuesMap: new Map(),
-    viewIssueCount: 0,
-    filteredIssues: [],
-    filters: getFilters(view, priorityFilter, statusFilter),
-    issueOrder: getIssueOrder(view, orderBy),
-  });
+  const [filters, setFilters] = useState(
+    getFilters(view, priorityFilter, statusFilter),
+  );
+  const issueOrder = getIssueOrder(view, orderBy);
+
+  const [, filterdIssues] = useQuery(() => {
+    const start = performance.now();
+    const source = db.issues.getSortedSource(issueOrder);
+    const ret = source.stream
+      .filter(issue => filters.issuesFilter(issue))
+      .materialize(source.comparator);
+
+    console.log(`Filter update duration: ${performance.now() - start}ms`);
+    return ret;
+  }, [issueOrder, filters]);
+  const [, viewIssueCount] = useQuery(() => {
+    const source = db.issues.getSortedSource(issueOrder);
+    return source.stream
+      .filter(issue => filters.viewFilter(issue))
+      .size()
+      .materializeValue(0);
+  }, [filters]);
 
   const partialSync = useSubscribe(
     rep,
@@ -73,37 +126,25 @@ const App = ({rep, undoManager}: AppProps) => {
   }, []);
 
   useEffect(() => {
-    return rep.experimentalWatch(
-      diff => {
-        dispatch({
-          type: 'diff',
-          diff,
-        });
-      },
-      {prefix: ISSUE_KEY_PREFIX, initialValuesInFirstDiff: true},
-    );
+    return rep.experimentalWatch(onNewDiff, {
+      prefix: ISSUE_KEY_PREFIX,
+      initialValuesInFirstDiff: true,
+    });
   }, [rep]);
 
   useEffect(() => {
-    dispatch({
-      type: 'setFilters',
-      filters: getFilters(view, priorityFilter, statusFilter),
-    });
+    const f = getFilters(view, priorityFilter, statusFilter);
+    if (f.equals(filters)) {
+      return;
+    }
+    setFilters(f);
   }, [view, priorityFilter?.join(), statusFilter?.join()]);
-
-  useEffect(() => {
-    dispatch({
-      type: 'setIssueOrder',
-      issueOrder: getIssueOrder(view, orderBy),
-    });
-  }, [view, orderBy]);
 
   const handleCreateIssue = useCallback(
     async (issue: Omit<Issue, 'kanbanOrder'>, description: Description) => {
-      const minKanbanOrderIssue = minBy(
-        [...state.allIssuesMap.values()],
-        issue => issue.kanbanOrder,
-      );
+      const minKanbanOrderIssue = db.issues
+        .getSortedSource('KANBAN')
+        .value.getMin();
       const minKanbanOrder = minKanbanOrderIssue
         ? minKanbanOrderIssue.kanbanOrder
         : null;
@@ -116,7 +157,7 @@ const App = ({rep, undoManager}: AppProps) => {
         description,
       });
     },
-    [rep.mutate, state.allIssuesMap],
+    [rep.mutate],
   );
   const handleCreateComment = useCallback(
     async (comment: Comment) => {
@@ -204,7 +245,9 @@ const App = ({rep, undoManager}: AppProps) => {
         view={view}
         detailIssueID={detailIssueID}
         isLoading={!partialSyncComplete}
-        state={state}
+        filters={filters}
+        viewIssueCount={viewIssueCount || 0}
+        filteredIssues={filterdIssues}
         rep={rep}
         onCloseMenu={handleCloseMenu}
         onToggleMenu={handleToggleMenu}

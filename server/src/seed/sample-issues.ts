@@ -79,7 +79,7 @@ export async function getReactSampleData(): Promise<SampleData[]> {
 
   // Can use this to generate artifically larger datasets for stress testing or
   // smaller for debugging.
-  const factor = 1;
+  const factor = 10;
   let commentId = 1;
   if (factor >= 1) {
     const multiplied: SampleData[] = [];

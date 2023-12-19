@@ -52,7 +52,6 @@ export function useQueryState<T>(
 
   useEffect(() => {
     const handlePopState = () => {
-      console.log('pop state event...');
       const encoded = getQueryValue();
       setValue(encoded);
     };
