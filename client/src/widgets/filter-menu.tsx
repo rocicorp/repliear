@@ -38,6 +38,7 @@ const FilterMenu = ({
   const [filter, setFilter] = useState<Filter | null>(null);
   const [filterDropDownVisible, setFilterDropDownVisible] = useState(false);
   const [view] = useViewState();
+  const bodyRef = useRef(document.body);
 
   const {styles, attributes, update} = usePopper(filterRef, popperRef, {
     placement: 'bottom-start',
@@ -50,12 +51,16 @@ const FilterMenu = ({
     setFilterDropDownVisible(!filterDropDownVisible);
   };
 
-  useClickOutside(ref, () => {
-    if (filterDropDownVisible) {
-      setFilter(null);
-      setFilterDropDownVisible(false);
-    }
-  });
+  useClickOutside(
+    ref,
+    () => {
+      if (filterDropDownVisible) {
+        setFilter(null);
+        setFilterDropDownVisible(false);
+      }
+    },
+    bodyRef,
+  );
 
   const filterBys = [
     [SignalStrongIcon, Filter.PRIORITY, 'Priority'],
