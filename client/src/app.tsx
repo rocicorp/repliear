@@ -11,7 +11,10 @@ import {generateKeyBetween} from 'fractional-indexing';
 import type {UndoManager} from '@rocicorp/undo';
 import {HotKeys} from 'react-hotkeys';
 import {
+  useCreatedFilterState,
+  useCreatorFilterState,
   useIssueDetailState,
+  useModifiedFilterState,
   useOrderByState,
   usePriorityFilterState,
   useStatusFilterState,
@@ -27,11 +30,24 @@ import {
   IssueUpdateWithID,
   ISSUE_KEY_PREFIX,
 } from 'shared';
-import {getFilters, getIssueOrder} from './filters';
 import {Layout} from './layout/layout';
 import {db} from './materialite/db';
 import {useQuery} from '@vlcn.io/materialite-react';
 import {issueFromKeyAndValue} from './issue/issue';
+import {
+  getCreatedFilter,
+  getCreatorFilter,
+  getCreators,
+  getIssueOrder,
+  getModifiedFilter,
+  getPriorities,
+  getPriorityFilter,
+  getStatuses,
+  getStatusFilter,
+  getViewFilter,
+  getViewStatuses,
+  hasNonViewFilters as doesHaveNonViewFilters,
+} from './filters';
 
 type AppProps = {
   rep: Replicache<M>;
@@ -72,34 +88,66 @@ function onNewDiff(diff: Diff) {
 
 const App = ({rep, undoManager}: AppProps) => {
   const [view] = useViewState();
-  const [priorityFilter] = usePriorityFilterState();
-  const [statusFilter] = useStatusFilterState();
   const [orderBy] = useOrderByState();
   const [detailIssueID, setDetailIssueID] = useIssueDetailState();
   const [menuVisible, setMenuVisible] = useState(false);
+  const [priorityFilter] = usePriorityFilterState();
+  const [statusFilter] = useStatusFilterState();
+  const [createdFilter] = useCreatedFilterState();
+  const [creatorFilter] = useCreatorFilterState();
+  const [modifiedFilter] = useModifiedFilterState();
+  const [hasNonViewFilters, setHasNonViewFilters] = useState(false);
 
-  const [filters, setFilters] = useState(
-    getFilters(view, priorityFilter, statusFilter),
-  );
   const issueOrder = getIssueOrder(view, orderBy);
 
   const [, filterdIssues] = useQuery(() => {
     const start = performance.now();
     const source = db.issues.getSortedSource(issueOrder);
-    const ret = source.stream
-      .filter(issue => filters.issuesFilter(issue))
-      .materialize(source.comparator);
 
+    const viewStatuses = getViewStatuses(view);
+    const statuses = getStatuses(statusFilter);
+    const statusFilterFn = getStatusFilter(viewStatuses, statuses);
+    const filterFns = [
+      statusFilterFn,
+      getPriorityFilter(getPriorities(priorityFilter)),
+      getCreatorFilter(getCreators(creatorFilter)),
+      getCreatedFilter(createdFilter),
+      getModifiedFilter(modifiedFilter),
+    ];
+
+    const hasNonViewFilters = !!(
+      doesHaveNonViewFilters(viewStatuses, statuses) ||
+      filterFns.filter(f => f !== null && f !== statusFilterFn).length > 0
+    );
+    setHasNonViewFilters(hasNonViewFilters);
+
+    let {stream} = source;
+    for (const filter of filterFns) {
+      if (filter !== null) {
+        stream = stream.filter(filter);
+      }
+    }
+
+    const ret = stream.materialize(source.comparator);
     console.log(`Filter update duration: ${performance.now() - start}ms`);
     return ret;
-  }, [issueOrder, filters]);
+  }, [
+    view,
+    issueOrder,
+    priorityFilter?.join(),
+    statusFilter?.join(),
+    createdFilter?.join(),
+    creatorFilter?.join(),
+    modifiedFilter?.join(),
+  ]);
+
   const [, viewIssueCount] = useQuery(() => {
+    const viewStatuses = getViewStatuses(view);
+    const viewFilterFn = getViewFilter(viewStatuses);
+
     const source = db.issues.getSortedSource(issueOrder);
-    return source.stream
-      .filter(issue => filters.viewFilter(issue))
-      .size()
-      .materializeValue(0);
-  }, [filters]);
+    return source.stream.filter(viewFilterFn).size().materializeValue(0);
+  }, [view]);
 
   const partialSync = useSubscribe(
     rep,
@@ -131,14 +179,6 @@ const App = ({rep, undoManager}: AppProps) => {
       initialValuesInFirstDiff: true,
     });
   }, [rep]);
-
-  useEffect(() => {
-    const f = getFilters(view, priorityFilter, statusFilter);
-    if (f.equals(filters)) {
-      return;
-    }
-    setFilters(f);
-  }, [view, priorityFilter?.join(), statusFilter?.join()]);
 
   const handleCreateIssue = useCallback(
     async (issue: Omit<Issue, 'kanbanOrder'>, description: Description) => {
@@ -245,10 +285,10 @@ const App = ({rep, undoManager}: AppProps) => {
         view={view}
         detailIssueID={detailIssueID}
         isLoading={!partialSyncComplete}
-        filters={filters}
         viewIssueCount={viewIssueCount || 0}
         filteredIssues={filterdIssues}
         rep={rep}
+        hasNonViewFilters={hasNonViewFilters}
         onCloseMenu={handleCloseMenu}
         onToggleMenu={handleToggleMenu}
         onUpdateIssues={handleUpdateIssues}

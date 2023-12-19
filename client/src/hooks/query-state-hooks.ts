@@ -3,34 +3,31 @@ import useQueryState, {
   QueryStateProcessor,
 } from './useQueryState';
 import {Order, Priority, Status} from 'shared';
+import {DateQueryArg} from '../filters';
 
 const processOrderBy: QueryStateProcessor<Order> = {
   toString: (value: Order) => value,
   fromString: (value: string | null) => (value ?? 'MODIFIED') as Order,
 };
 
-const processStatuFilter: QueryStateProcessor<Status[]> = {
-  toString: (value: Status[]) => value.join(','),
-  fromString: (value: string | null) =>
-    value === null ? null : (value.split(',') as Status[]),
-};
-
-const processPriorityFilter: QueryStateProcessor<Priority[]> = {
-  toString: (value: Priority[]) => value.join(','),
-  fromString: (value: string | null) =>
-    value === null ? null : (value.split(',') as Priority[]),
-};
+function makeStringSetProcessor<T extends string>(): QueryStateProcessor<T[]> {
+  return {
+    toString: (value: T[]) => value.join(','),
+    fromString: (value: string | null) =>
+      value === null ? null : (value.split(',') as T[]),
+  };
+}
 
 export function useOrderByState() {
   return useQueryState('orderBy', processOrderBy);
 }
 
 export function useStatusFilterState() {
-  return useQueryState('statusFilter', processStatuFilter);
+  return useQueryState('statusFilter', makeStringSetProcessor<Status>());
 }
 
 export function usePriorityFilterState() {
-  return useQueryState('priorityFilter', processPriorityFilter);
+  return useQueryState('priorityFilter', makeStringSetProcessor<Priority>());
 }
 
 export function useViewState() {
@@ -39,4 +36,19 @@ export function useViewState() {
 
 export function useIssueDetailState() {
   return useQueryState('iss', identityProcessor);
+}
+
+export function useCreatorFilterState() {
+  return useQueryState('creatorFilter', makeStringSetProcessor<string>());
+}
+
+export function useCreatedFilterState() {
+  return useQueryState('createdFilter', makeStringSetProcessor<DateQueryArg>());
+}
+
+export function useModifiedFilterState() {
+  return useQueryState(
+    'modifiedFilter',
+    makeStringSetProcessor<DateQueryArg>(),
+  );
 }

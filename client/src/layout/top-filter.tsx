@@ -6,11 +6,15 @@ import SortOrderMenu from '../widgets/sort-order-menu';
 import FilterMenu from '../widgets/filter-menu';
 import {noop} from 'lodash';
 import {
+  useCreatedFilterState,
+  useCreatorFilterState,
+  useModifiedFilterState,
   useOrderByState,
   usePriorityFilterState,
   useStatusFilterState,
 } from '../hooks/query-state-hooks';
 import {Priority, Status} from 'shared';
+import type {DateQueryArg, Op} from '../filters';
 
 interface Props {
   title: string;
@@ -21,12 +25,18 @@ interface Props {
 }
 
 interface FilterStatusProps {
-  filter: Status[] | Priority[] | null;
+  filter: Status[] | Priority[] | string[] | null;
   onDelete: () => void;
   label: string;
 }
 
-const displayStrings: Record<Priority | Status, string> = {
+type DateFilterStatusProps = {
+  filter: DateQueryArg[] | null;
+  onDelete: () => void;
+  label: string;
+};
+
+const displayStrings: Record<Priority | Status | string, string> = {
   NONE: 'None',
   LOW: 'Low',
   MEDIUM: 'Medium',
@@ -48,7 +58,7 @@ const FilterStatus = ({filter, onDelete, label}: FilterStatusProps) => {
         {label} is
       </span>
       <span className="px-1 text-gray-50 bg-gray-850 ">
-        {filter.map(f => displayStrings[f]).join(', ')}
+        {filter.map(f => displayStrings[f] || f).join(', ')}
       </span>
       <span
         className="px-1 text-gray-50 bg-gray-850 rounded-r cursor-pointer"
@@ -60,6 +70,31 @@ const FilterStatus = ({filter, onDelete, label}: FilterStatusProps) => {
   );
 };
 
+function DateFilterStatus({filter, onDelete, label}: DateFilterStatusProps) {
+  if (!filter || filter.length === 0) return null;
+  return (
+    <div className="flex items-center pr-4 space-x-[1px]">
+      <span className="px-1 text-gray-50 bg-gray-850 rounded-l">
+        {label} is
+      </span>
+      <span className="px-1 text-gray-50 bg-gray-850 ">
+        {filter
+          .map(f => {
+            const [time, op] = f.split('|') as [string, Op];
+            return `${op} ${new Date(parseInt(time)).toLocaleDateString()}`;
+          })
+          .join(' AND ')}
+      </span>
+      <span
+        className="px-1 text-gray-50 bg-gray-850 rounded-r cursor-pointer"
+        onMouseDown={onDelete}
+      >
+        &times;
+      </span>
+    </div>
+  );
+}
+
 const TopFilter = ({
   title,
   onToggleMenu = noop,
@@ -70,6 +105,9 @@ const TopFilter = ({
   const [orderBy, setOrderByParam] = useOrderByState();
   const [statusFilters, setStatusFilterByParam] = useStatusFilterState();
   const [priorityFilters, setPriorityFilterByParam] = usePriorityFilterState();
+  const [creatorFilters, setCreatorFilterByParam] = useCreatorFilterState();
+  const [createdFilters, setCreatedFilterByParam] = useCreatedFilterState();
+  const [modifiedFilters, setModifiedFilterByParam] = useModifiedFilterState();
 
   return (
     <>
@@ -91,28 +129,38 @@ const TopFilter = ({
             <span>{issuesCount}</span>
           )}
           <FilterMenu
-            onSelectPriority={async priority => {
-              const prioritySet = new Set(priorityFilters);
-              if (prioritySet.has(priority)) {
-                prioritySet.delete(priority);
-              } else {
-                prioritySet.add(priority);
-              }
-              await setPriorityFilterByParam(
-                prioritySet.size === 0 ? null : [...prioritySet],
-              );
-            }}
-            onSelectStatus={async status => {
-              const statusSet = new Set(statusFilters);
-              if (statusSet.has(status)) {
-                statusSet.delete(status);
-              } else {
-                statusSet.add(status);
-              }
-              await setStatusFilterByParam(
-                statusSet.size === 0 ? null : [...statusSet],
-              );
-            }}
+            onSelectPriority={createEnumSetFilterHandler(
+              priorityFilters,
+              setPriorityFilterByParam,
+            )}
+            onSelectStatus={createEnumSetFilterHandler(
+              statusFilters,
+              setStatusFilterByParam,
+            )}
+            onCreatorEntered={createEnumSetFilterHandler(
+              creatorFilters,
+              setCreatorFilterByParam,
+            )}
+            onCreatedAfterEntered={createDateFilterHandler(
+              createdFilters,
+              setCreatedFilterByParam,
+              '>=',
+            )}
+            onCreatedBeforeEntered={createDateFilterHandler(
+              createdFilters,
+              setCreatedFilterByParam,
+              '<=',
+            )}
+            onModifiedAfterEntered={createDateFilterHandler(
+              modifiedFilters,
+              setModifiedFilterByParam,
+              '>=',
+            )}
+            onModifiedBeforeEntered={createDateFilterHandler(
+              modifiedFilters,
+              setModifiedFilterByParam,
+              '<=',
+            )}
           />
         </div>
 
@@ -127,7 +175,10 @@ const TopFilter = ({
         </div>
       </div>
       {(statusFilters && statusFilters.length) ||
-      (priorityFilters && priorityFilters.length) ? (
+      (priorityFilters && priorityFilters.length) ||
+      (creatorFilters && creatorFilters.length) ||
+      (createdFilters && createdFilters.length) ||
+      (modifiedFilters && modifiedFilters.length) ? (
         <div className="flex pl-2 lg:pl-9 pr-6 border-b border-gray-850 h-8">
           <FilterStatus
             filter={statusFilters}
@@ -139,10 +190,60 @@ const TopFilter = ({
             onDelete={() => setPriorityFilterByParam(null)}
             label="Priority"
           />
+          <FilterStatus
+            filter={creatorFilters}
+            onDelete={() => setCreatorFilterByParam(null)}
+            label="Creator"
+          />
+          <DateFilterStatus
+            filter={createdFilters}
+            onDelete={() => setCreatedFilterByParam(null)}
+            label="Created"
+          />
+          <DateFilterStatus
+            filter={modifiedFilters}
+            onDelete={() => setModifiedFilterByParam(null)}
+            label="Modified"
+          />
         </div>
       ) : null}
     </>
   );
 };
+
+function createDateFilterHandler(
+  filters: DateQueryArg[] | null,
+  setFilters: (f: DateQueryArg[] | null) => void,
+  op: Op,
+) {
+  // TODO: do not allow more than one op of same type.
+  return async (date: Date) => {
+    const set = new Set(filters);
+    const encoded: DateQueryArg = `${
+      date.getTime() + date.getTimezoneOffset() * 60 * 1000
+    }|${op}`;
+    if (set.has(encoded)) {
+      set.delete(encoded);
+    } else {
+      set.add(encoded);
+    }
+    setFilters(set.size === 0 ? null : [...set]);
+  };
+}
+
+function createEnumSetFilterHandler<T>(
+  filters: T[] | null,
+  setFilters: (f: T[] | null) => void,
+) {
+  return async (e: T) => {
+    const set = new Set(filters);
+    if (set.has(e)) {
+      set.delete(e);
+    } else {
+      set.add(e);
+    }
+    setFilters(set.size === 0 ? null : [...set]);
+  };
+}
 
 export default memo(TopFilter);

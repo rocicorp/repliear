@@ -3,7 +3,6 @@ import classNames from 'classnames';
 import {memo} from 'react';
 import {Replicache} from 'replicache';
 import {Comment, Description, Issue, IssueUpdate} from 'shared';
-import {Filters} from '../filters';
 import IssueBoard from '../issue/issue-board';
 import IssueDetail from '../issue/issue-detail';
 import IssueList from '../issue/issue-list';
@@ -29,8 +28,8 @@ export interface LayoutProps {
   view: string | null;
   detailIssueID: string | null;
   isLoading: boolean;
-  filters: Filters;
   viewIssueCount: number;
+  hasNonViewFilters: boolean;
   filteredIssues: PersistentTreeView<Issue>['value'];
   rep: Replicache<M>;
   onCloseMenu: () => void;
@@ -49,9 +48,9 @@ const RawLayout = ({
   view,
   detailIssueID,
   isLoading,
-  filters,
   viewIssueCount,
   filteredIssues,
+  hasNonViewFilters,
   rep,
   onCloseMenu,
   onToggleMenu,
@@ -78,7 +77,7 @@ const RawLayout = ({
               onToggleMenu={onToggleMenu}
               title={getTitle(view)}
               filteredIssuesCount={
-                filters.hasNonViewFilters ? filteredIssues.size : undefined
+                hasNonViewFilters ? filteredIssues.size : undefined
               }
               issuesCount={viewIssueCount}
               showSortOrderMenu={view !== 'board'}

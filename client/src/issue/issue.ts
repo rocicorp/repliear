@@ -29,6 +29,9 @@ export const statusOrderValues: Record<Status, number> = {
 export enum Filter {
   PRIORITY,
   STATUS,
+  CREATOR,
+  CREATED,
+  MODIFIED,
 }
 
 const filterEnumSchema = z.nativeEnum(Filter);
