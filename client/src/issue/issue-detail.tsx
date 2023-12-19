@@ -83,7 +83,8 @@ export default function IssueDetail({
 
   useEffect(() => {
     if (detailIssueID) {
-      const index = issues.findIndex(
+      // TODO: can do better if we pass actual issue rather than issue id
+      const index = issues.findIndexByPredicate(
         (issue: Issue) => issue.id === detailIssueID,
       );
       setCurrentIssueIdx(index);

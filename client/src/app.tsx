@@ -11,13 +11,9 @@ import {generateKeyBetween} from 'fractional-indexing';
 import type {UndoManager} from '@rocicorp/undo';
 import {HotKeys} from 'react-hotkeys';
 import {
-  useCreatedFilterState,
-  useCreatorFilterState,
+  useFilters,
   useIssueDetailState,
-  useModifiedFilterState,
   useOrderByState,
-  usePriorityFilterState,
-  useStatusFilterState,
   useViewState,
 } from './hooks/query-state-hooks';
 import {useSubscribe} from 'replicache-react';
@@ -34,20 +30,7 @@ import {Layout} from './layout/layout';
 import {db} from './materialite/db';
 import {useQuery} from '@vlcn.io/materialite-react';
 import {issueFromKeyAndValue} from './issue/issue';
-import {
-  getCreatedFilter,
-  getCreatorFilter,
-  getCreators,
-  getIssueOrder,
-  getModifiedFilter,
-  getPriorities,
-  getPriorityFilter,
-  getStatuses,
-  getStatusFilter,
-  getViewFilter,
-  getViewStatuses,
-  hasNonViewFilters as doesHaveNonViewFilters,
-} from './filters';
+import {getIssueOrder, getViewFilter, getViewStatuses} from './filters';
 
 type AppProps = {
   rep: Replicache<M>;
@@ -91,12 +74,7 @@ const App = ({rep, undoManager}: AppProps) => {
   const [orderBy] = useOrderByState();
   const [detailIssueID, setDetailIssueID] = useIssueDetailState();
   const [menuVisible, setMenuVisible] = useState(false);
-  const [priorityFilter] = usePriorityFilterState();
-  const [statusFilter] = useStatusFilterState();
-  const [createdFilter] = useCreatedFilterState();
-  const [creatorFilter] = useCreatorFilterState();
-  const [modifiedFilter] = useModifiedFilterState();
-  const [hasNonViewFilters, setHasNonViewFilters] = useState(false);
+  const {filters, hasNonViewFilters} = useFilters();
 
   const issueOrder = getIssueOrder(view, orderBy);
 
@@ -104,42 +82,15 @@ const App = ({rep, undoManager}: AppProps) => {
     const start = performance.now();
     const source = db.issues.getSortedSource(issueOrder);
 
-    const viewStatuses = getViewStatuses(view);
-    const statuses = getStatuses(statusFilter);
-    const statusFilterFn = getStatusFilter(viewStatuses, statuses);
-    const filterFns = [
-      statusFilterFn,
-      getPriorityFilter(getPriorities(priorityFilter)),
-      getCreatorFilter(getCreators(creatorFilter)),
-      getCreatedFilter(createdFilter),
-      getModifiedFilter(modifiedFilter),
-    ];
-
-    const hasNonViewFilters = !!(
-      doesHaveNonViewFilters(viewStatuses, statuses) ||
-      filterFns.filter(f => f !== null && f !== statusFilterFn).length > 0
-    );
-    setHasNonViewFilters(hasNonViewFilters);
-
     let {stream} = source;
-    for (const filter of filterFns) {
-      if (filter !== null) {
-        stream = stream.filter(filter);
-      }
+    for (const filter of filters) {
+      stream = stream.filter(filter);
     }
 
     const ret = stream.materialize(source.comparator);
     console.log(`Filter update duration: ${performance.now() - start}ms`);
     return ret;
-  }, [
-    view,
-    issueOrder,
-    priorityFilter?.join(),
-    statusFilter?.join(),
-    createdFilter?.join(),
-    creatorFilter?.join(),
-    modifiedFilter?.join(),
-  ]);
+  }, [issueOrder, filters]);
 
   const [, viewIssueCount] = useQuery(() => {
     const viewStatuses = getViewStatuses(view);
