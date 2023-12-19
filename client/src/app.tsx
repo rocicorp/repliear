@@ -81,7 +81,7 @@ const App = ({rep, undoManager}: AppProps) => {
   const [filters, setFilters] = useState(
     getFilters(view, priorityFilter, statusFilter),
   );
-  const [issueOrder, setIssueOrder] = useState(getIssueOrder(view, orderBy));
+  const issueOrder = getIssueOrder(view, orderBy);
 
   const [, filterdIssues] = useQuery(() => {
     const start = performance.now();
@@ -139,10 +139,6 @@ const App = ({rep, undoManager}: AppProps) => {
     }
     setFilters(f);
   }, [view, priorityFilter?.join(), statusFilter?.join()]);
-
-  useEffect(() => {
-    setIssueOrder(getIssueOrder(view, orderBy));
-  }, [view, orderBy]);
 
   const handleCreateIssue = useCallback(
     async (issue: Omit<Issue, 'kanbanOrder'>, description: Description) => {
