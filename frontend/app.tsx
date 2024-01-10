@@ -1,43 +1,42 @@
-import React, { memo, useCallback, useEffect, useReducer } from "react";
+import type { UndoManager } from "@rocicorp/undo";
+import classnames from "classnames";
+import { generateKeyBetween } from "fractional-indexing";
+import { isEqual, minBy, partial, pickBy, sortBy, sortedIndexBy } from "lodash";
+import { useQueryState } from "next-usequerystate";
+import { memo, useCallback, useEffect, useReducer, useState } from "react";
+import { HotKeys } from "react-hotkeys";
 import type {
   ExperimentalDiff as Diff,
-  ReadonlyJSONValue,
   ReadTransaction,
+  ReadonlyJSONValue,
   Replicache,
 } from "replicache";
+import { useSubscribe } from "replicache-react";
+import { getPartialSyncState } from "./control";
+import {
+  Comment,
+  Description,
+  ISSUE_KEY_PREFIX,
+  Issue,
+  IssueUpdate,
+  IssueUpdateWithID,
+  Order,
+  Priority,
+  Status,
+  issueFromKeyAndValue,
+  orderEnumSchema,
+  priorityEnumSchema,
+  priorityOrderValues,
+  reverseTimestampSortKey,
+  statusEnumSchema,
+  statusOrderValues,
+} from "./issue";
+import IssueBoard from "./issue-board";
+import IssueDetail from "./issue-detail";
+import IssueList from "./issue-list";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
-import {
-  Issue,
-  issueFromKeyAndValue,
-  ISSUE_KEY_PREFIX,
-  Order,
-  orderEnumSchema,
-  Priority,
-  priorityEnumSchema,
-  Status,
-  statusEnumSchema,
-  Description,
-  Comment,
-  IssueUpdate,
-  reverseTimestampSortKey,
-  statusOrderValues,
-  priorityOrderValues,
-  IssueUpdateWithID,
-} from "./issue";
-import { useState } from "react";
 import TopFilter from "./top-filter";
-import IssueList from "./issue-list";
-import { useQueryState } from "next-usequerystate";
-import IssueBoard from "./issue-board";
-import { isEqual, minBy, partial, pickBy, sortBy, sortedIndexBy } from "lodash";
-import IssueDetail from "./issue-detail";
-import { generateKeyBetween } from "fractional-indexing";
-import { useSubscribe } from "replicache-react";
-import classnames from "classnames";
-import { getPartialSyncState } from "./control";
-import type { UndoManager } from "@rocicorp/undo";
-import { HotKeys } from "react-hotkeys";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -438,35 +437,22 @@ const App = ({ rep, undoManager }: AppProps) => {
             issueUpdate.issue,
             (_, key) => key in issueUpdate.issueChanges
           );
-          const rv: IssueUpdateWithID = {
+          return {
             id: issueUpdate.issue.id,
             issueChanges: undoChanges,
+            descriptionChange: issueUpdate.descriptionUpdate?.description,
           };
-          const { descriptionUpdate } = issueUpdate;
-          if (descriptionUpdate) {
-            return {
-              ...rv,
-              descriptionChange: descriptionUpdate.description,
-            };
-          }
-          return rv;
         }
       );
       await undoManager.add({
         execute: () =>
           rep.mutate.updateIssues(
             issueUpdates.map(({ issue, issueChanges, descriptionUpdate }) => {
-              const rv: IssueUpdateWithID = {
+              return {
                 id: issue.id,
                 issueChanges,
+                descriptionChange: descriptionUpdate?.description,
               };
-              if (descriptionUpdate) {
-                return {
-                  ...rv,
-                  descriptionChange: descriptionUpdate.description,
-                };
-              }
-              return rv;
             })
           ),
         undo: () => rep.mutate.updateIssues(uChanges),
