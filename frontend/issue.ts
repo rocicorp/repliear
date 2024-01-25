@@ -113,7 +113,7 @@ export type IssueUpdate = {
 export type IssueUpdateWithID = Immutable<{
   id: string;
   issueChanges: Partial<IssueValue>;
-  descriptionChange?: Description;
+  descriptionChange?: Description | undefined;
 }>;
 
 export async function getIssue(
