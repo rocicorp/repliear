@@ -43,7 +43,8 @@ async function getSchemaVersion(executor: Executor) {
   const qr = await executor(
     `select value from meta where key = 'schemaVersion'`
   );
-  return qr.rows[0].value;
+
+  return qr.rows[0]?.value;
 }
 
 // nanoid's don't include $, so cannot collide with other space ids.
