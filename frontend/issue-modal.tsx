@@ -112,7 +112,7 @@ export default function IssueModal({
       {/* Footer */}
       <div className="flex items-center justify-end flex-shrink-0 px-4 pt-3">
         <button
-          className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray text-white"
+          className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray"
           onMouseDown={handleSubmit}
         >
           Save Issue

@@ -2,16 +2,17 @@ import React, { RefObject, useRef, useState } from "react";
 import AddIcon from "./assets/icons/add.svg";
 import HelpIcon from "./assets/icons/help.svg";
 import MenuIcon from "./assets/icons/menu.svg";
-import ItemGroup from "./item-group";
+import { ItemGroup } from "./item-group";
 import { useClickOutside } from "./hooks/useClickOutside";
 import classnames from "classnames";
-import SearchBox from "./searchbox";
 import IssueModal from "./issue-modal";
 import ReactLogo from "./assets/images/logo.svg";
 import type { Description, Issue } from "./issue";
 import { queryTypes, useQueryState, useQueryStates } from "next-usequerystate";
 import AboutModal from "./about-modal";
 import { noop } from "lodash";
+import { Button } from "./button";
+import { SearchBox } from "./searchbox";
 
 interface Props {
   // Show menu (for small screen only)
@@ -83,63 +84,30 @@ const LeftMenu = ({
             </div>
           </div>
 
-          {/* Create issue btn */}
-          <button
-            className="inline-flex items-center px-2 py-2 mt-3 bg-gray-850  hover:bg-gray-900 border border-gray rounded focus:outline-none h-7"
-            onMouseDown={() => {
+          <Button
+            icon={AddIcon}
+            label="New Issue"
+            onClick={() => {
               setIssueModalVisible(true);
               onCloseMenu && onCloseMenu();
             }}
-          >
-            <AddIcon className="mr-2.5 w-3.5 h-3.5" /> New Issue
-          </button>
+          />
         </div>
 
-        {/* Search box */}
-        <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-4">
-          <SearchBox placeholder="Search" className="mt-5" />
-          {/* actions */}
+        <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-5">
+          <SearchBox />
 
-          <ItemGroup title="React Issues">
-            <div
-              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-900"
-              onMouseDown={async () => {
-                await setLayoutViewParams({ view: "all", iss: null });
-                onCloseMenu && onCloseMenu();
-              }}
-            >
-              <span>All</span>
-            </div>
-
-            <div
-              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-900"
-              onMouseDown={async () => {
-                await setLayoutViewParams({ view: "active", iss: null });
-                onCloseMenu && onCloseMenu();
-              }}
-            >
-              <span>Active</span>
-            </div>
-
-            <div
-              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-900"
-              onMouseDown={async () => {
-                await setLayoutViewParams({ view: "backlog", iss: null });
-                onCloseMenu && onCloseMenu();
-              }}
-            >
-              <span>Backlog</span>
-            </div>
-            <div
-              className="flex items-center pl-9 rounded cursor-pointer group h-8 hover:bg-gray-900"
-              onMouseDown={async () => {
-                await setLayoutViewParams({ view: "board", iss: null });
-                onCloseMenu && onCloseMenu();
-              }}
-            >
-              <span>Board</span>
-            </div>
-          </ItemGroup>
+          <ItemGroup
+            title="React Issues"
+            items={["All", "Active", "Backlog", "Board"]}
+            onClick={(item) => async () => {
+              await setLayoutViewParams({
+                view: item.toLowerCase(),
+                iss: null,
+              });
+              onCloseMenu?.();
+            }}
+          />
 
           {/* extra space */}
           <div className="flex flex-col flex-grow flex-shrink" />
