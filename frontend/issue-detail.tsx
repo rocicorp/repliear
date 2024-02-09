@@ -271,7 +271,7 @@ export default function IssueDetail({
       <div className="flex flex-1 p-2 overflow-hidden">
         <div className="flex flex-col flex-[3_0_0] items-center md:p-3 border-gray-700 md:border-r min-h-0 min-w-0 overflow-auto">
           <div className="flex flex-col w-full lg:max-w-4xl max-w-[90vw]">
-            <div className="flex border-solid border-b lg:px-5 justify-between px-2">
+            <div className="py-4 flex border-solid border-b lg:px-5 justify-between px-2">
               <div className="flex visible md:invisible">
                 <StatusMenu
                   onSelect={handleChangeStatus}
