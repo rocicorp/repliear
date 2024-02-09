@@ -65,6 +65,9 @@ class Filters {
     this.hasNonViewFilters = false;
     if (statusFilter) {
       this._issuesStatuses = new Set<Status>();
+
+      if (typeof statusFilter !== "string") return;
+
       for (const s of statusFilter.split(",")) {
         const parseResult = statusEnumSchema.safeParse(s);
         if (
@@ -82,6 +85,9 @@ class Filters {
 
     if (priorityFilter) {
       this._issuesPriorities = new Set<Priority>();
+
+      if (typeof priorityFilter !== "string") return;
+
       for (const p of priorityFilter.split(",")) {
         const parseResult = priorityEnumSchema.safeParse(p);
         if (parseResult.success) {
@@ -431,8 +437,8 @@ const App = ({ rep, undoManager }: AppProps) => {
 
   const handleUpdateIssues = useCallback(
     async (issueUpdates: Array<IssueUpdate>) => {
-      const uChanges: Array<IssueUpdateWithID> = issueUpdates.map<IssueUpdateWithID>(
-        (issueUpdate) => {
+      const uChanges: Array<IssueUpdateWithID> =
+        issueUpdates.map<IssueUpdateWithID>((issueUpdate) => {
           const undoChanges = pickBy(
             issueUpdate.issue,
             (_, key) => key in issueUpdate.issueChanges
@@ -442,8 +448,7 @@ const App = ({ rep, undoManager }: AppProps) => {
             issueChanges: undoChanges,
             descriptionChange: issueUpdate.descriptionUpdate?.description,
           };
-        }
-      );
+        });
       await undoManager.add({
         execute: () =>
           rep.mutate.updateIssues(
@@ -467,13 +472,14 @@ const App = ({ rep, undoManager }: AppProps) => {
     },
     [setDetailIssueID]
   );
-  const handleCloseMenu = useCallback(() => setMenuVisible(false), [
-    setMenuVisible,
-  ]);
-  const handleToggleMenu = useCallback(() => setMenuVisible(!menuVisible), [
-    setMenuVisible,
-    menuVisible,
-  ]);
+  const handleCloseMenu = useCallback(
+    () => setMenuVisible(false),
+    [setMenuVisible]
+  );
+  const handleToggleMenu = useCallback(
+    () => setMenuVisible(!menuVisible),
+    [setMenuVisible, menuVisible]
+  );
 
   const handlers = {
     undo: () => undoManager.undo(),

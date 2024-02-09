@@ -68,7 +68,7 @@ const LeftMenu = ({
 
         {/* Top menu*/}
         <div className="flex flex-col flex-grow-0 flex-shrink-0 px-5 py-3">
-          <div className="flex items-center justify-between">
+          <div className="mb-5 flex items-center justify-between">
             {/* Project selection */}
             <div
               className="flex items-center p-2 pr-3 rounded cursor-pointer hover:bg-gray-850"

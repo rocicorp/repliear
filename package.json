@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "dev": "PGDATABASE=repliear next",
+    "dev": "next",
     "build": "next build",
     "start": "next start",
     "check-types": "tsc --noEmit",
