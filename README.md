@@ -10,7 +10,7 @@ Running at [repliear.herokuapp.com](https://repliear.herokuapp.com/).
 # Prerequisites
 
 1. [Get a Replicache license key](https://doc.replicache.dev/licensing)
-2. Install PostgreSQL. On MacOS, we recommend using [Postgres.app](https://postgresapp.com/). For other OSes and options, see [Postgres Downloads](https://www.postgresql.org/download/).
+2. Install PostgreSQL. On MacOS, we recommend using [Postgres.app](https://postgresapp.com/). For other OSes and options, see [Postgres Downloads](https://www.postgresql.org/download/). We recommend to also install the CLI tools so you can create the database from the command line.
 3. [Sign up for a free pusher.com account](https://pusher.com/) and create a new "channels" app.
 
 # To run locally
@@ -19,19 +19,31 @@ Get the Pusher environment variables from the ["App Keys" section](https://i.img
 
 **Note:** These instructions assume you installed PostgreSQL via Postgres.app on MacOS. If you installed some other way, or configured PostgreSQL specially, you may additionally need to set the `PGUSER` and `PGPASSWORD` environment variables.</p>
 
+1. Create a local env file
+
+Create `.env.local` in the root of your project and copy & paste following environment variables that will be publicly available on runtime.
+
+```shell
+NEXT_PUBLIC_REPLICACHE_LICENSE_KEY=<your license key>
+NEXT_PUBLIC_PUSHER_APP_ID=<appid>
+NEXT_PUBLIC_PUSHER_KEY=<pusherkey>
+NEXT_PUBLIC_PUSHER_SECRET=<pushersecret>
+NEXT_PUBLIC_PUSHER_CLUSTER=<pushercluster>
 ```
-export PGDATABASE="repliear"
-export NEXT_PUBLIC_REPLICACHE_LICENSE_KEY="<your license key>"
-export NEXT_PUBLIC_PUSHER_APP_ID=<appid>
-export NEXT_PUBLIC_PUSHER_KEY=<pusherkey>
-export NEXT_PUBLIC_PUSHER_SECRET=<pushersecret>
-export NEXT_PUBLIC_PUSHER_CLUSTER=<pushercluster>
 
-# Create a new database for Repliear
-psql -d postgres -c 'create database repliear'
+2. Create a new database for Repliear
 
-npm install
-npm run dev
+When you have installed PostgreSQL, run following command to create a new database.
+
+`psql -d postgres -c 'create database repliear'`
+
+3. Install and run the application
+
+Run following commands to install all dependencies and start the application. Provide the name of your database to the environment variable before.
+
+```shell
+$ npm install
+$ PGDATABASE=repliear npm run dev
 ```
 
 ## Credits
