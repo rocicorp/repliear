@@ -8,6 +8,7 @@ import NoPriorityIcon from "./assets/icons/dots.svg";
 import UrgentPriorityIcon from "./assets/icons/rounded-claim.svg";
 import { Priority, PriorityEnum } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
+import { MenuItem } from "./menu-item";
 
 interface Props {
   labelVisible?: boolean;
@@ -60,22 +61,18 @@ const PriorityMenu = ({
     }
   });
 
-  const options = statusOpts.map(([Icon, label, priority], idx) => {
-    return (
-      <div
-        key={idx}
-        className="flex items-center h-8 px-3 text-gray focus:outline-none hover:text-gray-800 hover:bg-gray-300"
-        onClick={(e: MouseEvent) => {
-          onSelect(priority);
-          setPriorityDropDownVisible(false);
-          e.stopPropagation();
-        }}
-      >
-        <Icon className="mr-3" />
-        <span>{label}</span>
-      </div>
-    );
-  });
+  const options = statusOpts.map(([icon, label, priority], idx) => (
+    <MenuItem
+      key={idx}
+      onClick={(e: MouseEvent) => {
+        onSelect(priority);
+        setPriorityDropDownVisible(false);
+        e.stopPropagation();
+      }}
+      icon={icon}
+      label={label}
+    />
+  ));
 
   return (
     <div ref={ref}>
@@ -118,7 +115,7 @@ const Popper = ({
         ...styles.popper,
       }}
       {...attributes.popper}
-      className="cursor-default bg-white rounded shadow-modal z-100 w-34"
+      className="bg-white rounded shadow-modal z-100 w-34 overflow-hidden cursor-pointer"
     >
       <div style={styles.offset}>{children}</div>
     </div>

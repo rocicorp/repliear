@@ -8,6 +8,7 @@ import DoneIcon from "./assets/icons/done.svg";
 import InProgressIcon from "./assets/icons/half-circle.svg";
 import { Status, StatusEnum } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
+import { MenuItem } from "./menu-item";
 
 interface Props {
   labelVisible?: boolean;
@@ -57,22 +58,18 @@ const StatusMenu = ({ labelVisible = false, onSelect, status }: Props) => {
     }
   });
 
-  const options = statuses.map(([Icon, status, label], idx) => {
-    return (
-      <div
-        key={idx}
-        className="flex items-center h-8 px-3 text-gray focus:outline-none hover:text-gray-800 hover:bg-gray-300"
-        onClick={(e: MouseEvent) => {
-          onSelect(status);
-          setStatusDropDownVisible(false);
-          e.stopPropagation();
-        }}
-      >
-        <Icon className="mr-3" />
-        <span>{label}</span>
-      </div>
-    );
-  });
+  const options = statuses.map(([icon, status, label], idx) => (
+    <MenuItem
+      key={idx}
+      icon={icon}
+      onClick={(e: MouseEvent) => {
+        onSelect(status);
+        setStatusDropDownVisible(false);
+        e.stopPropagation();
+      }}
+      label={label}
+    />
+  ));
 
   return (
     <div ref={ref}>
@@ -115,7 +112,7 @@ const Popper = ({
         ...styles.popper,
       }}
       {...attributes.popper}
-      className="cursor-default bg-white rounded shadow-modal z-100 w-34"
+      className="bg-white rounded shadow-modal z-100 w-34 overflow-hidden cursor-pointer"
     >
       <div style={styles.offset}>{children}</div>
     </div>

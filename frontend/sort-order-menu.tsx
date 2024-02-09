@@ -4,6 +4,7 @@ import { Order } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
 import SortOutlinedIcon from "@mui/icons-material/SortOutlined";
 import classNames from "classnames";
+import { MenuItem } from "./menu-item";
 
 interface Props {
   onSelect: (orderBy: Order) => void;
@@ -16,7 +17,7 @@ const SortOrderMenu = ({ onSelect, order }: Props) => {
   const [orderByDropDownVisible, setOrderByDropDownVisible] = useState(false);
 
   const { styles, attributes, update } = usePopper(orderRef, popperRef, {
-    placement: "bottom-start",
+    placement: "bottom-end",
   });
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
@@ -41,24 +42,19 @@ const SortOrderMenu = ({ onSelect, order }: Props) => {
 
   const displayOrder = new Map(orderedBys);
 
-  const options = orderedBys.map(([orderOption, label], idx) => {
-    return (
-      <div
-        key={idx}
-        className={classNames(
-          "flex items-center h-8 px-3 text-gray focus:outline-none hover:text-gray-800 hover:bg-gray-300",
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          { "font-semibold text-black": order === orderOption }
-        )}
-        onMouseDown={() => {
-          onSelect(orderOption as Order);
-          setOrderByDropDownVisible(false);
-        }}
-      >
-        {label}
-      </div>
-    );
-  });
+  const options = orderedBys.map(([orderOption, label], idx) => (
+    <MenuItem
+      key={idx}
+      onClick={() => {
+        onSelect(orderOption as Order);
+        setOrderByDropDownVisible(false);
+      }}
+      label={label}
+      className={classNames({
+        "font-semibold text-black": order === orderOption,
+      })}
+    />
+  ));
 
   return (
     <div className="flex flex-row items-center" ref={ref}>
@@ -79,7 +75,7 @@ const SortOrderMenu = ({ onSelect, order }: Props) => {
           display: orderByDropDownVisible ? "" : "none",
         }}
         {...attributes.popper}
-        className="cursor-default bg-white rounded shadow-modal z-100 w-34"
+        className="bg-white rounded shadow-modal z-100 w-34 overflow-hidden cursor-pointer"
       >
         <div style={styles.offset}>{options}</div>
       </div>
