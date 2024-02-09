@@ -2,8 +2,11 @@ import React from "react";
 import type { AppProps } from "next/app";
 
 import Head from "next/head";
+import { Theme } from "@radix-ui/themes";
 
 import "../styles/index.css";
+
+import "@radix-ui/themes/styles.css";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
@@ -17,7 +20,9 @@ function MyApp({ Component, pageProps }: AppProps) {
           href="/static/replicache-logo-96.png"
         />
       </Head>
-      <Component {...pageProps} />
+      <Theme appearance="dark" accentColor="cyan" radius="small">
+        <Component {...pageProps} />
+      </Theme>
     </>
   );
 }

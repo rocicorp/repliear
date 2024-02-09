@@ -72,9 +72,9 @@ const StatusMenu = ({ labelVisible = false, onSelect, status }: Props) => {
   ));
 
   return (
-    <div ref={ref}>
+    <div ref={ref} className="flex h-full justify-center">
       <button
-        className="inline-flex items-center h-6 px-2 border-none rounded focus:outline-none hover:bg-gray-850"
+        className="border-none rounded focus:outline-none"
         ref={setButtonRef}
         onClick={handleDropdownClick}
       >

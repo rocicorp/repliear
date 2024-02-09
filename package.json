@@ -17,6 +17,7 @@
     "@mui/icons-material": "^5.15.9",
     "@mui/material": "^5.15.9",
     "@mui/utils": "^5.15.9",
+    "@radix-ui/themes": "^2.0.3",
     "@rocicorp/undo": "^0.2.0",
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/line-clamp": "^0.4.4",

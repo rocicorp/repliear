@@ -336,7 +336,7 @@ export default function IssueDetail({
             </div>
             <div className="text-md py-4 px-5 text-white">Comments</div>
             {CommentsList(comments, isLoading && description === null)}
-            <div className="mx-3 bg-gray-850 flex-1 mx- mt-0 mb-3 flex-1 border-transparent rounded full py-3 px-3 relative whitespace-pre-wrap ">
+            <div className="mx-3 bg-gray-850 flex-1 mx- mt-0 mb-3 border-transparent rounded full py-3 px-3 relative whitespace-pre-wrap ">
               <textarea
                 className="block flex-1 whitespace-pre-wrap text-size-sm w-full bg-gray-850 min-h-[6rem] placeholder-gray-300 placeholder:text-sm"
                 placeholder="Leave a comment ..."

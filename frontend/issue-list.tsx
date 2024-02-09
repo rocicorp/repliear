@@ -30,20 +30,17 @@ const itemKey = (index: number, data: ListData) => data.issues[index].id;
 const RawRow = ({
   data,
   index,
-  style,
 }: {
   data: ListData;
   index: number;
   style: CSSProperties;
 }) => (
-  <div style={style}>
-    <IssueRow
-      issue={data.issues[index]}
-      onChangePriority={data.handleChangePriority}
-      onChangeStatus={data.handleChangeStatus}
-      onOpenDetail={data.onOpenDetail}
-    />
-  </div>
+  <IssueRow
+    issue={data.issues[index]}
+    onChangePriority={data.handleChangePriority}
+    onChangeStatus={data.handleChangeStatus}
+    onOpenDetail={data.onOpenDetail}
+  />
 );
 
 const Row = memo(RawRow);
