@@ -47,19 +47,27 @@ This branch includes the main focus on the coding challenge and replaces existin
 
 **List View**
 
-![List View](assets/list.png)
+| Before                               | After                         |
+| ------------------------------------ | ----------------------------- |
+| ![List View](assets/before-list.png) | ![List View](assets/list.png) |
 
 **Detail View**
 
-![Detail View](assets/detail.png)
+| Before                                   | After                             |
+| ---------------------------------------- | --------------------------------- |
+| ![Detail View](assets/before-detail.png) | ![Detail View](assets/detail.png) |
 
 **Comments Section**
 
-![Comments Section](assets/comments.png)
+| Before                                          | After                                    |
+| ----------------------------------------------- | ---------------------------------------- |
+| ![Comments Section](assets/before-comments.png) | ![Comments Section](assets/comments.png) |
 
 **New Issue Modal**
 
-![New Issue Modal](assets/new.png)
+| Before                                    | After                              |
+| ----------------------------------------- | ---------------------------------- |
+| ![New Issue Modal](assets/before-new.png) | ![New Issue Modal](assets/new.png) |
 
 ## More Todos
 
