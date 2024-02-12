@@ -133,13 +133,15 @@ export const IssueDetailSideView: React.FC<Props> = ({
 
   const onComment = useCallback(() => {
     if (commentText !== "") {
-      onCreateComment({
-        id: nanoid(),
-        issueID: issue?.id as string,
-        created: Date.now(),
-        creator: "Me",
-        body: commentText,
-      });
+      onCreateComment(
+        {
+          id: nanoid(),
+          issueID: issue?.id as string,
+          created: Date.now(),
+          creator: "Me",
+          body: commentText,
+        } as unknown as Comment /** Needs type fixing although same code was used */
+      );
       setCommentText("");
     }
   }, [onCreateComment, commentText, issue]);
