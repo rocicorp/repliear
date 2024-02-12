@@ -3,9 +3,9 @@ export function formatDate(
   includeYear = false
 ): string {
   return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: includeYear ? "numeric" : undefined,
+    month: "long",
+    day: "2-digit",
+    year: includeYear ? "2-digit" : undefined,
   }).format(date);
 }
 

@@ -30,17 +30,20 @@ const itemKey = (index: number, data: ListData) => data.issues[index].id;
 const RawRow = ({
   data,
   index,
+  style,
 }: {
   data: ListData;
   index: number;
   style: CSSProperties;
 }) => (
-  <IssueRow
-    issue={data.issues[index]}
-    onChangePriority={data.handleChangePriority}
-    onChangeStatus={data.handleChangeStatus}
-    onOpenDetail={data.onOpenDetail}
-  />
+  <div style={style}>
+    <IssueRow
+      issue={data.issues[index]}
+      onChangePriority={data.handleChangePriority}
+      onChangeStatus={data.handleChangeStatus}
+      onOpenDetail={data.onOpenDetail}
+    />
+  </div>
 );
 
 const Row = memo(RawRow);
@@ -88,7 +91,7 @@ const IssueList = ({ onUpdateIssues, onOpenDetail, issues, view }: Props) => {
             ref={fixedSizeListRef}
             height={height}
             itemCount={issues.length}
-            itemSize={43}
+            itemSize={64}
             itemData={itemData}
             itemKey={itemKey}
             overscanCount={10}
