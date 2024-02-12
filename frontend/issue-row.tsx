@@ -3,7 +3,7 @@ import type { Issue, Priority, Status } from "./issue";
 import { formatDate } from "../util/date";
 import PriorityMenu from "./priority-menu";
 import StatusMenu from "./status-menu";
-import { Flex, Box, Text } from "@radix-ui/themes";
+import { Flex, Text } from "@radix-ui/themes";
 import { AvatarIcon } from "@radix-ui/react-icons";
 
 interface Props {
@@ -28,16 +28,17 @@ function IssueRow({
       align="center"
       onClick={handleIssueRowClick}
       className="hover:bg-gray-900"
+      style={{ height: 64 }}
     >
-      <Box width="9" height="9" className="flex-shrink-0">
+      <Flex justify="center" width="9" className="flex-shrink-0">
         <PriorityMenu
           onSelect={handleChangePriority}
           priority={issue.priority}
         />
-      </Box>
-      <Box width="9" height="9" className="flex-shrink-0">
+      </Flex>
+      <Flex justify="center" width="9" className="flex-shrink-0">
         <StatusMenu onSelect={handleChangeStatus} status={issue.status} />
-      </Box>
+      </Flex>
       <Flex
         direction="column"
         className="ml-4 flex-wrap flex-shrink-1 flex-grow cursor-pointer"

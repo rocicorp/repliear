@@ -64,6 +64,9 @@ module.exports = {
       8: "8px",
     },
     extend: {
+      transitionProperty: {
+        width: "width",
+      },
       boxShadow: {
         modal: "rgb(0 0 0 / 9%) 0px 3px 12px",
         "large-modal": "rgb(0 0 0 / 50%) 0px 16px 70px",

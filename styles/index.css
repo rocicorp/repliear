@@ -58,3 +58,7 @@ body,
 html {
   height: 100%;
 }
+
+pre {
+  white-space: break-spaces;
+}

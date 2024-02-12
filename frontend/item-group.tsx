@@ -22,8 +22,9 @@ export const ItemGroup: React.FC<Props> = ({ title, items, onClick }) => {
         {title}
       </div>
       {isVisible &&
-        items.map((item) => (
+        items.map((item, idx) => (
           <div
+            key={idx}
             className="flex items-center pl-10 rounded cursor-pointer group h-8 hover:bg-gray-900"
             onClick={onClick(item)}
           >

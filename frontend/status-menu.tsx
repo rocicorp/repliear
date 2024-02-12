@@ -9,6 +9,7 @@ import InProgressIcon from "./assets/icons/half-circle.svg";
 import { Status, StatusEnum } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
 import { MenuItem } from "./menu-item";
+import { Flex, IconButton, Text } from "@radix-ui/themes";
 
 interface Props {
   labelVisible?: boolean;
@@ -72,23 +73,20 @@ const StatusMenu = ({ labelVisible = false, onSelect, status }: Props) => {
   ));
 
   return (
-    <div ref={ref} className="flex h-full justify-center">
-      <button
-        className="border-none rounded focus:outline-none"
+    <Flex ref={ref} className="ml-0.5" height="8" align="center" gap="4">
+      <IconButton
         ref={setButtonRef}
         onClick={handleDropdownClick}
+        variant="ghost"
+        className="cursor-pointer"
       >
         <StatusIcon status={status} />
-        {labelVisible && (
-          <div className="ml-2 whitespace-nowrap">
-            {getStatusString(status)}
-          </div>
-        )}
-      </button>
+      </IconButton>
       {statusDropDownVisible && (
         <Popper buttonRef={buttonRef}>{options}</Popper>
       )}
-    </div>
+      {labelVisible && <Text className="align">{getStatusString(status)}</Text>}
+    </Flex>
   );
 };
 

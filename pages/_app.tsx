@@ -4,9 +4,8 @@ import type { AppProps } from "next/app";
 import Head from "next/head";
 import { Theme } from "@radix-ui/themes";
 
-import "../styles/index.css";
-
 import "@radix-ui/themes/styles.css";
+import "../styles/index.css";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (

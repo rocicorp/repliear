@@ -9,6 +9,7 @@ import UrgentPriorityIcon from "./assets/icons/rounded-claim.svg";
 import { Priority, PriorityEnum } from "./issue";
 import { useClickOutside } from "./hooks/useClickOutside";
 import { MenuItem } from "./menu-item";
+import { Flex, IconButton, Text } from "@radix-ui/themes";
 
 interface Props {
   labelVisible?: boolean;
@@ -55,6 +56,14 @@ const PriorityMenu = ({
     }
   };
 
+  const priorityColor = {
+    [Priority.NONE]: "gray",
+    [Priority.HIGH]: "orange",
+    [Priority.MEDIUM]: "yellow",
+    [Priority.LOW]: "green",
+    [Priority.URGENT]: "red",
+  } as const;
+
   useClickOutside(ref, () => {
     if (priorityDropDownVisible) {
       setPriorityDropDownVisible(false);
@@ -75,23 +84,23 @@ const PriorityMenu = ({
   ));
 
   return (
-    <div ref={ref} className="flex h-full justify-center">
-      <button
-        className="border-none rounded focus:outline-none"
+    <Flex ref={ref} height="8" align="center" gap="4">
+      <IconButton
         ref={setButtonRef}
         onClick={handleDropdownClick}
+        color={priorityColor[priority]}
+        variant="ghost"
+        className="cursor-pointer"
       >
         <PriorityIcon priority={priority} />
-        {labelVisible && (
-          <div className="ml-2 whitespace-nowrap">
-            {getPriorityString(priority)}
-          </div>
-        )}
-      </button>
+      </IconButton>
       {priorityDropDownVisible && (
         <Popper buttonRef={buttonRef}>{options}</Popper>
       )}
-    </div>
+      {labelVisible && (
+        <Text className="align">{getPriorityString(priority)}</Text>
+      )}
+    </Flex>
   );
 };
 

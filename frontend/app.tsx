@@ -1,5 +1,4 @@
 import type { UndoManager } from "@rocicorp/undo";
-import classnames from "classnames";
 import { generateKeyBetween } from "fractional-indexing";
 import { isEqual, minBy, partial, pickBy, sortBy, sortedIndexBy } from "lodash";
 import { useQueryState } from "next-usequerystate";
@@ -32,11 +31,11 @@ import {
   statusOrderValues,
 } from "./issue";
 import IssueBoard from "./issue-board";
-import IssueDetail from "./issue-detail";
 import IssueList from "./issue-list";
 import LeftMenu from "./left-menu";
 import type { M } from "./mutators";
 import TopFilter from "./top-filter";
+import { IssueDetailSideView } from "./issue-detail-side-view";
 
 class Filters {
   private readonly _viewStatuses: Set<Status> | undefined;
@@ -279,8 +278,6 @@ function reducer(
       };
     }
   }
-
-  return state;
 }
 
 function diffReducer(state: State, diff: Diff): State {
@@ -456,7 +453,7 @@ const App = ({ rep, undoManager }: AppProps) => {
               return {
                 id: issue.id,
                 issueChanges,
-                descriptionChange: descriptionUpdate?.description,
+                descriptionChange: descriptionUpdate?.descriptionChange,
               };
             })
           ),
@@ -466,12 +463,17 @@ const App = ({ rep, undoManager }: AppProps) => {
     [rep.mutate, undoManager]
   );
 
+  const onCloseDetail = useCallback(async () => {
+    await setDetailIssueID("", { scroll: false, shallow: true });
+  }, []);
+
   const handleOpenDetail = useCallback(
     async (issue: Issue) => {
       await setDetailIssueID(issue.id, { scroll: false, shallow: true });
     },
     [setDetailIssueID]
   );
+
   const handleCloseMenu = useCallback(
     () => setMenuVisible(false),
     [setMenuVisible]
@@ -506,6 +508,7 @@ const App = ({ rep, undoManager }: AppProps) => {
         onCreateIssue={handleCreateIssue}
         onCreateComment={handleCreateComment}
         onOpenDetail={handleOpenDetail}
+        onCloseDetail={onCloseDetail}
       ></Layout>
     </HotKeys>
   );
@@ -532,21 +535,22 @@ interface LayoutProps {
   ) => void;
   onCreateComment: (comment: Comment) => void;
   onOpenDetail: (issue: Issue) => void;
+  onCloseDetail: VoidFunction;
 }
 
 const RawLayout = ({
   menuVisible,
   view,
   detailIssueID,
-  isLoading,
   state,
   rep,
   onCloseMenu,
   onToggleMenu,
   onUpdateIssues,
   onCreateIssue,
-  onCreateComment,
+  onCloseDetail,
   onOpenDetail,
+  onCreateComment,
 }: LayoutProps) => {
   return (
     <div>
@@ -557,11 +561,7 @@ const RawLayout = ({
           onCreateIssue={onCreateIssue}
         />
         <div className="flex flex-col flex-grow min-w-0">
-          <div
-            className={classnames("flex flex-col", {
-              hidden: detailIssueID,
-            })}
-          >
+          <div className="flex flex-col">
             <TopFilter
               onToggleMenu={onToggleMenu}
               title={getTitle(view)}
@@ -575,22 +575,7 @@ const RawLayout = ({
             />
           </div>
           <div className="relative flex flex-1 min-h-0">
-            {detailIssueID && (
-              <IssueDetail
-                issues={state.filteredIssues}
-                rep={rep}
-                onUpdateIssues={onUpdateIssues}
-                onAddComment={onCreateComment}
-                isLoading={isLoading}
-              />
-            )}
-            <div
-              className={classnames("absolute inset-0 flex flex-col", {
-                invisible: detailIssueID,
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                "pointer-events-none": detailIssueID,
-              })}
-            >
+            <div className="absolute inset-0 flex flex-col">
               {view === "board" ? (
                 <IssueBoard
                   issues={state.filteredIssues}
@@ -608,6 +593,14 @@ const RawLayout = ({
             </div>
           </div>
         </div>
+        <IssueDetailSideView
+          onCloseDetail={onCloseDetail}
+          onUpdateIssues={onUpdateIssues}
+          issueId={detailIssueID}
+          issues={state.filteredIssues}
+          rep={rep}
+          onCreateComment={onCreateComment}
+        />
       </div>
     </div>
   );
