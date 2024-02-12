@@ -1,13 +1,20 @@
-import CloseIcon from "./assets/icons/close.svg";
-import Modal from "./modal";
 import React, { useState } from "react";
 import { Description, Issue, Priority, Status } from "./issue";
 import { nanoid } from "nanoid";
 
 import PriorityMenu from "./priority-menu";
 import StatusMenu from "./status-menu";
-
-// import { showInfo, showWarning } from 'utils/notification';
+import { Cross2Icon } from "@radix-ui/react-icons";
+import {
+  Button,
+  Dialog,
+  Flex,
+  IconButton,
+  TextArea,
+  TextField,
+  Text,
+  Heading,
+} from "@radix-ui/themes";
 
 interface Props {
   isOpen: boolean;
@@ -18,11 +25,7 @@ interface Props {
   ) => void;
 }
 
-export default function IssueModal({
-  isOpen,
-  onDismiss,
-  onCreateIssue,
-}: Props) {
+export default function IssueModal({ onDismiss, onCreateIssue }: Props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState(Priority.NONE);
@@ -60,70 +63,44 @@ export default function IssueModal({
     if (onDismiss) onDismiss();
   };
 
-  const body = (
-    <div className="flex flex-col w-full py-4">
-      {/* header */}
-      <div className="flex items-center justify-between flex-shrink-0 px-4">
-        <div className="flex items-center">
-          <span className="ml-2 font-normal text-white">› New Issue</span>
-        </div>
-        <div className="flex items-center">
-          <div
-            className="inline-flex items-center justify-center ml-2 h-7 w-7 rounded hover:bg-gray-850 hover-text-gray-400 text-white"
-            onMouseDown={handleClickCloseBtn}
-          >
-            <CloseIcon className="w-4" />
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col flex-1 pb-3.5 overflow-y-auto">
-        {/* Issue title */}
-        <div className="flex items-center w-full mt-1.5 px-4">
-          <StatusMenu onSelect={setStatus} status={status} />
-          <input
-            className="w-full ml-1.5 text-lg font-semibold placeholder-white  border-none h-7 focus:outline-none bg-gray-900 text-white"
-            placeholder="Issue title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-
-        {/* Issue description editor */}
-        <div className="flex w-full px-4">
-          <textarea
-            rows={5}
-            onChange={(e) => setDescription(e.target.value)}
-            value={description}
-            className="w-full mt-4 ml-5 font-normal border-none appearance-none min-h-12 text-md focus:outline-none placeholder-white bg-gray-900 text-white"
-            placeholder="Add description..."
-          />
-        </div>
-      </div>
-
-      {/* Issue labels & priority */}
-      <div className="flex items-center px-4 pb-3 mt-1 border-b border-gray-500">
-        <PriorityMenu
-          onSelect={setPriority}
-          labelVisible={true}
-          priority={priority}
-        />
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-end flex-shrink-0 px-4 pt-3">
-        <button
-          className="px-3 ml-2 rounded hover:bg-indigo-700 h-7 focus:outline-none bg-gray"
-          onMouseDown={handleSubmit}
-        >
-          Save Issue
-        </button>
-      </div>
-    </div>
-  );
-
   return (
-    <Modal isOpen={isOpen} center={false} size="large" onDismiss={onDismiss}>
-      {body}
-    </Modal>
+    <Dialog.Content style={{ maxWidth: 450 }}>
+      <Flex height="9" justify="between" align="center">
+        <StatusMenu onSelect={setStatus} status={status} />
+        <Heading>New issue</Heading>
+        <Dialog.Close>
+          <IconButton color="gray" onClick={handleClickCloseBtn}>
+            <Cross2Icon className="w-5 h-5 cursor-pointer" />
+          </IconButton>
+        </Dialog.Close>
+      </Flex>
+      <Text size="2" as="label">
+        Title
+      </Text>
+      <TextField.Root className="mb-4 mt-2">
+        <TextField.Input
+          value={title}
+          placeholder="New Issue Title"
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </TextField.Root>
+      <Text size="2" as="label">
+        Description
+      </Text>
+      <TextArea
+        className="mt-2"
+        placeholder="New Issue Description"
+        onChange={(e) => setDescription(e.target.value)}
+        value={description}
+      ></TextArea>
+      <Flex justify="between">
+        <PriorityMenu onSelect={setPriority} labelVisible priority={priority} />
+        <Dialog.Close>
+          <Button variant="surface" className="my-4" onClick={handleSubmit}>
+            Add new issue
+          </Button>
+        </Dialog.Close>
+      </Flex>
+    </Dialog.Content>
   );
 }

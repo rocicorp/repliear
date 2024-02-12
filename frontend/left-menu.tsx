@@ -13,6 +13,7 @@ import AboutModal from "./about-modal";
 import { noop } from "lodash";
 import { Button } from "./button";
 import { SearchBox } from "./searchbox";
+import { Dialog } from "@radix-ui/themes";
 
 interface Props {
   // Show menu (for small screen only)
@@ -38,7 +39,7 @@ const LeftMenu = ({
 
   const ref = useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
   const [issueModalVisible, setIssueModalVisible] = useState(false);
-  const [aboutModalVisible, setAboutModalVisible] = useState(true);
+  const [aboutModalVisible, setAboutModalVisible] = useState(false);
 
   const classes = classnames(
     "absolute lg:static inset-0 lg:relative lg:translate-x-0 flex flex-col flex-shrink-0 w-56 font-sans text-sm border-r lg:shadow-none justify-items-start bg-gray border-gray-850 text-white bg-opacity-1",
@@ -84,14 +85,22 @@ const LeftMenu = ({
             </div>
           </div>
 
-          <Button
-            icon={AddIcon}
-            label="New Issue"
-            onClick={() => {
-              setIssueModalVisible(true);
-              onCloseMenu && onCloseMenu();
-            }}
-          />
+          <Dialog.Root>
+            <Dialog.Trigger>
+              <Button
+                icon={AddIcon}
+                label="New Issue"
+                onClick={() => {
+                  setIssueModalVisible(true);
+                  onCloseMenu && onCloseMenu();
+                }}
+              />
+            </Dialog.Trigger>
+            <IssueModal
+              isOpen={issueModalVisible}
+              onCreateIssue={onCreateIssue}
+            />
+          </Dialog.Root>
         </div>
 
         <div className="flex flex-col flex-shrink flex-grow overflow-y-auto mb-0.5 px-5">
@@ -123,14 +132,7 @@ const LeftMenu = ({
           </div>
         </div>
       </div>
-      {/* Modals */}
-      {
-        <IssueModal
-          isOpen={issueModalVisible}
-          onDismiss={() => setIssueModalVisible(false)}
-          onCreateIssue={onCreateIssue}
-        />
-      }
+
       {
         <AboutModal
           isOpen={aboutModalVisible && disableAbout !== "true"}

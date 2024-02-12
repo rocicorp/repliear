@@ -13,8 +13,13 @@ import {
   TextField,
 } from "@radix-ui/themes";
 import classNames from "classnames";
-import { Cross2Icon, Pencil1Icon } from "@radix-ui/react-icons";
-import { ClockIcon, AvatarIcon, CheckIcon } from "@radix-ui/react-icons";
+import {
+  ClockIcon,
+  AvatarIcon,
+  CheckIcon,
+  Cross2Icon,
+  Pencil1Icon,
+} from "@radix-ui/react-icons";
 import { Remark } from "react-remark";
 import StatusMenu from "./status-menu";
 import PriorityMenu from "./priority-menu";
@@ -279,7 +284,7 @@ export const IssueDetailSideView: React.FC<Props> = ({
               </>
             )}
             <TextArea
-              placeholder="Leave a comment ..."
+              placeholder="Leave a comment..."
               onChange={(e) => setCommentText(e.target.value)}
               value={commentText}
             ></TextArea>
