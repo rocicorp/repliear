@@ -49,10 +49,8 @@ export async function withExecutor<R>(
       );
       return result;
     } catch (e) {
-      throw new Error(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        `Error executing SQL: ${sql}: ${((e as unknown) as any).toString()}`
-      );
+      console.error("Error executing SQL", sql, e);
+      throw e;
     }
   };
 
