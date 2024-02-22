@@ -38,20 +38,15 @@ export async function withExecutor<R>(
   console.log("pool.connect took", Date.now() - startConnect);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const executor = async (sql: string, params?: any[]) => {
-    try {
-      const start = Date.now();
-      const result = await client.query(sql, params);
-      console.log(
-        "Db query took " +
-          (Date.now() - start) +
-          "ms. SQL: " +
-          sql.substring(0, Math.min(sql.length, 150))
-      );
-      return result;
-    } catch (e) {
-      console.error("Error executing SQL", sql, e);
-      throw e;
-    }
+    const start = Date.now();
+    const result = await client.query(sql, params);
+    console.log(
+      "Db query took " +
+        (Date.now() - start) +
+        "ms. SQL: " +
+        sql.substring(0, Math.min(sql.length, 150))
+    );
+    return result;
   };
 
   try {
@@ -90,7 +85,7 @@ async function transactWithExecutor<R>(
         await executor("commit");
         return r;
       } catch (e) {
-        console.log("caught error", e, "rolling back");
+        console.log(`caught error ${e} rolling back`);
         await executor("rollback");
         throw e;
       }
