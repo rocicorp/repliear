@@ -9,7 +9,7 @@ Running at [repliear.herokuapp.com](https://repliear.herokuapp.com/).
 
 # Prerequisites
 
-1. [Get a Replicache license key](https://doc.replicache.dev/licensing)
+1. [Get a Replicache license key](https://doc.replicache.dev/howto/licensing)
 2. Install PostgreSQL. On MacOS, we recommend using [Postgres.app](https://postgresapp.com/). For other OSes and options, see [Postgres Downloads](https://www.postgresql.org/download/).
 3. [Sign up for a free pusher.com account](https://pusher.com/) and create a new "channels" app.
 
